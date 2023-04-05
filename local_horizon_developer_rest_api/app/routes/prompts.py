@@ -120,8 +120,6 @@ class DeployPromptAPI(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument('prompt_id', type=int, required=True,
                             help='Prompt ID is required')
-        parser.add_argument('api_key', type=str, required=True,
-                            help='API key is required')
         parser.add_argument('inputs', type=dict, required=True,
                             help='Input variables are required as a dictionary')
         args = parser.parse_args()

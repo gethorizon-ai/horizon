@@ -1,11 +1,13 @@
-from app.models.prompt.factory import PromptTemplateFactory as factory
+from app.models.prompt.factory import PromptTemplateFactory
 from app.models.prompt.prompt import PromptTemplate
+from app.models.llm.factory import LLMFactory
 from app.models.schema import HumanMessage
 from app.models.llm.open_ai import OpenAI, ChatOpenAI
 from app.models.llm.base import BaseLLM
 from app.models.component.experiment import Experiment
 import pandas as pd
 import copy
+from app.utilities.clustering.cluster import cluster_shortlist_data
 
 
 def prompt_generation_user_objective_training_data(experiment: Experiment, model_object: BaseLLM, num_prompts: int, global_prompt_id: list) -> pd.DataFrame:
@@ -50,7 +52,7 @@ def prompt_generation_user_objective_training_data(experiment: Experiment, model
     )
 
     # create the few shot prompt template
-    few_shot_metaprompt = factory.create_prompt_template(
+    few_shot_metaprompt = PromptTemplateFactory.create_prompt_template(
         "fewshot",
         examples=examples,
         example_prompt=example_prompt,

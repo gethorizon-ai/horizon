@@ -95,10 +95,7 @@ def generate_prompt(objective, prompt_id) -> BasePromptTemplate:
     # Define the OpenAI instance parameters
     openai_params = {
         "model_name": "text-davinci-003",
-        "temperature": 0.4,
-        "max_tokens": 1000,
-        "n": 1,
-        "best_of": 1
+        "temperature": 0.7,
     }
 
     # Create the OpenAI instance
@@ -108,36 +105,42 @@ def generate_prompt(objective, prompt_id) -> BasePromptTemplate:
     prompt.model_name = "openai"
     prompt.model = json.dumps(openai_params)
 
-    # commit the changes to the database
-    db.session.commit()
-
     # Define the global prompt ID
     global_prompt_id = [0]
+    prompt_template_type = "prompt"
 
     # Generate the prompts using the pattern roleplay method
     num_prompt = 1
     prompts_pattern_role_play = prompt_generation_pattern_roleplay(
-        experiment_instance, openai_instance, num_prompt, global_prompt_id)
+        experiment_instance, openai_instance, num_prompt, global_prompt_id, prompt_template_type)
+
+    # Generate the prompts using the user objective method
+    num_prompt = 1
+    prompts_user_objective = prompt_generation_user_objective(
+        experiment_instance, openai_instance, num_prompt, global_prompt_id, prompt_template_type)
+
+    # combine the prompts from the two methods
+    prompts_generated = prompts_pattern_role_play.append(
+        prompts_user_objective)
 
     # run the prompts through the inference engine
     inference_results = run_inference(
-        experiment_instance, prompts_pattern_role_play, "test")
-
-    # # return inference_results
-    # return inference_results["prompt_object"].iloc[0]
+        experiment_instance, prompts_generated, "test")
 
     # run the infrence results through the evaluation engine
     run_evaluation(inference_results)
 
-    # rerurn the evaluation results
-    # return inference_results["prompt_object"].iloc[0]
-    # return inference_results["prompt_object"].iloc[0]
-
     # put the evaluation results through a shortlist engine
     winning_prompt = prompt_shortlist(inference_results, 1, 0)
 
+    # store the winning prompt template type in the database
+
+    prompt.template_type = prompt_template_type
+
     # store the winning prompt in the database using the prompt_id as the template parameter
-    prompt.template = json.dumps(winning_prompt["prompt_object"].iloc[0])
+    prompt.template_data = json.dumps(winning_prompt["prompt_object"].iloc[0])
+
+    # save the prompt to the database
 
     # commit the changes to the database
     db.session.commit()

@@ -5,6 +5,7 @@ import openai
 from app import db
 from app.models.llm.factory import LLMFactory
 from app.models.prompt.factory import PromptTemplateFactory
+import json
 
 
 def deploy_prompt(prompt_id, input_values):
@@ -31,7 +32,7 @@ def deploy_prompt(prompt_id, input_values):
     model_name = prompt.model_name
 
     # get the model_params from the prompt
-    model_params = prompt.model
+    model_params = json.loads(prompt.model)
 
     # define the LLM factory instance
     llm_factory = LLMFactory()
@@ -39,37 +40,25 @@ def deploy_prompt(prompt_id, input_values):
     # Create the model instance
     model_instance = llm_factory.create_llm(model_name, **model_params)
 
-    # get the prompt_template from the prompt
-    prompt_template = prompt.template
+    # get the template type from the prompt
+    template_type = prompt.template_type
+
+    # get the template_data from the prompt
+    template_data = json.loads(prompt.template_data)
 
     # define the prompt factory instance
     prompt_factory = PromptTemplateFactory()
 
     # Create the prompt instance
-    prompt_instance = prompt_factory.create_prompt_template(prompt_template)
+    prompt_instance = prompt_factory.create_prompt_template(
+        template_type, **template_data)
 
     # format the prompt
-    prompt_instance.template.format(**input_values)
+    formated_prompt = prompt_instance.format(**input_values)
 
     # generate the output
-    output = model_instance.generate([prompt_instance.template])
+    output = model_instance.generate(
+        [formated_prompt]).generations[0][0].text.strip()
 
     # return the output
     return output
-
-
-# TODOOO
-# OVERRIDE GENERATE FUNCTIONS FOR DIFFERENT PROMPT TYPES
-
-    #  """
-    #     Generate output using the provided prompt_object and model_object.
-    #     Arguments must be passed in as a key-value pair for each input variable
-    #     """
-    #   prompt = self.prompt_object.format(**input_values)
-
-    #    if type(self.model_object) == ChatOpenAI:
-    #         prompt = [HumanMessage(content=prompt)]
-    #     output = self.model_object.generate(
-    #         [prompt]).generations[0][0].text.strip()
-
-    #     return output

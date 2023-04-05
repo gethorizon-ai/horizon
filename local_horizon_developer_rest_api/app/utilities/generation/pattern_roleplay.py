@@ -1,5 +1,5 @@
 from app.models.prompt.factory import PromptTemplateFactory as factory
-from app.models.prompt.prompt import PromptTemplate
+from app.models.llm.factory import LLMFactory
 from app.models.schema import HumanMessage
 from app.models.llm.open_ai import OpenAI, ChatOpenAI
 from app.models.llm.base import BaseLLM
@@ -8,11 +8,11 @@ import pandas as pd
 import copy
 
 
-def prompt_generation_pattern_roleplay(experiment: Experiment, model_object: BaseLLM, num_prompts: int, global_prompt_id: list) -> pd.DataFrame:
+def prompt_generation_pattern_roleplay(experiment: Experiment, model_object: BaseLLM, num_prompts: int, global_prompt_id: list, prompt_template_type: str) -> pd.DataFrame:
     """
     Generates prompt candidates by converting provided prompt candidates into a role play prompt pattern
     """
-    metaprompt = PromptTemplate(template="""You are a prompt generation robot that generates optimal prompt template strings for use with AI large language models (LLM). One effective approach for prompts is to frame them as a role play for the LLM. Therefore, you will provide the optimal role play prompt template string to accomplish the given objective using the given input variables. Surround input variables by angle brackets when referencing them.
+    metaprompt = factory.create_prompt_template(prompt_template_type, template="""You are a prompt generation robot that generates optimal prompt template strings for use with AI large language models (LLM). One effective approach for prompts is to frame them as a role play for the LLM. Therefore, you will provide the optimal role play prompt template string to accomplish the given objective using the given input variables. Surround input variables by angle brackets when referencing them.
 ==
 EXAMPLES:
 
@@ -38,7 +38,7 @@ BEGIN:
 OBJECTIVE: {objective}
 INPUT VARIABLES: {input_variables}
 OPTIMAL PROMPT:""",
-                                input_variables=['objective', 'input_variables'])
+                                                input_variables=['objective', 'input_variables'])
     formatted_metaprompt = metaprompt.format(objective=experiment.user_objective,
                                              input_variables=', '.join('{input_variable}'.format(input_variable='<' + input_var + '>') for input_var in experiment.input_variables))
 
@@ -47,9 +47,17 @@ OPTIMAL PROMPT:""",
         prompt_suffix += '<' + input_var + '>: {' + input_var + '}\n'
     prompt_suffix += '<OUTPUT>:'
 
-    # metaprompt_model = ChatOpenAI(max_tokens=1000, temperature=0.7, n=num_prompts)
-    metaprompt_model = OpenAI(model_name="text-davinci-003", temperature=0.4,
-                              max_tokens=1000, n=num_prompts, best_of=num_prompts)
+    llm_factory = LLMFactory()
+
+    model_params = {
+        "model_name": "text-davinci-003",
+        "temperature": 0.4,
+        "max_tokens": 1000,
+        "n": num_prompts,
+        "best_of": num_prompts
+    }
+
+    metaprompt_model = llm_factory.create_llm("openai", **model_params)
 
     if type(metaprompt_model) == ChatOpenAI:
         formatted_metaprompt = [HumanMessage(content=formatted_metaprompt)]
@@ -66,8 +74,8 @@ OPTIMAL PROMPT:""",
         prompt_prefix = responses[i].text.strip()
         prompt_template = prompt_prefix + prompt_suffix
         try:
-            generated_prompt = PromptTemplate(
-                template=prompt_template, input_variables=experiment.input_variables)
+            generated_prompt = factory.create_prompt_template("prompt",
+                                                              template=prompt_template, input_variables=experiment.input_variables)
         except:
             continue
 
@@ -85,4 +93,5 @@ OPTIMAL PROMPT:""",
         'prompt_prefix': prompt_prefix_list,
         'model_object': model_object_list
     })
+
     return result
