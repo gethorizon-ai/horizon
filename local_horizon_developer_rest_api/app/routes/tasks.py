@@ -1,6 +1,6 @@
 from flask import request
 from flask_restful import Resource, reqparse
-from app.models import Task
+from app.models.component import Task
 from app import db, api
 from app.routes.users import api_key_required
 

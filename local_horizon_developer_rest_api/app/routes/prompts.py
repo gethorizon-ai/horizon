@@ -1,8 +1,10 @@
 from flask import request
 from flask_restful import Resource, reqparse
-from app.models import Prompt
+from app.models.component import Prompt
 from app import db, api
 from app.routes.users import api_key_required
+from app.utilities.run.run1 import generate_prompt
+from app.deploy.prompt import deploy_prompt
 
 
 class ListPromptsAPI(Resource):
@@ -95,7 +97,44 @@ class PromptAPI(Resource):
         return {"message": "Prompt deleted successfully"}, 200
 
 
+class GeneratePromptAPI(Resource):
+    @api_key_required
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('objective', type=str, required=True,
+                            help='Objective is required')
+        parser.add_argument('prompt_id', type=int, required=True,
+                            help='Prompt ID is required')
+        args = parser.parse_args()
+
+        # Call the generate_prompt function with the provided objective and prompt_id
+        generated_prompt = generate_prompt(
+            args['objective'], args['prompt_id'])
+        generated_prompt_dict = generated_prompt
+        return {"message": "Prompt generation completed", "generated_prompt": generated_prompt_dict}, 200
+
+
+class DeployPromptAPI(Resource):
+    @api_key_required
+    def post(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument('prompt_id', type=int, required=True,
+                            help='Prompt ID is required')
+        parser.add_argument('api_key', type=str, required=True,
+                            help='API key is required')
+        parser.add_argument('inputs', type=dict, required=True,
+                            help='Input variables are required as a dictionary')
+        args = parser.parse_args()
+
+        # Call the deploy function with the provided prompt_id and inputs
+        return_value = deploy_prompt(args['prompt_id'], args['inputs'])
+
+        return {"message": "Prompt deployment completed", "return_value": return_value}, 200
+
+
 def register_routes(api):
     api.add_resource(ListPromptsAPI, '/api/prompts')
     api.add_resource(CreatePromptAPI, '/api/prompts/new')
     api.add_resource(PromptAPI, '/api/prompts/<int:prompt_id>')
+    api.add_resource(GeneratePromptAPI, '/api/prompts/generate')
+    api.add_resource(DeployPromptAPI, '/api/prompts/deploy')

@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse
-from app.models import Project, Task
+from app.models.component import Experiment, Project, Prompt, Task, User
 from app import db, api
 from app.routes.users import api_key_required
 from sqlalchemy.exc import IntegrityError
@@ -11,6 +11,9 @@ import csv
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 from flask import Response
+import base64
+import requests
+import pandas as pd
 
 ALLOWED_EXTENSIONS = {'csv'}
 
@@ -40,12 +43,6 @@ class CreateProjectAPI(Resource):
         except IntegrityError as e:
             db.session.rollback()
             return {"error": str(e)}, 400
-
-        # Check if a file was uploaded
-        if 'evaluation_datasets' in request.files:
-            file = request.files['evaluation_datasets']
-            project.evaluation_datasets = file.read()
-            db.session.commit()
 
         return {"message": "Project created successfully", "project": project.to_dict()}, 201
 
@@ -109,14 +106,23 @@ class UploadEvaluationDatasetsAPI(Resource):
 
         if 'evaluation_datasets' not in request.files:
             return {"error": "No file provided"}, 400
+        # Get the current working directory (your project folder)
+        project_dir = os.getcwd()
 
-        file = request.files['evaluation_datasets']
+        evaluation_datasets = request.files['evaluation_datasets']
 
-        if not allowed_file(file.filename):
+        if not allowed_file(evaluation_datasets.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
 
-        project.evaluation_datasets = file.read()
-        db.session.commit()
+        # Create the file path to store the CSV file in the data folder
+        file_path = os.path.join(
+            project_dir, 'data', evaluation_datasets.filename)
+
+        # Save the file to the file path
+        evaluation_datasets.save(file_path)
+
+        project.evaluation_datasets = file_path
+        db.session.commit()  # Commit the changes to the database
 
         return {"message": "Evaluation datasets uploaded successfully", "project": project.to_dict()}, 200
 
@@ -131,15 +137,15 @@ class ViewEvaluationDatasetsAPI(Resource):
         if not project.evaluation_datasets:
             return {"error": "No evaluation_datasets file associated with this project"}, 404
 
-        evaluation_datasets_file = BytesIO(project.evaluation_datasets)
-        reader = csv.DictReader(
-            evaluation_datasets_file.read().decode('utf-8').splitlines())
+        with open(project.evaluation_datasets, 'r', encoding='utf-8') as evaluation_datasets_file:
+            reader = csv.DictReader(evaluation_datasets_file)
+            evaluation_datasets = [row for row in reader]
 
-        evaluation_datasets = [row for row in reader]
         return {"evaluation_datasets": evaluation_datasets}, 200
 
 
 class EvaluationDatasetsAPI(Resource):
+    @api_key_required
     def get(self, project_id):
         project = Project.query.get(project_id)
         if not project:
@@ -148,11 +154,27 @@ class EvaluationDatasetsAPI(Resource):
         if not project.evaluation_datasets:
             return {"error": "No evaluation datasets available"}, 404
 
-        response = make_response(send_file(BytesIO(project.evaluation_datasets),
+        response = make_response(send_file(project.evaluation_datasets,
                                            attachment_filename='evaluation_datasets.csv',
                                            as_attachment=True))
         response.headers['Content-Type'] = 'text/csv'
         return response
+
+
+class DeleteEvaluationDatasetsAPI(Resource):
+    @api_key_required
+    def delete(self, project_id):
+        project = Project.query.get(project_id)
+        if not project:
+            return {"error": "Project not found"}, 404
+
+        if not project.evaluation_datasets:
+            return {"error": "No evaluation_datasets file associated with this project"}, 404
+
+        project.evaluation_datasets = None
+        db.session.commit()
+
+        return {"message": "Evaluation datasets deleted successfully", "project": project.to_dict()}, 200
 
 
 def register_routes(api):
@@ -165,3 +187,5 @@ def register_routes(api):
                      '/api/projects/<int:project_id>/view_evaluation_datasets')
     api.add_resource(EvaluationDatasetsAPI,
                      '/api/projects/<int:project_id>/evaluation_datasets')
+    api.add_resource(DeleteEvaluationDatasetsAPI,
+                     '/api/projects/<int:project_id>/delete_evaluation_datasets')

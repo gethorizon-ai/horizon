@@ -1,7 +1,7 @@
 from flask import request
 from flask_restful import Resource, reqparse, Api
 from functools import wraps
-from app.models import User
+from app.models.component import User
 from app import db, api
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy.exc import IntegrityError

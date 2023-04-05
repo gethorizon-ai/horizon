@@ -17,3 +17,8 @@ Flask-HTTPAuth
 Flask-CORS
 warrant
 pytest
+langchain
+openai
+pandas
+python-dotenv 
+requests

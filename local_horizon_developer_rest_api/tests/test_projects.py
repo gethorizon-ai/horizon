@@ -1,6 +1,6 @@
 import json
 import pytest
-from app.models import User, Project
+from app.models import Experiment, Project, Prompt, Task, User
 from app import create_app, db
 import os
 from io import BytesIO
