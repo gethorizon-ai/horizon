@@ -46,7 +46,8 @@ class RegisterAPI(Resource):
             db.session.rollback()
             return {"error": str(e)}, 400
 
-        return {"message": "User registered successfully"}, 201
+        # Add the user_id to the response
+        return {"message": "User registered successfully", "user_id": new_user.id}, 201
 
 
 class AuthenticateAPI(Resource):
@@ -86,7 +87,20 @@ class GetUserAPI(Resource):
         return user.to_dict(), 200
 
 
+class DeleteUserAPI(Resource):
+    @api_key_required
+    def delete(self, user_id):
+        user = User.query.get(user_id)
+        if not user:
+            return {"error": "User not found"}, 404
+
+        db.session.delete(user)
+        db.session.commit()
+        return {"message": "User deleted successfully"}, 200
+
+
 def register_routes(api):
     api.add_resource(RegisterAPI, '/api/users/register')
     api.add_resource(AuthenticateAPI, '/api/users/authenticate')
     api.add_resource(GetUserAPI, '/api/users/<int:user_id>')
+    api.add_resource(DeleteUserAPI, '/api/users/<int:user_id>')
