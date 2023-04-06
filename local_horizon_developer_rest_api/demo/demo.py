@@ -76,6 +76,7 @@ deployed_prompt = horizon.deploy_prompt(
     prompt_id, inputs, api_key)
 print(deployed_prompt)
 
+
 # Cleanup section
 # Delete prompt
 delete_prompt = horizon.delete_prompt(prompt_id, api_key)
