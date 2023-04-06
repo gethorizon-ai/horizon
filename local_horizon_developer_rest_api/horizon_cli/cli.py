@@ -2,6 +2,11 @@ import click
 from horizon_ai import APIClient
 
 
+@click.group()
+def cli():
+    pass
+
+
 @click.command()
 @click.option('--base_url', prompt='Base URL', help='The base URL for the API.')
 @click.option('--username', prompt='Username', help='The username for the new user.')
@@ -13,5 +18,7 @@ def register_user(base_url, username, email, password):
     click.echo(result)
 
 
+cli.add_command(register_user)
+
 if __name__ == '__main__':
-    register_user()
+    cli()
