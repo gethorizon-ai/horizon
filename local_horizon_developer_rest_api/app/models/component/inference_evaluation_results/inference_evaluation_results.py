@@ -3,9 +3,9 @@
 Class stores ids corresponding to prompt-model candidates and evaluation data to avoid duplicating their values, so these
 must be fetched from separate data structures when needed.
 
-This class does not optimize for latency since. This was implemented this way because the primary bottleneck is LLM
-inference, this approach was faster to implement, and it has additional DataFrame functionality that may be useful (e.g., 
-as compared to storing values in lists or dicts). This may be optimized later.
+This class does not optimize for latency associated with DataFrames. This was implemented this way because the primary 
+bottleneck is LLM inference, this approach was faster to implement, and it has additional DataFrame functionality that 
+may be useful (e.g., as compared to storing values in lists or dicts). This may be optimized later.
 
 Typical usage example:
 
