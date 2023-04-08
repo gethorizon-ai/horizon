@@ -6,12 +6,11 @@ must be fetched from separate data structures when needed.
 This class does not optimize for latency associated with DataFrames. This was implemented this way because the primary 
 bottleneck is LLM inference, this approach was faster to implement, and it has additional DataFrame functionality that 
 may be useful (e.g., as compared to storing values in lists or dicts). This may be optimized later.
-
 Typical usage example:
 
-    inference_evaluation_results = InferenceEvaluationResults(prompt_model_id_list=[x], eval_data_id_list=[x])
+    inference_evaluation_results = InferenceEvaluationResults(prompt_model_id_list=[x], eval_data_id_list=[x], stage_id='x')
     # iterate over each combination of prompt-model candidate and evaluation datum
-    inference_evaluation_results.iloc[i]["output"] = x
+    inference_evaluation_results.iloc[i]["output"] = 'x'
 """
 
 import pandas as pd
