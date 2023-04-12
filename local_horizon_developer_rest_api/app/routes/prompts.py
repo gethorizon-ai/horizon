@@ -25,9 +25,13 @@ class CreatePromptAPI(Resource):
         args = parser.parse_args()
 
         prompt = Prompt(name=args['name'], task_id=args['task_id'])
-        db.session.add(prompt)
-        db.session.commit()
 
+        try:
+            db.session.add(prompt)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 400
         return {"message": "Prompt created successfully", "prompt": prompt.to_dict()}, 201
 
 
@@ -82,7 +86,12 @@ class PromptAPI(Resource):
         if args['evaluation_job_name'] is not None:
             prompt.evaluation_job_name = args['evaluation_job_name']
 
-        db.session.commit()
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 400
+
         return {"message": "Prompt updated successfully", "prompt": prompt.to_dict()}, 200
 
     @api_key_required
@@ -91,8 +100,12 @@ class PromptAPI(Resource):
         if not prompt:
             return {"error": "Prompt not found"}, 404
 
-        db.session.delete(prompt)
-        db.session.commit()
+        try:
+            db.session.delete(prompt)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 400
 
         return {"message": "Prompt deleted successfully"}, 200
 

@@ -1,4 +1,3 @@
-from setuptools import setup
 import click
 from setuptools import setup, find_packages
 

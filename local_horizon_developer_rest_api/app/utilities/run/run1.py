@@ -22,7 +22,7 @@ from app.utilities.shortlist.shortlist import prompt_shortlist
 from app import db
 
 
-def generate_prompt(objective, prompt_id) -> BasePromptTemplate:
+def generate_prompt(prompt_id, objective) -> BasePromptTemplate:
 
     load_dotenv()
     openai.api_key = os.getenv('OPENAI_API_KEY')
@@ -38,13 +38,13 @@ def generate_prompt(objective, prompt_id) -> BasePromptTemplate:
     project_id = task.project_id
     project = Project.query.get(project_id)
 
-    # Get the evaluation dataset from the project. If there is no evaluation dataset, return an error
-    if not project.evaluation_datasets:
-        return {"error": "No evaluation_datasets file associated with this project"}, 404
+    # Get the evaluation dataset from the task. If there is no evaluation dataset, return an error
+    if not task.evaluation_dataset:
+        return {"error": "No evaluation_dataset file associated with this task"}, 404
 
-    # Fetch the evaluation dataset from the project
-    with open(project.evaluation_datasets, 'r', encoding='utf-8') as evaluation_datasets_file:
-        reader = csv.DictReader(evaluation_datasets_file)
+    # Fetch the evaluation dataset from the task
+    with open(task.evaluation_dataset, 'r', encoding='utf-8') as evaluation_dataset_file:
+        reader = csv.DictReader(evaluation_dataset_file)
 
         # Convert the evaluation dataset to a pandas dataframe
         curr_evaluation_dataset = pd.DataFrame([row for row in reader])

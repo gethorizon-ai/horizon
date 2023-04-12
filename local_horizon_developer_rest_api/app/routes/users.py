@@ -1,4 +1,4 @@
-from flask import request
+from flask import request, g
 from flask_restful import Resource, reqparse, Api
 from functools import wraps
 from app.models.component import User
@@ -12,11 +12,13 @@ def api_key_required(f):
     def decorated_function(*args, **kwargs):
         api_key = request.headers.get('X-Api-Key')
         if not api_key:
-            return {"error": "API key required"}, 403
+            return {"error": "API key required"}, 401
 
         user = User.query.filter_by(api_key=api_key).first()
         if not user:
-            return {"error": "Invalid API key"}, 403
+            return {"error": "Invalid API key"}, 401
+
+        g.user = user
 
         return f(*args, **kwargs)
     return decorated_function
@@ -80,8 +82,9 @@ class AuthenticateAPI(Resource):
 
 class GetUserAPI(Resource):
     @api_key_required
-    def get(self, user_id):
-        user = User.query.get(user_id)
+    def get(self):
+        api_key = request.headers.get("X-Api-Key")
+        user = User.query.filter_by(api_key=api_key).first()
         if not user:
             return {"error": "User not found"}, 404
         return user.to_dict(), 200
@@ -89,18 +92,24 @@ class GetUserAPI(Resource):
 
 class DeleteUserAPI(Resource):
     @api_key_required
-    def delete(self, user_id):
-        user = User.query.get(user_id)
+    def delete(self):
+        api_key = request.headers.get("X-Api-Key")
+        user = User.query.filter_by(api_key=api_key).first()
         if not user:
             return {"error": "User not found"}, 404
 
-        db.session.delete(user)
-        db.session.commit()
+        try:
+            db.session.delete(user)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 400
+
         return {"message": "User deleted successfully"}, 200
 
 
 def register_routes(api):
     api.add_resource(RegisterAPI, '/api/users/register')
     api.add_resource(AuthenticateAPI, '/api/users/authenticate')
-    api.add_resource(GetUserAPI, '/api/users/<int:user_id>')
-    api.add_resource(DeleteUserAPI, '/api/users/<int:user_id>')
+    api.add_resource(GetUserAPI, '/api/users/')
+    api.add_resource(DeleteUserAPI, '/api/users/')

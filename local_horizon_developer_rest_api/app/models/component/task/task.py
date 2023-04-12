@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime
+from app.models.component.prompt import Prompt
 
 
 class Task(db.Model):
@@ -7,13 +8,15 @@ class Task(db.Model):
     name = db.Column(db.String(64), nullable=False)
     description = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
+    evaluation_dataset = db.Column(db.String(100), nullable=True)
     status = db.Column(db.String(64), nullable=False, default='created')
     create_timestamp = db.Column(
         db.DateTime, nullable=False, default=datetime.utcnow)
     project_id = db.Column(db.Integer, db.ForeignKey(
         'project.id'), nullable=False)
     prompts = db.relationship(
-        'Prompt', backref='project', lazy='dynamic', cascade='all,delete')
+        'Prompt', backref='project', lazy='dynamic', cascade='all,delete', foreign_keys=[Prompt.task_id])
+    active_prompt_id = db.Column(db.Integer, db.ForeignKey('prompt.id'))
 
     def to_dict(self):
         return {
@@ -21,8 +24,10 @@ class Task(db.Model):
             'name': self.name,
             'description': self.description,
             'task_type': self.task_type,
+            'evaluation_dataset': self.evaluation_dataset,
             'status': self.status,
             'create_timestamp': datetime.isoformat(self.create_timestamp),
             'project_id': self.project_id,
+            'active_prompt_id': self.active_prompt_id,
             'prompts': [prompt.to_dict() for prompt in self.prompts.all()]
         }
