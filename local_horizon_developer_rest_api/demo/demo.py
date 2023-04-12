@@ -1,8 +1,6 @@
 # demo.py
 
 # Replace 'http://your-api-base-url' with the base URL of your API, for example 'http://127.0.0.1:5000' for local testing
-import horizon_ai
-
 horizon = horizon_ai.APIClient(base_url="http://127.0.0.1:5000")
 
 
