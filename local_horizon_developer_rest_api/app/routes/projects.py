@@ -29,11 +29,12 @@ class CreateProjectAPI(Resource):
     @api_key_required
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, required=True,
-                            help='Project name is required')
+        parser.add_argument(
+            "name", type=str, required=True, help="Project name is required"
+        )
         args = parser.parse_args()
 
-        project = Project(name=args['name'], user_id=g.user.id)
+        project = Project(name=args["name"], user_id=g.user.id)
 
         try:
             db.session.add(project)
@@ -63,14 +64,14 @@ class ProjectAPI(Resource):
             return {"error": "Project not found"}, 404
 
         parser = reqparse.RequestParser()
-        parser.add_argument('description', type=str)
-        parser.add_argument('status', type=str)
+        parser.add_argument("description", type=str)
+        parser.add_argument("status", type=str)
         args = parser.parse_args()
 
-        if args['description'] is not None:
-            project.description = args['description']
-        if args['status'] is not None:
-            project.status = args['status']
+        if args["description"] is not None:
+            project.description = args["description"]
+        if args["status"] is not None:
+            project.status = args["status"]
 
         try:
             db.session.commit()
@@ -78,7 +79,10 @@ class ProjectAPI(Resource):
             db.session.rollback()
             return {"error": str(e)}, 400
 
-        return {"message": "Project updated successfully", "project": project.to_dict()}, 200
+        return {
+            "message": "Project updated successfully",
+            "project": project.to_dict(),
+        }, 200
 
     @api_key_required
     def delete(self, project_id):
@@ -92,14 +96,20 @@ class ProjectAPI(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 400
+        try:
+            db.session.delete(project)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 400
 
         return {"message": "Project deleted successfully"}, 200
 
 
 def register_routes(api):
-    api.add_resource(ListProjectsAPI, '/api/projects')
-    api.add_resource(CreateProjectAPI, '/api/projects/create')
-    api.add_resource(ProjectAPI, '/api/projects/<int:project_id>')
+    api.add_resource(ListProjectsAPI, "/api/projects")
+    api.add_resource(CreateProjectAPI, "/api/projects/create")
+    api.add_resource(ProjectAPI, "/api/projects/<int:project_id>")
 
 
 # curl -X GET -H "Content-Type: application/json" -H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" http://54.188.108.247:5000/api/projects

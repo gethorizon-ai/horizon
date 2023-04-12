@@ -29,7 +29,7 @@ from dotenv import load_dotenv, find_dotenv
 
 
 def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
-    load_dotenv(find_dotenv())
+    load_dotenv()
     openai.api_key = os.getenv("OPENAI_API_KEY")
 
     # Get the prompt from the database using the prompt_id

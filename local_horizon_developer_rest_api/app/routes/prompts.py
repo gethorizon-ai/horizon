@@ -26,7 +26,7 @@ class CreatePromptAPI(Resource):
         )
         args = parser.parse_args()
 
-        prompt = Prompt(name=args['name'], task_id=args['task_id'])
+        prompt = Prompt(name=args["name"], task_id=args["task_id"])
 
         try:
             db.session.add(prompt)
@@ -34,7 +34,10 @@ class CreatePromptAPI(Resource):
         except Exception as e:
             db.session.rollback()
             return {"error": str(e)}, 400
-        return {"message": "Prompt created successfully", "prompt": prompt.to_dict()}, 201
+        return {
+            "message": "Prompt created successfully",
+            "prompt": prompt.to_dict(),
+        }, 201
 
 
 class PromptAPI(Resource):
@@ -94,7 +97,10 @@ class PromptAPI(Resource):
             db.session.rollback()
             return {"error": str(e)}, 400
 
-        return {"message": "Prompt updated successfully", "prompt": prompt.to_dict()}, 200
+        return {
+            "message": "Prompt updated successfully",
+            "prompt": prompt.to_dict(),
+        }, 200
 
     @api_key_required
     def delete(self, prompt_id):
