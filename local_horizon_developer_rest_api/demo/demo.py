@@ -5,6 +5,7 @@ import horizon_ai
 
 horizon = horizon_ai.APIClient(base_url="http://127.0.0.1:5000")
 
+
 # Register a new user
 register_response = horizon.register_user(
     "ltawfik", "ltawfik@horizonai.com", "123TestPassword!45"
@@ -44,18 +45,18 @@ deployed_task = horizon.deploy_task(task_id, inputs, api_key)
 # delete_prompt = horizon.delete_prompt(prompt_id, api_key)
 # print(delete_prompt)
 
-# Delete task
-delete_task = horizon.delete_task(task_id, api_key)
-print(delete_task)
+# # Delete task
+# delete_task = horizon.delete_task(task_id, api_key)
+# print(delete_task)
 
 # Delete evaluation datasets
 delete_datasets = horizon.delete_evaluation_dataset(project_id, api_key)
 print(delete_datasets)
 
-# Delete project
-delete_project = horizon.delete_project(project_id, api_key)
-print(delete_project)
+# # Delete project
+# delete_project = horizon.delete_project(project_id, api_key)
+# print(delete_project)
 
-# Delete user
-delete_user = horizon.delete_user(user_id, api_key)
-print(delete_user)
+# # Delete user
+# delete_user = horizon.delete_user(user_id, api_key)
+# print(delete_user)
