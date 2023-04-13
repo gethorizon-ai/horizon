@@ -95,25 +95,26 @@ def adaptive_filtering(
             task_request=task_request,
             prompt_model_candidates=shortlisted_prompt_model_candidates,
             train_or_test_dataset="test",
-            stage_id=f"[{stage_id}_adaptive_filtering_iteration_{i}]",
+            stage_id=stage_id,
             evaluation_data_id_list=evaluation_data_id_segments[i],
         )
         evaluation.run_evaluation(
             task_request=task_request,
             inference_evaluation_results=inference_evaluation_results,
         )
-        shortlisted_prompt_model_candidates = (
-            shortlist.shortlist_prompt_model_candidates(
-                prompt_model_candidates=shortlisted_prompt_model_candidates,
-                inference_evaluation_results=inference_evaluation_results,
-                num_shortlist=candidate_batch_sizes[i + 1],
-            )
-        )
 
         # Aggregate inference and evaluation results
         aggregated_inference_evaluation_results = pd.concat(
             [aggregated_inference_evaluation_results, inference_evaluation_results],
             axis=0,
+        )
+
+        shortlisted_prompt_model_candidates = (
+            shortlist.shortlist_prompt_model_candidates(
+                prompt_model_candidates=shortlisted_prompt_model_candidates,
+                inference_evaluation_results=aggregated_inference_evaluation_results,
+                num_shortlist=candidate_batch_sizes[i + 1],
+            )
         )
 
     return (

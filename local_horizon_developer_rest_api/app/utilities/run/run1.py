@@ -13,6 +13,8 @@ from app.utilities.generation import variants
 from app.utilities.generation import few_shot
 from app.utilities.generation import temperature_variation
 from app.utilities.clustering import cluster_prompts
+from app.utilities.inference import inference
+from app.utilities.evaluation import evaluation
 from app.models.component.prompt import Prompt
 from app.models.component.task import Task
 from app.models.component.project import Project
@@ -74,7 +76,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             "num_shortlist": 3,
             "num_iterations": 2,
         },
-        "stage_2": {"num_shortlist": 1, "num_iterations": 2},
+        "stage_2": {"num_shortlist": 1},
         "stage_3": {
             "num_prompts_temperature_variation": 2,
             "num_shortlist": 1,
@@ -204,7 +206,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             [aggregated_inference_evaluation_results, inference_evaluation_results],
             axis=0,
         )
-        print("finished adaptive_filtering stage_1")
+        print("finished adaptive_filtering for stage_1")
 
         # STAGE 2 - Few shots
         # Generate few shot-based prompts
@@ -216,23 +218,42 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
         starting_prompt_model_id += algorithm_parameters["stage_1"]["num_shortlist"]
         print("finished prompt_generation_few_shots")
 
-        # Run adaptive filtering
-        # TODO: compare against stage 1 prompts in case zero-shot prompts outperform
-        (
-            prompt_model_candidates_stage_2_shortlisted,
-            inference_evaluation_results,
-        ) = adaptive_filtering.adaptive_filtering(
+        # Run inference and evaluation of few-shot based prompts, and store in aggregated results
+        inference_evaluation_results_stage_2 = inference.run_inference(
             task_request=task_request,
             prompt_model_candidates=prompt_model_candidates_stage_2,
+            train_or_test_dataset="test",
             stage_id="stage_2",
-            num_shortlist=algorithm_parameters["stage_2"]["num_shortlist"],
-            num_iterations=algorithm_parameters["stage_2"]["num_iterations"],
+        )
+        evaluation.run_evaluation(
+            task_request=task_request,
+            inference_evaluation_results=inference_evaluation_results_stage_2,
         )
         aggregated_inference_evaluation_results = pd.concat(
-            [aggregated_inference_evaluation_results, inference_evaluation_results],
+            [
+                aggregated_inference_evaluation_results,
+                inference_evaluation_results_stage_2,
+            ],
             axis=0,
         )
-        print("finished adaptive_filtering stage_2")
+
+        # Shortlist from stage 1 prompts and few-shot versions in stage 2
+        prompt_model_candidates_stage_1_and_2 = pd.concat(
+            [
+                prompt_model_candidates_stage_1_shortlisted,
+                prompt_model_candidates_stage_2,
+            ],
+            axis=0,
+        )
+        prompt_model_candidates_stage_2_shortlisted = (
+            shortlist.shortlist_prompt_model_candidates(
+                prompt_model_candidates=prompt_model_candidates_stage_1_and_2,
+                inference_evaluation_results=aggregated_inference_evaluation_results,
+                num_shortlist=algorithm_parameters["stage_2"]["num_shortlist"],
+                stage_id_list=["stage_1", "stage_2"],
+            )
+        )
+        print("finished inference, evaluation, and shortlist for stage_2")
 
         # STAGE 3 - Temperature variation
         # Generate temperature variants
@@ -265,7 +286,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             [aggregated_inference_evaluation_results, inference_evaluation_results],
             axis=0,
         )
-        print("finished adaptive_filtering stage_3")
+        print("finished adaptive_filtering for stage_3")
 
         # Store best prompt-model candidate for this llm
         prompt_model_candidates_selected = pd.concat(
