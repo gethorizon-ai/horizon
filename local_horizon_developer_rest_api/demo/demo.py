@@ -24,7 +24,7 @@ project_id = project["project"]["id"]
 
 # Create a task
 objective = "Generate the first 1-3 lines of a personalized marketing email"
-file_path = "/Users/linatawfik/Documents/email_gen_demo.csv"
+file_path = "./data/email_gen_demo.csv"
 task = horizon.create_task("Test Task", project_id,
                            "text_generation", objective, file_path, api_key)
 task_id = task["task_id"]

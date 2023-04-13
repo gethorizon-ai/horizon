@@ -15,22 +15,22 @@ from .prompt import PromptTemplate
 
 
 class PromptTemplateFactory:
+    prompt_template_classes = {
+        "chat": ChatPromptTemplate,
+        "fewshot": FewshotPromptTemplate,
+        "fewshot_with_templates": FewshotWithTemplatesPromptTemplate,
+        "prompt": PromptTemplate,
+        "chat_message": ChatMessagePromptTemplate,
+        "human_message": HumanMessagePromptTemplate,
+        "ai_message": AIMessagePromptTemplate,
+        "system_message": SystemMessagePromptTemplate,
+        "messages_placeholder": MessagesPlaceholder,
+        "chat_prompt_value": ChatPromptValue,
+    }
+
     @staticmethod
     def create_prompt_template(template_type: str, **kwargs) -> BasePromptTemplate:
-        prompt_template_classes = {
-            "chat": ChatPromptTemplate,
-            "fewshot": FewshotPromptTemplate,
-            "fewshot_with_templates": FewshotWithTemplatesPromptTemplate,
-            "prompt": PromptTemplate,
-            "chat_message": ChatMessagePromptTemplate,
-            "human_message": HumanMessagePromptTemplate,
-            "ai_message": AIMessagePromptTemplate,
-            "system_message": SystemMessagePromptTemplate,
-            "messages_placeholder": MessagesPlaceholder,
-            "chat_prompt_value": ChatPromptValue,
-        }
-
-        if template_type not in prompt_template_classes:
+        if template_type not in PromptTemplateFactory.prompt_template_classes:
             raise ValueError(f"Invalid template_type: {template_type}")
 
-        return prompt_template_classes[template_type](**kwargs)
+        return PromptTemplateFactory.prompt_template_classes[template_type](**kwargs)

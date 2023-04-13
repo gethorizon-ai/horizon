@@ -1,7 +1,7 @@
-"""Generates prompt candidates based on user-provided objective and input variables.
+"""Generates prompt candidates in a role play pattern based on user-provided objective and input variables.
 
 Typical usage example:
-    prompt_model_candidates = prompt_generation_user_objective(experiment=x, model_object=x, num_prompts=x, 
+    prompt_model_candidates = prompt_generation_pattern_role_play(experiment=x, model_object=x, num_prompts=x, 
         starting_prompt_model_id=x)
 
 """
@@ -16,13 +16,13 @@ from app.utilities.generation import prompt_generation_models
 import copy
 
 
-def prompt_generation_user_objective(
+def prompt_generation_pattern_role_play(
     task_request: TaskRequest,
     model_object: BaseLLM,
     num_prompts: int,
     starting_prompt_model_id: int,
 ) -> PromptModelCandidates:
-    """Generates prompt candidates based on user-provided objective and input variables.
+    """Generates prompt candidates in a role play pattern based on user-provided objective and input variables.
 
     Args:
         task_request (TaskRequest): details for this task creation run
@@ -34,7 +34,7 @@ def prompt_generation_user_objective(
         PromptModelCandidates: data structure with generated prompt-model candidates
     """
     # Get metaprompt and format it
-    metaprompt = prompt_generation_metaprompts.get_metaprompt_user_objective()
+    metaprompt = prompt_generation_metaprompts.get_metaprompt_pattern_role_play()
     formatted_metaprompt = metaprompt.format(
         objective=task_request.user_objective,
         input_variables=base.generate_input_variables_string(
@@ -43,7 +43,7 @@ def prompt_generation_user_objective(
     )
 
     # Get LLM
-    metaprompt_model = prompt_generation_models.get_model_user_objective(
+    metaprompt_model = prompt_generation_models.get_model_pattern_role_play(
         num_prompts=num_prompts
     )
 
@@ -73,7 +73,7 @@ def prompt_generation_user_objective(
 
         prompt_model_id_list.append(starting_prompt_model_id)
         starting_prompt_model_id += 1
-        generation_id_list.append("[user_objective]")
+        generation_id_list.append("[pattern_role_play]")
         prompt_object_list.append(generated_prompt)
         prompt_prefix_list.append(prompt_prefix)
         model_object_list.append(copy.deepcopy(model_object))

@@ -1,3 +1,4 @@
+"""Test creation of LLM model object and ability to generate completions."""
 import pytest
 from app.models.llm.open_ai import OpenAI, ChatOpenAI
 import os
@@ -7,8 +8,9 @@ from app.models.schema import HumanMessage, SystemMessage, AIMessage
 
 
 def test_factory_creation():
+    """Test creation of LLM model object and ability to generate completions."""
     load_dotenv()
-    openai.api_key = os.getenv('OPENAI_API_KEY')
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
     prompt = """Answer the question based on the context below. If the
     question cannot be answered using the information provided answer
@@ -22,7 +24,7 @@ def test_factory_creation():
 
     Question: Which libraries and model providers offer LLMs?
 
-    Answer: """
+    Answer:"""
     # initialize the models
 
     testllm = OpenAI(
@@ -30,14 +32,21 @@ def test_factory_creation():
     )
     print(testllm(prompt))
     chat = ChatOpenAI(temperature=0)
-    chat([HumanMessage(
-        content="Translate this sentence from English to French. I love programming.")])
+    chat(
+        [
+            HumanMessage(
+                content="Translate this sentence from English to French. I love programming."
+            )
+        ]
+    )
 
     messages = [
         SystemMessage(
-            content="You are a helpful assistant that translates English to French."),
+            content="You are a helpful assistant that translates English to French."
+        ),
         HumanMessage(
-            content="Translate this sentence from English to French. I love programming.")
+            content="Translate this sentence from English to French. I love programming."
+        ),
     ]
     chat(messages)
 

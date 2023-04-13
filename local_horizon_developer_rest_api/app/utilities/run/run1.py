@@ -1,31 +1,34 @@
-from app.models.prompt.factory import PromptTemplateFactory as factory
-from app.models.prompt.prompt import PromptTemplate
+"""Generate prompt-model candidate for task."""
+
 from app.models.prompt.base import BasePromptTemplate
-from app.models.schema import HumanMessage
+from app.models.prompt import factory
 from app.models.llm.factory import LLMFactory
-from app.models.component.experiment import Experiment
-import pandas as pd
-import copy
-import json
-from app.utilities.generation.user_objective import prompt_generation_user_objective
-from app.utilities.generation.pattern_roleplay import prompt_generation_pattern_roleplay
-import csv
-import os
-from dotenv import load_dotenv
-import openai
+from app.models.component.task_request import TaskRequest
+from app.models.component.prompt_model_candidates import PromptModelCandidates
+from app.models.component.inference_evaluation_results import InferenceEvaluationResults
+from app.utilities.generation import user_objective as prompt_generation_user_objective
+from app.utilities.generation import pattern_role_play
+from app.utilities.generation import user_objective_training_data
+from app.utilities.generation import variants
+from app.utilities.generation import few_shot
+from app.utilities.generation import temperature_variation
+from app.utilities.clustering import cluster_prompts
 from app.models.component.prompt import Prompt
 from app.models.component.task import Task
 from app.models.component.project import Project
-from app.utilities.inference.inference import run_inference
-from app.utilities.evaluation.evaluation import run_evaluation
-from app.utilities.shortlist.shortlist import prompt_shortlist
+from app.utilities.adaptive_filtering import adaptive_filtering
+from app.utilities.shortlist import shortlist
 from app import db
+import openai
+import pandas as pd
+import os
+import json
+from dotenv import load_dotenv, find_dotenv
 
 
-def generate_prompt(prompt_id, objective) -> BasePromptTemplate:
-
-    load_dotenv()
-    openai.api_key = os.getenv('OPENAI_API_KEY')
+def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
+    load_dotenv(find_dotenv())
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
     # Get the prompt from the database using the prompt_id
     prompt = Prompt.query.get(prompt_id)
@@ -42,69 +45,264 @@ def generate_prompt(prompt_id, objective) -> BasePromptTemplate:
     if not task.evaluation_dataset:
         return {"error": "No evaluation_dataset file associated with this task"}, 404
 
-    # Fetch the evaluation dataset from the task
-    with open(task.evaluation_dataset, 'r', encoding='utf-8') as evaluation_dataset_file:
-        reader = csv.DictReader(evaluation_dataset_file)
+    # Create the TaskRequest instance
+    task_request = TaskRequest(
+        user_objective=user_objective,
+        dataset_file_name=task.evaluation_dataset,
+        num_test_data=2,
+    )
+    print("TaskRequest instance created", task_request, "\n")
 
-        # Convert the evaluation dataset to a pandas dataframe
-        curr_evaluation_dataset = pd.DataFrame([row for row in reader])
+    # Define the starting prompt-model candidate id
+    starting_prompt_model_id = 0
 
-    # Create the experiment data dictionary to pass to the Experiment class constructor method
-    experiment_data = {
-        'user_objective': objective,
-        # get the input variables from the evaluation dataset columns and remove the last column which is the ground truth column
-        'input_variables': curr_evaluation_dataset.columns[:-1].tolist(),
-
-        'evaluation_dataset': curr_evaluation_dataset,
-        'input_values_test': [
-            curr_evaluation_dataset.iloc[0:10, 0].reset_index(
-                drop=True),
-            curr_evaluation_dataset.iloc[0:10, 1].reset_index(
-                drop=True),
-            curr_evaluation_dataset.iloc[0:10, 2].reset_index(
-                drop=True),
-            curr_evaluation_dataset.iloc[0:10, 3].reset_index(
-                drop=True),
-            curr_evaluation_dataset.iloc[0:10, 4].reset_index(
-                drop=True),
-        ],
-        'ground_truth_test': curr_evaluation_dataset.iloc[0:10, 5].reset_index(drop=True),
-        'input_values_train': [
-            curr_evaluation_dataset.iloc[0:15, 0].reset_index(
-                drop=True),
-            curr_evaluation_dataset.iloc[0:15, 1].reset_index(
-                drop=True),
-            curr_evaluation_dataset.iloc[0:15, 2].reset_index(
-                drop=True),
-            curr_evaluation_dataset.iloc[0:15, 3].reset_index(
-                drop=True),
-            curr_evaluation_dataset.iloc[0:15, 4].reset_index(
-                drop=True),
-        ],
-        'ground_truth_train': curr_evaluation_dataset.iloc[0:15, 5].reset_index(drop=True)
-    }
-
-    # Create the Experiment instance
-    experiment_instance = Experiment.from_dict(experiment_data)
-    print("Experiment instance created", experiment_instance, "\n")
-
-    # define the LLM factory instance
+    # Define the LLM factory instance
     llm_factory = LLMFactory()
 
-    # define the models to use
-    # Define the OpenAI instance parameters
-    openai_params = {
-        "model_name": "text-davinci-003",
-        "temperature": 0.7,
+    # Initiate objects to store selected prompt-model candidates and inference and evaluation results
+    prompt_model_candidates_selected = PromptModelCandidates()
+    aggregated_inference_evaluation_results = InferenceEvaluationResults()
+
+    # Define parameters for algorithm
+    algorithm_parameters = {
+        "stage_1": {
+            "num_prompts_user_objective": 2,
+            "num_prompts_pattern_role_play": 2,
+            "num_prompts_user_objective_training_data": 2,
+            "num_variants": 1,
+            "num_clusters": 5,
+            "num_shortlist": 3,
+            "num_iterations": 2,
+        },
+        "stage_2": {"num_shortlist": 1, "num_iterations": 2},
+        "stage_3": {
+            "num_prompts_temperature_variation": 2,
+            "num_shortlist": 1,
+            "num_iterations": 1,
+        },
     }
 
-    # Create the OpenAI instance
-    openai_instance = llm_factory.create_llm("openai", **openai_params)
+    # Iterate over applicable llms for this task
+    for llm, llm_info in task_request.applicable_llms.items():
+        print(f"working on {llm}")
+
+        # Define the OpenAI instance parameters
+        openai_params = {
+            "model_name": llm,
+            "temperature": 0.7,
+            "max_tokens": llm_info["max_output_length"],
+        }
+
+        # Create the OpenAI instance
+        openai_instance = llm_factory.create_llm(
+            openai_params["model_name"], **openai_params
+        )
+
+        # STAGE 1 - Initial prompt generation
+        # Generate prompt-model candidates using user objective method
+        prompt_model_candidates_user_objective = (
+            prompt_generation_user_objective.prompt_generation_user_objective(
+                task_request=task_request,
+                model_object=openai_instance,
+                num_prompts=algorithm_parameters["stage_1"][
+                    "num_prompts_user_objective"
+                ],
+                starting_prompt_model_id=starting_prompt_model_id,
+            )
+        )
+        starting_prompt_model_id += algorithm_parameters["stage_1"][
+            "num_prompts_user_objective"
+        ]
+        print("finished prompt_generation_user_objective")
+
+        # Generate prompt-model candidates using role play pattern method
+        prompt_model_candidates_pattern_role_play = (
+            pattern_role_play.prompt_generation_pattern_role_play(
+                task_request=task_request,
+                model_object=openai_instance,
+                num_prompts=algorithm_parameters["stage_1"][
+                    "num_prompts_pattern_role_play"
+                ],
+                starting_prompt_model_id=starting_prompt_model_id,
+            )
+        )
+        starting_prompt_model_id += algorithm_parameters["stage_1"][
+            "num_prompts_pattern_role_play"
+        ]
+        print("finished prompt_generation_pattern_role_play")
+
+        # Generate prompt-model candidates using user objective with training data method
+        prompt_model_candidates_user_objective_training_data = (
+            user_objective_training_data.prompt_generation_user_objective_training_data(
+                task_request=task_request,
+                model_object=openai_instance,
+                num_prompts=algorithm_parameters["stage_1"][
+                    "num_prompts_user_objective_training_data"
+                ],
+                starting_prompt_model_id=starting_prompt_model_id,
+            )
+        )
+        starting_prompt_model_id += algorithm_parameters["stage_1"][
+            "num_prompts_user_objective_training_data"
+        ]
+        print("finished prompt_generation_user_objective_training_data")
+
+        # Concatenate current set of prompt-model candidates
+        prompt_model_candidates_stage_1_initial = pd.concat(
+            [
+                prompt_model_candidates_user_objective,
+                prompt_model_candidates_pattern_role_play,
+                prompt_model_candidates_user_objective_training_data,
+            ],
+            axis=0,
+        )
+
+        # Generate syntactic variants of prompt-model candidates and concatenate with previous set of prompt-model candidates
+        prompt_model_candidates_syntactic_variants = (
+            variants.prompt_generation_variants(
+                task_request=task_request,
+                prompt_model_candidates=prompt_model_candidates_stage_1_initial,
+                num_variants=algorithm_parameters["stage_1"]["num_variants"],
+                starting_prompt_model_id=starting_prompt_model_id,
+            )
+        )
+        prompt_model_candidates_stage_1 = pd.concat(
+            [
+                prompt_model_candidates_stage_1_initial,
+                prompt_model_candidates_syntactic_variants,
+            ],
+            axis=0,
+        )
+        starting_prompt_model_id += (
+            algorithm_parameters["stage_1"]["num_prompts_user_objective"]
+            + algorithm_parameters["stage_1"]["num_prompts_pattern_role_play"]
+            + algorithm_parameters["stage_1"][
+                "num_prompts_user_objective_training_data"
+            ]
+        ) * algorithm_parameters["stage_1"]["num_variants"]
+        print("finished prompt_generation_variants")
+
+        # Cluster shortlist current set of prompt-model candidates
+        prompt_model_candidates_stage_1 = cluster_prompts.cluster_shortlist_prompts(
+            prompt_model_candidates=prompt_model_candidates_stage_1,
+            num_clusters=algorithm_parameters["stage_1"]["num_clusters"],
+        )
+        print("finished cluster_shortlist_prompts")
+
+        # Run adaptive filtering and aggregate inference and evaluation results
+        (
+            prompt_model_candidates_stage_1_shortlisted,
+            inference_evaluation_results,
+        ) = adaptive_filtering.adaptive_filtering(
+            task_request=task_request,
+            prompt_model_candidates=prompt_model_candidates_stage_1,
+            stage_id="stage_1",
+            num_shortlist=algorithm_parameters["stage_1"]["num_shortlist"],
+            num_iterations=algorithm_parameters["stage_1"]["num_iterations"],
+        )
+        aggregated_inference_evaluation_results = pd.concat(
+            [aggregated_inference_evaluation_results, inference_evaluation_results],
+            axis=0,
+        )
+        print("finished adaptive_filtering stage_1")
+
+        # STAGE 2 - Few shots
+        # Generate few shot-based prompts
+        prompt_model_candidates_stage_2 = few_shot.prompt_generation_few_shots(
+            task_request=task_request,
+            prompt_model_candidates=prompt_model_candidates_stage_1_shortlisted,
+            starting_prompt_model_id=starting_prompt_model_id,
+        )
+        starting_prompt_model_id += algorithm_parameters["stage_1"]["num_shortlist"]
+        print("finished prompt_generation_few_shots")
+
+        # Run adaptive filtering
+        # TODO: compare against stage 1 prompts in case zero-shot prompts outperform
+        (
+            prompt_model_candidates_stage_2_shortlisted,
+            inference_evaluation_results,
+        ) = adaptive_filtering.adaptive_filtering(
+            task_request=task_request,
+            prompt_model_candidates=prompt_model_candidates_stage_2,
+            stage_id="stage_2",
+            num_shortlist=algorithm_parameters["stage_2"]["num_shortlist"],
+            num_iterations=algorithm_parameters["stage_2"]["num_iterations"],
+        )
+        aggregated_inference_evaluation_results = pd.concat(
+            [aggregated_inference_evaluation_results, inference_evaluation_results],
+            axis=0,
+        )
+        print("finished adaptive_filtering stage_2")
+
+        # STAGE 3 - Temperature variation
+        # Generate temperature variants
+        prompt_model_candidates_stage_3 = (
+            temperature_variation.prompt_generation_temperature_variation(
+                prompt_model_candidates=prompt_model_candidates_stage_2_shortlisted,
+                num_prompts=algorithm_parameters["stage_3"][
+                    "num_prompts_temperature_variation"
+                ],
+                starting_prompt_model_id=starting_prompt_model_id,
+            )
+        )
+        starting_prompt_model_id += algorithm_parameters["stage_3"][
+            "num_prompts_temperature_variation"
+        ]
+        print("finished prompt_generation_temperature_variation")
+
+        # Run adaptive filtering
+        (
+            prompt_model_candidates_stage_3_shortlisted,
+            inference_evaluation_results,
+        ) = adaptive_filtering.adaptive_filtering(
+            task_request=task_request,
+            prompt_model_candidates=prompt_model_candidates_stage_3,
+            stage_id="stage_3",
+            num_shortlist=algorithm_parameters["stage_3"]["num_shortlist"],
+            num_iterations=algorithm_parameters["stage_3"]["num_iterations"],
+        )
+        aggregated_inference_evaluation_results = pd.concat(
+            [aggregated_inference_evaluation_results, inference_evaluation_results],
+            axis=0,
+        )
+        print("finished adaptive_filtering stage_3")
+
+        # Store best prompt-model candidate for this llm
+        prompt_model_candidates_selected = pd.concat(
+            [
+                prompt_model_candidates_selected,
+                prompt_model_candidates_stage_3_shortlisted,
+            ],
+            axis=0,
+        )
+
+    # Shortlist best prompt-model candidate across applicable llms
+    # TODO: reference stats from aggregated inferance and evaluation results from task object
+    prompt_model_candidates_final = shortlist.shortlist_prompt_model_candidates(
+        prompt_model_candidates=prompt_model_candidates_selected,
+        inference_evaluation_results=aggregated_inference_evaluation_results,
+        num_shortlist=1,
+    )
+    final_prompt_object = prompt_model_candidates_final["prompt_object"].iloc[0]
+    final_model_object = prompt_model_candidates_final["model_object"].iloc[0]
 
     # save the model to the database
-    prompt.model_name = "openai"
-    prompt.model = json.dumps(openai_params)
+    prompt.model_name = final_model_object.model_name
+    if final_model_object.model_name == "gpt-3.5-turbo":
+        model_params = {
+            "model_name": final_model_object.model_name,
+            "temperature": final_model_object.model_kwargs["temperature"],
+            "max_tokens": final_model_object.max_tokens,
+        }
+    elif final_model_object.model_name == "text-davinci-003":
+        model_params = {
+            "model_name": final_model_object.model_name,
+            "temperature": final_model_object.temperature,
+            "max_tokens": final_model_object.max_tokens,
+        }
+    prompt.model = json.dumps(model_params)
 
+<<<<<<< HEAD
     # Define the global prompt ID
     global_prompt_id = [0]
     prompt_template_type = "prompt"
@@ -135,9 +333,21 @@ def generate_prompt(prompt_id, objective) -> BasePromptTemplate:
 
     # store the winning prompt template type in the database
     prompt.template_type = prompt_template_type
+=======
+    # look up the prompt template type for the final prompt and store in the database
+    prompt.template_type = list(
+        factory.PromptTemplateFactory.prompt_template_classes.keys()
+    )[
+        list(factory.PromptTemplateFactory.prompt_template_classes.values()).index(
+            type(final_prompt_object)
+        )
+    ]
+>>>>>>> 5f9861b (Initial porting of POC functionality)
 
     # store the winning prompt in the database using the prompt_id as the template parameter
-    prompt.template_data = json.dumps(winning_prompt["prompt_object"].iloc[0])
+    print(type(final_prompt_object))
+    print(final_prompt_object)
+    prompt.template_data = json.dumps(final_prompt_object.to_dict())
 
     # save the prompt to the database
 
@@ -145,8 +355,4 @@ def generate_prompt(prompt_id, objective) -> BasePromptTemplate:
     db.session.commit()
 
     # return the winning prompt
-    return winning_prompt["prompt_object"].iloc[0]
-
-
-if __name__ == "__main__":
-    generate_prompt()
+    return final_prompt_object

@@ -5,6 +5,7 @@ import openai
 from app import db
 from app.models.llm.factory import LLMFactory
 from app.models.prompt.factory import PromptTemplateFactory
+from app.models.prompt.chat import HumanMessage
 import json
 
 
@@ -21,7 +22,7 @@ def deploy_prompt(prompt_id, input_values):
     """
 
     load_dotenv()
-    openai.api_key = os.getenv('OPENAI_API_KEY')
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
     # Get the prompt from the database using the prompt_id
     prompt = Prompt.query.get(prompt_id)
@@ -51,14 +52,23 @@ def deploy_prompt(prompt_id, input_values):
 
     # Create the prompt instance
     prompt_instance = prompt_factory.create_prompt_template(
-        template_type, **template_data)
+        template_type, **template_data
+    )
+
+    # Modify input variables by prepending "var_" as done in Task creation process (to prevent names from matching internal horizonai
+    # variable names)
+    for input_variable in list(input_values.keys()):
+        input_values["var_" + input_variable] = input_values.pop(input_variable)
 
     # format the prompt
-    formated_prompt = prompt_instance.format(**input_values)
+    formatted_prompt = prompt_instance.format(**input_values)
+
+    # If model is ChatOpenAI, then wrap message around a HumanMessage object
+    if model_name == "gpt-3.5-turbo":
+        formatted_prompt = [HumanMessage(content=formatted_prompt)]
 
     # generate the output
-    output = model_instance.generate(
-        [formated_prompt]).generations[0][0].text.strip()
+    output = model_instance.generate([formatted_prompt]).generations[0][0].text.strip()
 
     # return the output
     return output

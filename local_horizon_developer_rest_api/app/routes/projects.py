@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse
-from app.models.component import Experiment, Project, Prompt, Task, User
+from app.models.component import TaskRequest, Project, Prompt, Task, User
 from app import db, api
 from app.routes.users import api_key_required
 from sqlalchemy.exc import IntegrityError
@@ -15,15 +15,14 @@ import base64
 import requests
 import pandas as pd
 
-
-ALLOWED_EXTENSIONS = {'csv'}
+ALLOWED_EXTENSIONS = {"csv"}
 
 
 class ListProjectsAPI(Resource):
     @api_key_required
     def get(self):
         projects = Project.query.all()
-        return {'projects': [project.to_dict() for project in projects]}, 200
+        return {"projects": [project.to_dict() for project in projects]}, 200
 
 
 class CreateProjectAPI(Resource):
@@ -43,7 +42,10 @@ class CreateProjectAPI(Resource):
             db.session.rollback()
             return {"error": str(e)}, 400
 
-        return {"message": "Project created successfully", "project": project.to_dict()}, 201
+        return {
+            "message": "Project created successfully",
+            "project": project.to_dict(),
+        }, 201
 
 
 class ProjectAPI(Resource):
