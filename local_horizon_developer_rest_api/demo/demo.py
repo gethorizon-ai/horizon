@@ -1,5 +1,7 @@
 # demo.py
 
+import horizon_ai
+
 # Replace 'http://your-api-base-url' with the base URL of your API, for example 'http://127.0.0.1:5000' for local testing
 horizon = horizon_ai.APIClient(base_url="http://127.0.0.1:5000")
 
@@ -26,15 +28,22 @@ project_id = project["project"]["id"]
 # Create a task
 objective = "Generate the first 1-3 lines of a personalized marketing email"
 file_path = "./data/email_gen_demo.csv"
-task = horizon.create_task("Test Task", project_id,
-                           "text_generation", objective, file_path, api_key)
+task = horizon.create_task(
+    "Test Task", project_id, "text_generation", objective, file_path, api_key
+)
 task_id = task["task_id"]
 
 # Deploy a task
-inputs = {"name": "John", "industry": "Sporting Goods", "company": "Nike", "title": "VP of Marketing",
-          "notes": "They are experienced in marketing and sales and recently got promoted to VP of Marketing after 10 year of working at Nike."}
+inputs = {
+    "name": "John",
+    "industry": "Sporting Goods",
+    "company": "Nike",
+    "title": "VP of Marketing",
+    "notes": "They are experienced in marketing and sales and recently got promoted to VP of Marketing after 10 year of working at Nike.",
+}
 
 deployed_task = horizon.deploy_task(task_id, inputs, api_key)
+print(deployed_task)
 
 
 # # Cleanup section

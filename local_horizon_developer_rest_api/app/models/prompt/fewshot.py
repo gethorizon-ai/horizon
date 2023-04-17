@@ -1,6 +1,69 @@
 from .base import BasePromptTemplate
+from app.models.prompt import prompt
+from app.utilities.dataset_processing import dataset_processing
 from langchain.prompts.few_shot import FewShotPromptTemplate as FewShotPromptOriginal
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelector
 
 
 class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
-    pass
+    def reconstruct_from_stored_data(
+        dataset_file_path: str, template_data: dict, example_selector_data: dict
+    ) -> "FewshotPromptTemplate":
+        """Reconstructs a few shot prompt object from data stored.
+
+        Args:
+            dataset_file_path (str): path to evaluation dataset.
+            template_data (dict): data to reconstruct few shot prompt template.
+            example_selector_data (dict): data to reconstruct few shot example selector.
+
+        Returns:
+            FewshotPromptTemplate: few shot prompt object to be deployed.
+        """
+        # Get evaluation dataset and convert each row to dict
+        evaluation_dataset = dataset_processing.get_evaluation_dataset(
+            dataset_file_path=dataset_file_path
+        )
+        evaluation_dataset = evaluation_dataset.drop("evaluation_data_id", axis=1)
+        examples = evaluation_dataset.to_dict("records")
+
+        # Construct example selector
+        example_selector = MaxMarginalRelevanceExampleSelector.from_examples(
+            examples, OpenAIEmbeddings(), FAISS, k=example_selector_data["k"]
+        )
+
+        # Construct example prompt
+        example_prompt = prompt.PromptTemplate(**template_data["example_prompt"])
+
+        # Construct few shot prompt object
+        return FewshotPromptTemplate(
+            example_selector=example_selector,
+            example_prompt=example_prompt,
+            prefix=template_data["prefix"],
+            suffix=template_data["suffix"],
+            input_variables=template_data["input_variables"],
+        )
+
+    def to_dict(self) -> dict:
+        """Return dict with information to reconstruct few-shot prompt template.
+
+        Returns:
+            dict: information to reconstruct few-shot prompt template.
+        """
+        return {
+            "example_prompt": self.example_prompt.to_dict(),
+            "prefix": self.prefix,
+            "suffix": self.suffix,
+            "input_variables": self.input_variables,
+        }
+
+    def few_shot_example_selector_to_dict(self) -> dict:
+        """Return dict with information to reconstruct example selector for few-shot prompt object.
+
+        Currently just tracks number of few shot examples. Other parameters (e.g., selector type) are assumed when deploying prompt.
+
+        Returns:
+            dict: information to reconstruct example selector for few-shot prompt object.
+        """
+        return {"k": self.example_selector.k}

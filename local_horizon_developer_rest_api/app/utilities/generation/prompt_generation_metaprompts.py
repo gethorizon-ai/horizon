@@ -8,7 +8,11 @@ from app.utilities.clustering import cluster_data
 
 
 def get_metaprompt_user_objective() -> PromptTemplate:
-    """Produces metaprompt for prompt generation method of user objective."""
+    """Produces metaprompt for prompt generation method of user objective.
+
+    Returns:
+        PromptTemplate: prompt object to serve as prompt generation metaprompt.
+    """
     metaprompt_template = """You are an intelligent English professor. You will craft an instruction that I can give to my friend to accomplish the following objective:
 OBJECTIVE: {objective}
 
@@ -32,6 +36,9 @@ def get_metaprompt_user_objective_training_data(
 
     Args:
         task_request (TaskRequest): TaskRequest object with training data
+
+    Returns:
+        FewshotPromptTemplate: prompt object to serve as prompt generation metaprompt.
     """
     # Prefix to few shot-based metaprompt
     few_shot_metaprompt_prefix = """You are an intelligent English professor. You will craft an instruction that I can give to my friend to accomplish a task. Here is my task objective, input variables to be used, and ideal example outputs.
@@ -95,7 +102,11 @@ INSTRUCTION:"""
 
 
 def get_metaprompt_pattern_role_play() -> PromptTemplate:
-    """Produces metaprompt for prompt generation method of role play pattern."""
+    """Produces metaprompt for prompt generation method of role play pattern.
+
+    Returns:
+        PromptTemplate: prompt object to serve as prompt generation metaprompt.
+    """
     metaprompt_template = """You are a prompt generation robot that generates optimal prompt template strings for use with AI large language models (LLM). One effective approach for prompts is to frame them as a role play for the LLM. Therefore, you will provide the optimal role play prompt template string to accomplish the given objective using the given input variables. Surround input variables by angle brackets when referencing them.
 ==
 EXAMPLES:
@@ -130,7 +141,15 @@ OPTIMAL PROMPT:"""
     return metaprompt
 
 
-def get_few_shot_example_formatter_template(input_variables: list) -> str:
+def get_few_shot_example_formatter_template(input_variables: list) -> PromptTemplate:
+    """Produces example formatter template, which is input to constructing few shot prompt object.
+
+    Args:
+        input_variables (list): list of input variables.
+
+    Returns:
+        PromptTemplate: example formatter template to be used when constructing few shot prompt object.
+    """
     example_formatter_string = ""
     for input_var in input_variables:
         example_formatter_string += f"<{input_var}>: {{{input_var}}}\n"
@@ -144,6 +163,11 @@ def get_few_shot_example_formatter_template(input_variables: list) -> str:
 
 
 def get_metaprompt_variants() -> PromptTemplate:
+    """Produces metaprompt for prompt generation method of syntactic variation.
+
+    Returns:
+        PromptTemplate: prompt object to serve as prompt generation metaprompt.
+    """
     metaprompt_template = """You are a creative writer. I came up with an instruction for my friend to complete. Generate a creative variation of my original instruction while keeping the same exact semantic meaning and objective. Include all relevant context and details from my original instruction so my friend completes the specific intent of my original instruction. Do not complete the instruction or provide an example completion.
 ORIGINAL INSTRUCTION: {original_prompt_prefix}
 NEW INSTRUCTION:"""
@@ -156,6 +180,10 @@ NEW INSTRUCTION:"""
 
 
 def get_metaprompt_variants_check() -> PromptTemplate:
+    """Produces prompt for llm check of prompt generation through syntactic variation.
+
+    Returns:
+        PromptTemplate: prompt object to serve for llm check."""
     metaprompt_template = """You are an intelligent English professor. I read aloud a very sensitive instruction for my colleague. My friend heard it and tried to write down the instruction. Here is my original instruction and my friend's version:
 [BEGIN DATA]
 ==

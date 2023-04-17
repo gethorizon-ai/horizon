@@ -27,6 +27,25 @@ import os
 import json
 from dotenv import load_dotenv, find_dotenv
 
+# Define parameters for algorithm
+PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
+    "stage_1": {
+        "num_prompts_user_objective": 2,
+        "num_prompts_pattern_role_play": 2,
+        "num_prompts_user_objective_training_data": 2,
+        "num_variants": 1,
+        "num_clusters": 5,
+        "num_shortlist": 3,
+        "num_iterations": 1,
+    },
+    "stage_2": {"num_shortlist": 1},
+    "stage_3": {
+        "num_prompts_temperature_variation": 1,
+        "num_shortlist": 1,
+        "num_iterations": 1,
+    },
+}
+
 
 def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
     load_dotenv()
@@ -37,11 +56,11 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
     if not prompt:
         raise ValueError("Prompt not found")
 
-    # Get the task and project associated with the prompt
+    # Get the task associated with the prompt
     task_id = prompt.task_id
     task = Task.query.get(task_id)
-    project_id = task.project_id
-    project = Project.query.get(project_id)
+    # project_id = task.project_id
+    # project = Project.query.get(project_id)
 
     # Get the evaluation dataset from the task. If there is no evaluation dataset, return an error
     if not task.evaluation_dataset:
@@ -50,8 +69,8 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective=user_objective,
-        dataset_file_name=task.evaluation_dataset,
-        num_test_data=2,
+        dataset_file_path=task.evaluation_dataset,
+        num_test_data_input=1,
     )
     print("TaskRequest instance created", task_request, "\n")
 
@@ -61,28 +80,9 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
     # Define the LLM factory instance
     llm_factory = LLMFactory()
 
-    # Initiate objects to store selected prompt-model candidates and inference and evaluation results
+    # Initiate objects to store selected prompt-model candidates and aggregated inference and evaluation results
     prompt_model_candidates_selected = PromptModelCandidates()
     aggregated_inference_evaluation_results = InferenceEvaluationResults()
-
-    # Define parameters for algorithm
-    algorithm_parameters = {
-        "stage_1": {
-            "num_prompts_user_objective": 2,
-            "num_prompts_pattern_role_play": 2,
-            "num_prompts_user_objective_training_data": 2,
-            "num_variants": 1,
-            "num_clusters": 5,
-            "num_shortlist": 3,
-            "num_iterations": 2,
-        },
-        "stage_2": {"num_shortlist": 1},
-        "stage_3": {
-            "num_prompts_temperature_variation": 2,
-            "num_shortlist": 1,
-            "num_iterations": 1,
-        },
-    }
 
     # Iterate over applicable llms for this task
     for llm, llm_info in task_request.applicable_llms.items():
@@ -106,13 +106,13 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             prompt_generation_user_objective.prompt_generation_user_objective(
                 task_request=task_request,
                 model_object=openai_instance,
-                num_prompts=algorithm_parameters["stage_1"][
+                num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                     "num_prompts_user_objective"
                 ],
                 starting_prompt_model_id=starting_prompt_model_id,
             )
         )
-        starting_prompt_model_id += algorithm_parameters["stage_1"][
+        starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_prompts_user_objective"
         ]
         print("finished prompt_generation_user_objective")
@@ -122,13 +122,13 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             pattern_role_play.prompt_generation_pattern_role_play(
                 task_request=task_request,
                 model_object=openai_instance,
-                num_prompts=algorithm_parameters["stage_1"][
+                num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                     "num_prompts_pattern_role_play"
                 ],
                 starting_prompt_model_id=starting_prompt_model_id,
             )
         )
-        starting_prompt_model_id += algorithm_parameters["stage_1"][
+        starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_prompts_pattern_role_play"
         ]
         print("finished prompt_generation_pattern_role_play")
@@ -138,13 +138,13 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             user_objective_training_data.prompt_generation_user_objective_training_data(
                 task_request=task_request,
                 model_object=openai_instance,
-                num_prompts=algorithm_parameters["stage_1"][
+                num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                     "num_prompts_user_objective_training_data"
                 ],
                 starting_prompt_model_id=starting_prompt_model_id,
             )
         )
-        starting_prompt_model_id += algorithm_parameters["stage_1"][
+        starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_prompts_user_objective_training_data"
         ]
         print("finished prompt_generation_user_objective_training_data")
@@ -157,14 +157,16 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
                 prompt_model_candidates_user_objective_training_data,
             ],
             axis=0,
-        )
+        ).reset_index(drop=True)
 
         # Generate syntactic variants of prompt-model candidates and concatenate with previous set of prompt-model candidates
         prompt_model_candidates_syntactic_variants = (
             variants.prompt_generation_variants(
                 task_request=task_request,
                 prompt_model_candidates=prompt_model_candidates_stage_1_initial,
-                num_variants=algorithm_parameters["stage_1"]["num_variants"],
+                num_variants=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                    "num_variants"
+                ],
                 starting_prompt_model_id=starting_prompt_model_id,
             )
         )
@@ -174,20 +176,26 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
                 prompt_model_candidates_syntactic_variants,
             ],
             axis=0,
-        )
+        ).reset_index(drop=True)
         starting_prompt_model_id += (
-            algorithm_parameters["stage_1"]["num_prompts_user_objective"]
-            + algorithm_parameters["stage_1"]["num_prompts_pattern_role_play"]
-            + algorithm_parameters["stage_1"][
+            PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                "num_prompts_user_objective"
+            ]
+            + PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                "num_prompts_pattern_role_play"
+            ]
+            + PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                 "num_prompts_user_objective_training_data"
             ]
-        ) * algorithm_parameters["stage_1"]["num_variants"]
+        ) * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"]["num_variants"]
         print("finished prompt_generation_variants")
 
         # Cluster shortlist current set of prompt-model candidates
         prompt_model_candidates_stage_1 = cluster_prompts.cluster_shortlist_prompts(
             prompt_model_candidates=prompt_model_candidates_stage_1,
-            num_clusters=algorithm_parameters["stage_1"]["num_clusters"],
+            num_clusters=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                "num_clusters"
+            ],
         )
         print("finished cluster_shortlist_prompts")
 
@@ -199,13 +207,17 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             task_request=task_request,
             prompt_model_candidates=prompt_model_candidates_stage_1,
             stage_id="stage_1",
-            num_shortlist=algorithm_parameters["stage_1"]["num_shortlist"],
-            num_iterations=algorithm_parameters["stage_1"]["num_iterations"],
+            num_shortlist=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                "num_shortlist"
+            ],
+            num_iterations=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                "num_iterations"
+            ],
         )
         aggregated_inference_evaluation_results = pd.concat(
             [aggregated_inference_evaluation_results, inference_evaluation_results],
             axis=0,
-        )
+        ).reset_index(drop=True)
         print("finished adaptive_filtering for stage_1")
 
         # STAGE 2 - Few shots
@@ -215,7 +227,9 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             prompt_model_candidates=prompt_model_candidates_stage_1_shortlisted,
             starting_prompt_model_id=starting_prompt_model_id,
         )
-        starting_prompt_model_id += algorithm_parameters["stage_1"]["num_shortlist"]
+        starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+            "num_shortlist"
+        ]
         print("finished prompt_generation_few_shots")
 
         # Run inference and evaluation of few-shot based prompts, and store in aggregated results
@@ -235,7 +249,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
                 inference_evaluation_results_stage_2,
             ],
             axis=0,
-        )
+        ).reset_index(drop=True)
 
         # Shortlist from stage 1 prompts and few-shot versions in stage 2
         prompt_model_candidates_stage_1_and_2 = pd.concat(
@@ -244,12 +258,14 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
                 prompt_model_candidates_stage_2,
             ],
             axis=0,
-        )
+        ).reset_index(drop=True)
         prompt_model_candidates_stage_2_shortlisted = (
             shortlist.shortlist_prompt_model_candidates(
                 prompt_model_candidates=prompt_model_candidates_stage_1_and_2,
                 inference_evaluation_results=aggregated_inference_evaluation_results,
-                num_shortlist=algorithm_parameters["stage_2"]["num_shortlist"],
+                num_shortlist=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_2"][
+                    "num_shortlist"
+                ],
                 stage_id_list=["stage_1", "stage_2"],
             )
         )
@@ -260,13 +276,13 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
         prompt_model_candidates_stage_3 = (
             temperature_variation.prompt_generation_temperature_variation(
                 prompt_model_candidates=prompt_model_candidates_stage_2_shortlisted,
-                num_prompts=algorithm_parameters["stage_3"][
+                num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
                     "num_prompts_temperature_variation"
                 ],
                 starting_prompt_model_id=starting_prompt_model_id,
             )
         )
-        starting_prompt_model_id += algorithm_parameters["stage_3"][
+        starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
             "num_prompts_temperature_variation"
         ]
         print("finished prompt_generation_temperature_variation")
@@ -279,13 +295,17 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             task_request=task_request,
             prompt_model_candidates=prompt_model_candidates_stage_3,
             stage_id="stage_3",
-            num_shortlist=algorithm_parameters["stage_3"]["num_shortlist"],
-            num_iterations=algorithm_parameters["stage_3"]["num_iterations"],
+            num_shortlist=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
+                "num_shortlist"
+            ],
+            num_iterations=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
+                "num_iterations"
+            ],
         )
         aggregated_inference_evaluation_results = pd.concat(
             [aggregated_inference_evaluation_results, inference_evaluation_results],
             axis=0,
-        )
+        ).reset_index(drop=True)
         print("finished adaptive_filtering for stage_3")
 
         # Store best prompt-model candidate for this llm
@@ -295,7 +315,8 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
                 prompt_model_candidates_stage_3_shortlisted,
             ],
             axis=0,
-        )
+        ).reset_index(drop=True)
+        break
 
     # Shortlist best prompt-model candidate across applicable llms
     # TODO: reference stats from aggregated inferance and evaluation results from task object
@@ -306,6 +327,9 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
     )
     final_prompt_object = prompt_model_candidates_final["prompt_object"].iloc[0]
     final_model_object = prompt_model_candidates_final["model_object"].iloc[0]
+
+    print(type(final_prompt_object))
+    print(final_prompt_object)
 
     # save the model to the database
     prompt.model_name = final_model_object.model_name
@@ -366,14 +390,194 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
 >>>>>>> 5f9861b (Initial porting of POC functionality)
 
     # store the winning prompt in the database using the prompt_id as the template parameter
-    print(type(final_prompt_object))
-    print(final_prompt_object)
-    prompt.template_data = json.dumps(final_prompt_object.to_dict())
+    print(f"final prompt template type: {prompt.template_type}")
+    print(f"final prompt for serialization: {type(final_prompt_object.to_dict())}")
+    print(final_prompt_object.to_dict())
+    serialized_prompt_object = final_prompt_object.to_dict()
+    prompt.template_data = json.dumps(serialized_prompt_object)
 
-    # save the prompt to the database
+    # If prompt is few shot, then also store data on few shot example selector
+    if prompt.template_type == "fewshot":
+        serialized_few_shot_example_selector = (
+            final_prompt_object.few_shot_example_selector_to_dict()
+        )
+        prompt.few_shot_example_selector = json.dumps(
+            serialized_few_shot_example_selector
+        )
+        serialized_prompt_object = (
+            serialized_prompt_object | serialized_few_shot_example_selector
+        )
 
     # commit the changes to the database
     db.session.commit()
 
     # return the winning prompt
-    return final_prompt_object
+    return serialized_prompt_object
+
+
+def estimate_task_creation_cost(task_request: TaskRequest) -> tuple:
+    """Returns estimated task creation cost range given evaluation data and applicable LLMs.
+
+    Args:
+        task_request (TaskRequest): data structure holding task request information.
+
+    Returns:
+        tuple: estimated low and high end of task creation cost range.
+    """
+    cost = 0
+
+    # Iterate over each of the selected LLMs
+    for llm in task_request.applicable_llms:
+        if LLMFactory.llm_classes[llm]["data_unit"] == "token":
+            instruction_length = LLMFactory.llm_data_assumptions["instruction_tokens"]
+            few_shot_length = llm["max_few_shot_tokens"]
+            input_length = task_request.max_input_tokens
+            output_length = task_request.max_ground_truth_tokens
+            metaprompt_context = 500
+        elif LLMFactory.llm_classes[llm]["data_unit"] == "character":
+            instruction_length = LLMFactory.llm_data_assumptions[
+                "instruction_characters"
+            ]
+            few_shot_length = llm["max_few_shot_characters"]
+            input_length = task_request.max_input_characters
+            output_length = task_request.max_ground_truth_characters
+            metaprompt_context = (
+                500 / LLMFactory.llm_data_assumptions["tokens_per_character"]
+            )
+        num_few_shots = llm["max_few_shots"]
+        num_test_data = task_request.num_test_data
+        generation_price = LLMFactory.llm_classes["text-davinci-003"][
+            "price_per_data_unit"
+        ]
+        inference_price = LLMFactory.llm_classes[llm]["price_per_data_unit"]
+
+        llm_usage = {
+            # STAGE 1 - initial prompt generation
+            "stage_1": {
+                # Prompt generation based on user objective has instruction string with the same assumed instruction length
+                "prompt_generation_user_objective": {
+                    "total_data_length": instruction_length
+                    + instruction_length
+                    * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                        "num_prompts_user_objective"
+                    ],
+                    "price": generation_price,
+                },
+                # Prompt generation based on role play pattern uses few shot examples (accounted for in metaprompt_context) and
+                # produces prompt candidates with assumed instruction length
+                "prompt_generation_pattern_role_play": {
+                    "total_data_length": instruction_length
+                    + metaprompt_context
+                    + instruction_length
+                    * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                        "num_prompts_pattern_role_play"
+                    ],
+                    "price": generation_price,
+                },
+                # Prompt generation based on user objective with training data uses few shot examples from evaluation dataset and
+                # produces prompt candidates with assumed instruction length
+                "prompt_generation_user_objective_training_data": {
+                    "total_data_length": instruction_length
+                    + few_shot_length
+                    * task_request.applicable_llms["text_davinci_003"]["max_few_shots"]
+                    + instruction_length
+                    * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                        "num_prompts_user_objective_training_data"
+                    ],
+                    "price": generation_price,
+                },
+                # Prompt variant generations generates variant prompts for each original prompt candidate from prior prompt
+                # generation methods, then checks for overfitting (accounted for in metaprompt_context)
+                "prompt_generation_variants": {
+                    "total_data_length": (
+                        PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                            "num_prompts_user_objective"
+                        ]
+                        + PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                            "num_prompts_pattern_role_play"
+                        ]
+                        + PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                            "num_prompts_user_objective_training_data"
+                        ],
+                    )
+                    * (
+                        instruction_length
+                        + metaprompt_context
+                        + instruction_length
+                        * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                            "num_variants"
+                        ],
+                    ),
+                    "price": generation_price,
+                },
+                # Stage 1 inference and evaluation with adaptive filtering
+                "inference_evaluation": {
+                    "total_data_length": (
+                        instruction_length + input_length + output_length
+                    )
+                    * adaptive_filtering.get_total_num_inferences(
+                        num_original_prompt_model_candidates=PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                            "stage_1"
+                        ][
+                            "num_clusters"
+                        ],
+                        num_data=num_test_data,
+                        num_shortlist=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                            "num_shortlist"
+                        ],
+                        num_iterations=PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                            "stage_1"
+                        ]["num_iterations"],
+                    ),
+                    "price": inference_price,
+                },
+            },
+            # STAGE 2 - Few shots
+            "stage_2": {
+                # Generation of few shots generation does not cost anything
+                # Inference and evaluation of new few shot prompts incurs fee
+                "inference_evaluation": {
+                    "total_data_length": PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                        "stage_1"
+                    ]["num_shortlist"]
+                    * (
+                        instruction_length
+                        + num_few_shots * few_shot_length
+                        + input_length
+                        + output_length
+                    )
+                    * num_test_data,
+                    "price": inference_price,
+                }
+            },
+            # STAGE 3 - Temperature variant
+            "stage_3": {
+                # Generation of temperature variants does not use llms
+                # For inference and evaluation, run different temperature variants assuming use of a few shot prompt
+                "inference_evaluation": {
+                    "total_data_length": PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                        "stage_2"
+                    ]["num_shortlist"]
+                    * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
+                        "num_prompts_temperature_variation"
+                    ]
+                    * (
+                        instruction_length
+                        + num_few_shots * few_shot_length
+                        + input_length
+                        + output_length
+                    )
+                    * num_test_data,
+                    "price": inference_price,
+                }
+            },
+        }
+
+        # Sum up costs across all stages
+        for stage in llm_usage:
+            for step in stage:
+                cost += step["total_data_length"] * step["price"]
+
+    # Range final cost estimate
+    range_factor = 0.25
+    return (cost * (1 - range_factor), cost * (1 + range_factor))

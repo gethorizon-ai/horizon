@@ -34,3 +34,17 @@ class PromptTemplateFactory:
             raise ValueError(f"Invalid template_type: {template_type}")
 
         return PromptTemplateFactory.prompt_template_classes[template_type](**kwargs)
+
+    @staticmethod
+    def reconstruct_prompt_object(template_type: str, **kwargs) -> BasePromptTemplate:
+        if template_type not in PromptTemplateFactory.prompt_template_classes:
+            raise ValueError(f"Invalid template_type: {template_type}")
+
+        if template_type == "prompt":
+            return PromptTemplateFactory.prompt_template_classes[template_type](
+                **kwargs
+            )
+        elif template_type == "fewshot":
+            return PromptTemplateFactory.prompt_template_classes[
+                template_type
+            ].reconstruct_from_stored_data(**kwargs)

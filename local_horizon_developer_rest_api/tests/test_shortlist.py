@@ -20,8 +20,8 @@ def test_shortlist():
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
-        dataset_file_name="./data/email_gen_demo.csv",
-        num_test_data=2,
+        dataset_file_path="./data/email_gen_demo.csv",
+        num_test_data_input=2,
     )
 
     print("User Objective:", task_request.user_objective)

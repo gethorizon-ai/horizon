@@ -42,5 +42,7 @@ def get_semantic_cosine_similarity_openAI(
         evaluation_latency = end_time - start_time
 
         # Record inference quality and evaluation latency in inference_evaluation_results object
-        inference_evaluation_results[index, "inference_quality"] = cosine_similarity
-        inference_evaluation_results[index, "evaluation_latency"] = evaluation_latency
+        inference_evaluation_results.loc[index, "inference_quality"] = cosine_similarity
+        inference_evaluation_results.loc[
+            index, "evaluation_latency"
+        ] = evaluation_latency

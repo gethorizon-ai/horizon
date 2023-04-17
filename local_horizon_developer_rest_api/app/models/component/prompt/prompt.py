@@ -11,8 +11,9 @@ if TYPE_CHECKING:
 class Prompt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
-    task_id = db.Column(db.Integer, db.ForeignKey(
-        'task.id', ondelete='CASCADE'), nullable=False)
+    task_id = db.Column(
+        db.Integer, db.ForeignKey("task.id", ondelete="CASCADE"), nullable=False
+    )
     version = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(50), nullable=True)
     source = db.Column(db.String(50), nullable=True)
@@ -37,27 +38,30 @@ class Prompt(db.Model):
 
     def to_dict(self):
         prompt_dict = {
-            'id': self.id,
-            'name': self.name,
-            'task_id': self.task_id,
-            'version': self.version,
-            'status': self.status,
-            'source': self.source,
-            'generation_technique': self.generation_technique,
-            'prompt_type': self.prompt_type,
-            'template_type': self.template_type,
-            'template_data': self.get_template_object(),
-            'variables': self.variables,
-            'few_shot_template': self.few_shot_template,
-            'few_shot_example_selector': self.few_shot_example_selector,
-            'model': self.model,
-            'evaluation_job_name': self.evaluation_job_name,
-            'model_name': self.model_name,
+            "id": self.id,
+            "name": self.name,
+            "task_id": self.task_id,
+            "version": self.version,
+            "status": self.status,
+            "source": self.source,
+            "generation_technique": self.generation_technique,
+            "prompt_type": self.prompt_type,
+            "template_type": self.template_type,
+            # "template_data": self.get_template_object(),
+            "template_data": self.template_data,
+            "variables": self.variables,
+            "few_shot_template": self.few_shot_template,
+            "few_shot_example_selector": self.few_shot_example_selector,
+            "model": self.model,
+            "evaluation_job_name": self.evaluation_job_name,
+            "model_name": self.model_name,
         }
         return prompt_dict
 
-    def get_template_object(self) -> "BasePromptTemplate":
-        if self.template_data:
-            template_dict = json.loads(self.template_data)
-            return PromptTemplateFactory.create_prompt_template(self.template_type, **template_dict)
-        return None
+    # def get_template_object(self) -> "BasePromptTemplate":
+    #     if self.template_data:
+    #         template_dict = json.loads(self.template_data)
+    #         return PromptTemplateFactory.create_prompt_template(
+    #             self.template_type, **template_dict
+    #         )
+    #     return None

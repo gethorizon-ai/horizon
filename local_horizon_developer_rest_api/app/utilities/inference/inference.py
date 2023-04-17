@@ -63,15 +63,16 @@ def run_inference(
         input_values = row[task_request.input_variables].to_dict()
 
         # Format prompt and generate inference
+        print(
+            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']}"
+        )
         print(row["generation_id"])
         print(row["prompt_object"])
         formatted_prompt = row["prompt_object"].format(**input_values)
         if type(row["model_object"]) == ChatOpenAI:
             formatted_prompt = [HumanMessage(content=formatted_prompt)]
         start_time = time.time()
-        print(
-            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']}"
-        )
+
         output = (
             row["model_object"]
             .generate([formatted_prompt])

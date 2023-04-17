@@ -22,8 +22,8 @@ def test_prompt_generation_user_objective():
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
-        dataset_file_name="./data/email_gen_demo.csv",
-        num_test_data=2,
+        dataset_file_path="./data/email_gen_demo.csv",
+        num_test_data_input=2,
     )
 
     print("User Objective:", task_request.user_objective)
@@ -72,8 +72,8 @@ def test_prompt_generation_pattern_role_play():
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
-        dataset_file_name="./data/email_gen_demo.csv",
-        num_test_data=2,
+        dataset_file_path="./data/email_gen_demo.csv",
+        num_test_data_input=2,
     )
 
     print("User Objective:", task_request.user_objective)
@@ -122,8 +122,8 @@ def test_prompt_generation_user_objective_training_data():
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
-        dataset_file_name="./data/email_gen_demo.csv",
-        num_test_data=2,
+        dataset_file_path="./data/email_gen_demo.csv",
+        num_test_data_input=2,
     )
 
     print("User Objective:", task_request.user_objective)
@@ -176,8 +176,8 @@ def test_prompt_generation_variants():
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
-        dataset_file_name="./data/email_gen_demo.csv",
-        num_test_data=2,
+        dataset_file_path="./data/email_gen_demo.csv",
+        num_test_data_input=2,
     )
 
     print("User Objective:", task_request.user_objective)
@@ -239,8 +239,8 @@ def test_prompt_generation_few_shots():
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
-        dataset_file_name="./data/email_gen_demo.csv",
-        num_test_data=2,
+        dataset_file_path="./data/email_gen_demo.csv",
+        num_test_data_input=2,
     )
 
     print("User Objective:", task_request.user_objective)
@@ -300,8 +300,8 @@ def test_prompt_generation_temperature_variation():
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
-        dataset_file_name="./data/email_gen_demo.csv",
-        num_test_data=2,
+        dataset_file_path="./data/email_gen_demo.csv",
+        num_test_data_input=2,
     )
 
     print("User Objective:", task_request.user_objective)

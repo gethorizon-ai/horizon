@@ -32,7 +32,9 @@ def cluster_shortlist_prompts(
     ).to_list()
 
     # Compute k-means clusters of prompt templates
-    clusters = KMeans(n_clusters=num_clusters).fit(prompt_prefix_embeddings)
+    clusters = KMeans(n_clusters=num_clusters, n_init="auto").fit(
+        prompt_prefix_embeddings
+    )
 
     # Loop over all clusters and find index of closest point to the cluster center and append to
     # closest_prompt_index list

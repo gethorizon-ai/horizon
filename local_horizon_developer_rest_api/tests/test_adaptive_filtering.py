@@ -21,8 +21,8 @@ def test_adaptive_filtering():
     num_test_data = 6
     task_request = TaskRequest(
         user_objective="generate a marketing email",
-        dataset_file_name="./data/email_gen_demo.csv",
-        num_test_data=num_test_data,
+        dataset_file_path="./data/email_gen_demo.csv",
+        num_test_data_input=num_test_data,
     )
 
     print("User Objective:", task_request.user_objective)
@@ -77,7 +77,6 @@ def test_adaptive_filtering():
         num_iterations=num_iterations,
     )
 
-    assert len(shortlisted_prompt_model_candidates) > 0, "No prompts shortlisted"
     assert (
         len(shortlisted_prompt_model_candidates) == num_shortlist
     ), "Shortlisted different number of prompts than expected"

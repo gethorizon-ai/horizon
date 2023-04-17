@@ -1,4 +1,5 @@
 from app.models.component.prompt import Prompt
+from app.models.component.task import Task
 import os
 from dotenv import load_dotenv
 import openai
@@ -44,16 +45,29 @@ def deploy_prompt(prompt_id, input_values):
     # get the template type from the prompt
     template_type = prompt.template_type
 
-    # get the template_data from the prompt
-    template_data = json.loads(prompt.template_data)
-
     # define the prompt factory instance
     prompt_factory = PromptTemplateFactory()
 
-    # Create the prompt instance
-    prompt_instance = prompt_factory.create_prompt_template(
-        template_type, **template_data
-    )
+    # get the template_data from the prompt
+    template_data = json.loads(prompt.template_data)
+
+    # Create prompt instance based on if object is zero-shot or few-shot
+    if template_type == "prompt":
+        prompt_instance = prompt_factory.reconstruct_prompt_object(
+            template_type, **template_data
+        )
+    elif template_type == "fewshot":
+        # If few shot, get evaluation dataset from task and few shot example selector data
+        task_id = prompt.task_id
+        task = Task.query.get(task_id)
+        dataset_file_path = task.evaluation_dataset
+        few_shot_example_selector = json.loads(prompt.few_shot_example_selector)
+        prompt_instance = prompt_factory.reconstruct_prompt_object(
+            template_type=template_type,
+            dataset_file_path=dataset_file_path,
+            template_data=template_data,
+            example_selector_data=few_shot_example_selector,
+        )
 
     # Modify input variables by prepending "var_" as done in Task creation process (to prevent names from matching internal horizonai
     # variable names)

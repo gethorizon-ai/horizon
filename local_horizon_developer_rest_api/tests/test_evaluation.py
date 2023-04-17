@@ -21,8 +21,8 @@ def test_evaluation():
     num_test_data = 2
     task_request = TaskRequest(
         user_objective="generate a marketing email",
-        dataset_file_name="./data/email_gen_demo.csv",
-        num_test_data=num_test_data,
+        dataset_file_path="./data/email_gen_demo.csv",
+        num_test_data_input=num_test_data,
     )
 
     print("User Objective:", task_request.user_objective)

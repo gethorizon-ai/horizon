@@ -49,7 +49,7 @@ def cluster_shortlist_data(
     ).to_list()
 
     # Compute k-means clusters of embeddings
-    clusters = KMeans(n_clusters=num_clusters).fit(example_embeddings)
+    clusters = KMeans(n_clusters=num_clusters, n_init="auto").fit(example_embeddings)
 
     # Loop over all clusters and find index of closest point to the cluster center and append to closest_prompt_index list
     closest_prompt_index = []
