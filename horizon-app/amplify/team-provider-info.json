@@ -1,0 +1,20 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-horizonapp-dev-84102-authRole",
+      "UnauthRoleArn": "arn:aws:iam::520495742003:role/amplify-horizonapp-dev-84102-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::520495742003:role/amplify-horizonapp-dev-84102-authRole",
+      "Region": "us-west-2",
+      "DeploymentBucketName": "amplify-horizonapp-dev-84102-deployment",
+      "UnauthRoleName": "amplify-horizonapp-dev-84102-unauthRole",
+      "StackName": "amplify-horizonapp-dev-84102",
+      "StackId": "arn:aws:cloudformation:us-west-2:520495742003:stack/amplify-horizonapp-dev-84102/42ed8bf0-dd36-11ed-8464-029e14f4fcad",
+      "AmplifyAppId": "deddpb7zv44er"
+    },
+    "categories": {
+      "auth": {
+        "horizonapp": {}
+      }
+    }
+  }
+}
