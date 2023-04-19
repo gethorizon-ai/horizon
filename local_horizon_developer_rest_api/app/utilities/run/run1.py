@@ -71,7 +71,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
     task_request = TaskRequest(
         user_objective=user_objective,
         dataset_file_path=task.evaluation_dataset,
-        num_test_data_input=1,
+        num_test_data_input=1,  # TODO: remove test data points constraint
     )
     # print("TaskRequest instance created", task_request, "\n")
 
