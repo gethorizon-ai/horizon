@@ -58,7 +58,7 @@ def adaptive_filtering(
         num_shortlist=num_shortlist,
         num_iterations=num_iterations,
     )
-    print(f"Candidate batch sizes: {candidate_batch_sizes}")
+    # print(f"Candidate batch sizes: {candidate_batch_sizes}")
 
     # Segment test data points into approximately equal sizes for each iteration
     evaluation_data_id_list = task_request.input_data_test[
@@ -74,7 +74,7 @@ def adaptive_filtering(
         list(evaluation_data_id_segments[i])
         for i in range(len(evaluation_data_id_segments))
     ]
-    print(f"Evalution data id list: {evaluation_data_id_segments}")
+    # print(f"Evalution data id list: {evaluation_data_id_segments}")
 
     # Run inference, evaluation, and shortlist iterations
     shortlisted_prompt_model_candidates = prompt_model_candidates.copy()
@@ -87,12 +87,12 @@ def adaptive_filtering(
             stage_id=stage_id,
             evaluation_data_id_list=evaluation_data_id_segments[i],
         )
-        print("Finished inference")
+        # print("Finished inference")
         evaluation.run_evaluation(
             task_request=task_request,
             inference_evaluation_results=inference_evaluation_results,
         )
-        print("Finished evaluation")
+        # print("Finished evaluation")
 
         # Aggregate inference and evaluation results
         aggregated_inference_evaluation_results = pd.concat(
@@ -107,9 +107,9 @@ def adaptive_filtering(
                 num_shortlist=candidate_batch_sizes[i + 1],
             )
         )
-        print(
-            f"Number of shortlisted candidates: {len(shortlisted_prompt_model_candidates)}"
-        )
+        # print(
+        #     f"Number of shortlisted candidates: {len(shortlisted_prompt_model_candidates)}"
+        # )
 
     return (
         shortlisted_prompt_model_candidates,
@@ -179,7 +179,7 @@ def get_num_data_per_iteration(num_data: int, num_iterations: int) -> List[int]:
     evaluation_data_id_segments.reverse()
 
     # Count number of data points in each iteration
-    num_data_per_iteration = [len(x) for x in evaluation_data_id_list]
+    num_data_per_iteration = [len(x) for x in evaluation_data_id_segments]
 
     return num_data_per_iteration
 

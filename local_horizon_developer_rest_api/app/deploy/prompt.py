@@ -61,12 +61,10 @@ def deploy_prompt(prompt_id, input_values):
         task_id = prompt.task_id
         task = Task.query.get(task_id)
         dataset_file_path = task.evaluation_dataset
-        few_shot_example_selector = json.loads(prompt.few_shot_example_selector)
         prompt_instance = prompt_factory.reconstruct_prompt_object(
             template_type=template_type,
             dataset_file_path=dataset_file_path,
             template_data=template_data,
-            example_selector_data=few_shot_example_selector,
         )
 
     # Modify input variables by prepending "var_" as done in Task creation process (to prevent names from matching internal horizonai

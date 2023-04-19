@@ -4,6 +4,7 @@ Class organizes information around Task request, including objective, input vari
 """
 
 from app.utilities.dataset_processing import dataset_processing
+from typing import List
 
 
 class TaskRequest:
@@ -11,16 +12,16 @@ class TaskRequest:
 
     def __init__(
         self,
-        user_objective: str,
         dataset_file_path: str,
+        user_objective: str = None,
         synthetic_data_generation: bool = False,
         num_test_data_input: int = None,
     ):
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
         Args:
-            user_objective (str): task objective.
             dataset_file_path (str): path to evaluation dataset.
+            user_objective (str, optional): task objective. Defaults to None.
             synthetic_data_generation (bool, optional): whether this task request is to generate synthetic data. Defaults to False.
             num_test_data (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
                 assignment of test data points Defaults to None.
@@ -45,7 +46,7 @@ class TaskRequest:
         self.max_ground_truth_characters = None
         self.applicable_llms = None
 
-        if len(user_objective) > 500:
+        if user_objective != None and len(user_objective) > 500:
             raise ValueError(
                 "User objective can be at most 500 characters to manage token limits."
             )
@@ -115,3 +116,15 @@ class TaskRequest:
         self.ground_truth_data_test = evaluation_dataset_segments[
             "ground_truth_data_test"
         ]
+
+    def get_normalized_input_variables(self) -> List[str]:
+        """Get input variables from evaluation dataset without "var_" prepended to them.
+
+        Assumes evaluation dataset has been checked and processed appropriately.
+
+        Returns:
+            List[str]: list of input variable names.
+        """
+        return dataset_processing.get_normalized_input_variables(
+            evaluation_dataset=self.evaluation_dataset
+        )

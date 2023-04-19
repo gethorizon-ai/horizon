@@ -42,8 +42,8 @@ def shortlist_prompt_model_candidates(
         summary_results = summary_results.loc[
             summary_results["stage_id"].isin(stage_id_list)
         ]
-    print(f"Length of summary_results: {len(summary_results)}")
-    print(summary_results)
+    # print(f"Length of summary_results: {len(summary_results)}")
+    # print(summary_results)
 
     # Aggregate by prompt_model_id
     summary_results = (
@@ -63,7 +63,7 @@ def shortlist_prompt_model_candidates(
     summary_results.columns = [
         "_".join(col).strip("_") for col in summary_results.columns.values
     ]
-    print(f"Length of aggregated summary_results: {len(summary_results)}")
+    # print(f"Length of aggregated summary_results: {len(summary_results)}")
 
     # Add score that computes average of min and mean inference quality score
     summary_results["inference_quality_min_mean"] = (

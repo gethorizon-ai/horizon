@@ -25,9 +25,11 @@ import openai
 import pandas as pd
 import os
 import json
+import math
 from dotenv import load_dotenv, find_dotenv
 
-# Define parameters for algorithm
+# Define parameters for algorithm#
+# TODO: update to parameters for full prompt generation algorithm
 PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
     "stage_1": {
         "num_prompts_user_objective": 2,
@@ -47,7 +49,7 @@ PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
 }
 
 
-def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
+def generate_prompt(user_objective: str, prompt_id: int) -> dict:
     load_dotenv()
     openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -56,15 +58,14 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
     if not prompt:
         raise ValueError("Prompt not found")
 
-    # Get the task associated with the prompt
+    # Get the task associated with the prompt and log the user objective
     task_id = prompt.task_id
     task = Task.query.get(task_id)
-    # project_id = task.project_id
-    # project = Project.query.get(project_id)
+    task.objective = user_objective
 
     # Get the evaluation dataset from the task. If there is no evaluation dataset, return an error
     if not task.evaluation_dataset:
-        return {"error": "No evaluation_dataset file associated with this task"}, 404
+        raise AssertionError("No evaluation_dataset file associated with this task")
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
@@ -72,7 +73,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
         dataset_file_path=task.evaluation_dataset,
         num_test_data_input=1,
     )
-    print("TaskRequest instance created", task_request, "\n")
+    # print("TaskRequest instance created", task_request, "\n")
 
     # Define the starting prompt-model candidate id
     starting_prompt_model_id = 0
@@ -86,7 +87,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
 
     # Iterate over applicable llms for this task
     for llm, llm_info in task_request.applicable_llms.items():
-        print(f"working on {llm}")
+        # print(f"working on {llm}")
 
         # Define the OpenAI instance parameters
         openai_params = {
@@ -115,7 +116,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_prompts_user_objective"
         ]
-        print("finished prompt_generation_user_objective")
+        # print("finished prompt_generation_user_objective")
 
         # Generate prompt-model candidates using role play pattern method
         prompt_model_candidates_pattern_role_play = (
@@ -131,7 +132,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_prompts_pattern_role_play"
         ]
-        print("finished prompt_generation_pattern_role_play")
+        # print("finished prompt_generation_pattern_role_play")
 
         # Generate prompt-model candidates using user objective with training data method
         prompt_model_candidates_user_objective_training_data = (
@@ -147,7 +148,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_prompts_user_objective_training_data"
         ]
-        print("finished prompt_generation_user_objective_training_data")
+        # print("finished prompt_generation_user_objective_training_data")
 
         # Concatenate current set of prompt-model candidates
         prompt_model_candidates_stage_1_initial = pd.concat(
@@ -188,7 +189,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
                 "num_prompts_user_objective_training_data"
             ]
         ) * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"]["num_variants"]
-        print("finished prompt_generation_variants")
+        # print("finished prompt_generation_variants")
 
         # Cluster shortlist current set of prompt-model candidates
         prompt_model_candidates_stage_1 = cluster_prompts.cluster_shortlist_prompts(
@@ -197,7 +198,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
                 "num_clusters"
             ],
         )
-        print("finished cluster_shortlist_prompts")
+        # print("finished cluster_shortlist_prompts")
 
         # Run adaptive filtering and aggregate inference and evaluation results
         (
@@ -218,7 +219,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             [aggregated_inference_evaluation_results, inference_evaluation_results],
             axis=0,
         ).reset_index(drop=True)
-        print("finished adaptive_filtering for stage_1")
+        # print("finished adaptive_filtering for stage_1")
 
         # STAGE 2 - Few shots
         # Generate few shot-based prompts
@@ -230,7 +231,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_shortlist"
         ]
-        print("finished prompt_generation_few_shots")
+        # print("finished prompt_generation_few_shots")
 
         # Run inference and evaluation of few-shot based prompts, and store in aggregated results
         inference_evaluation_results_stage_2 = inference.run_inference(
@@ -269,7 +270,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
                 stage_id_list=["stage_1", "stage_2"],
             )
         )
-        print("finished inference, evaluation, and shortlist for stage_2")
+        # print("finished inference, evaluation, and shortlist for stage_2")
 
         # STAGE 3 - Temperature variation
         # Generate temperature variants
@@ -285,7 +286,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
             "num_prompts_temperature_variation"
         ]
-        print("finished prompt_generation_temperature_variation")
+        # print("finished prompt_generation_temperature_variation")
 
         # Run adaptive filtering
         (
@@ -306,7 +307,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             [aggregated_inference_evaluation_results, inference_evaluation_results],
             axis=0,
         ).reset_index(drop=True)
-        print("finished adaptive_filtering for stage_3")
+        # print("finished adaptive_filtering for stage_3")
 
         # Store best prompt-model candidate for this llm
         prompt_model_candidates_selected = pd.concat(
@@ -316,20 +317,18 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
             ],
             axis=0,
         ).reset_index(drop=True)
+        # TODO: remove break so that other llms also run
         break
 
     # Shortlist best prompt-model candidate across applicable llms
-    # TODO: reference stats from aggregated inferance and evaluation results from task object
     prompt_model_candidates_final = shortlist.shortlist_prompt_model_candidates(
         prompt_model_candidates=prompt_model_candidates_selected,
         inference_evaluation_results=aggregated_inference_evaluation_results,
         num_shortlist=1,
     )
+    final_prompt_model_id = prompt_model_candidates_final["prompt_model_id"].iloc[0]
     final_prompt_object = prompt_model_candidates_final["prompt_object"].iloc[0]
     final_model_object = prompt_model_candidates_final["model_object"].iloc[0]
-
-    print(type(final_prompt_object))
-    print(final_prompt_object)
 
     # save the model to the database
     prompt.model_name = final_model_object.model_name
@@ -389,48 +388,63 @@ def generate_prompt(user_objective: str, prompt_id: int) -> BasePromptTemplate:
     ]
 >>>>>>> 5f9861b (Initial porting of POC functionality)
 
-    # store the winning prompt in the database using the prompt_id as the template parameter
-    print(f"final prompt template type: {prompt.template_type}")
-    print(f"final prompt for serialization: {type(final_prompt_object.to_dict())}")
-    print(final_prompt_object.to_dict())
+    # Store the winning prompt in the database
     serialized_prompt_object = final_prompt_object.to_dict()
     prompt.template_data = json.dumps(serialized_prompt_object)
 
-    # If prompt is few shot, then also store data on few shot example selector
+    # Store example selector if few-shot based. CURRENTLY HARDCODED TO MAXMARGINALRELEVANCE
     if prompt.template_type == "fewshot":
-        serialized_few_shot_example_selector = (
-            final_prompt_object.few_shot_example_selector_to_dict()
-        )
-        prompt.few_shot_example_selector = json.dumps(
-            serialized_few_shot_example_selector
-        )
-        serialized_prompt_object = (
-            serialized_prompt_object | serialized_few_shot_example_selector
-        )
+        prompt.few_shot_example_selector = "MaxMarginalRelevanceExampleSelector"
+
+    # Store inference statistics with prompt object
+    inference_statistics = {
+        "inference_quality": aggregated_inference_evaluation_results.loc[
+            aggregated_inference_evaluation_results["prompt_model_id"]
+            == final_prompt_model_id,
+            "inference_quality",
+        ].mean(),
+        "inference_latency": aggregated_inference_evaluation_results.loc[
+            aggregated_inference_evaluation_results["prompt_model_id"]
+            == final_prompt_model_id,
+            "inference_latency",
+        ].mean(),
+    }
+    prompt.inference_statistics = json.dumps(inference_statistics)
+
+    # Store evaluation statistics with task object
+    evaluation_statistics = {
+        "number_of_prompt_model_candidates_considered": len(
+            pd.unique(aggregated_inference_evaluation_results["prompt_model_id"])
+        ),
+        "number_of_inferences_and_evaluations_done": len(
+            aggregated_inference_evaluation_results
+        ),
+    }
+    task.evaluation_statistics = json.dumps(evaluation_statistics)
 
     # commit the changes to the database
     db.session.commit()
 
     # return the winning prompt
-    return serialized_prompt_object
+    return task.to_dict_filtered()
 
 
-def estimate_task_creation_cost(task_request: TaskRequest) -> tuple:
+def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
     """Returns estimated task creation cost range given evaluation data and applicable LLMs.
 
     Args:
         task_request (TaskRequest): data structure holding task request information.
 
     Returns:
-        tuple: estimated low and high end of task creation cost range.
+        dict: estimated low and high end of task creation cost range.
     """
+    # Setup variable to track overall cost
     cost = 0
 
     # Iterate over each of the selected LLMs
-    for llm in task_request.applicable_llms:
+    for llm, llm_info in task_request.applicable_llms.items():
         if LLMFactory.llm_classes[llm]["data_unit"] == "token":
             instruction_length = LLMFactory.llm_data_assumptions["instruction_tokens"]
-            few_shot_length = llm["max_few_shot_tokens"]
             input_length = task_request.max_input_tokens
             output_length = task_request.max_ground_truth_tokens
             metaprompt_context = 500
@@ -438,13 +452,13 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> tuple:
             instruction_length = LLMFactory.llm_data_assumptions[
                 "instruction_characters"
             ]
-            few_shot_length = llm["max_few_shot_characters"]
             input_length = task_request.max_input_characters
             output_length = task_request.max_ground_truth_characters
             metaprompt_context = (
                 500 / LLMFactory.llm_data_assumptions["tokens_per_character"]
             )
-        num_few_shots = llm["max_few_shots"]
+        few_shot_length = input_length + output_length
+        num_few_shots = llm_info["max_few_shots"]
         num_test_data = task_request.num_test_data
         generation_price = LLMFactory.llm_classes["text-davinci-003"][
             "price_per_data_unit"
@@ -479,7 +493,7 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> tuple:
                 "prompt_generation_user_objective_training_data": {
                     "total_data_length": instruction_length
                     + few_shot_length
-                    * task_request.applicable_llms["text_davinci_003"]["max_few_shots"]
+                    * task_request.applicable_llms["text-davinci-003"]["max_few_shots"]
                     + instruction_length
                     * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                         "num_prompts_user_objective_training_data"
@@ -498,7 +512,7 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> tuple:
                         ]
                         + PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                             "num_prompts_user_objective_training_data"
-                        ],
+                        ]
                     )
                     * (
                         instruction_length
@@ -506,7 +520,7 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> tuple:
                         + instruction_length
                         * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                             "num_variants"
-                        ],
+                        ]
                     ),
                     "price": generation_price,
                 },
@@ -574,10 +588,46 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> tuple:
         }
 
         # Sum up costs across all stages
-        for stage in llm_usage:
-            for step in stage:
+        for stage in llm_usage.values():
+            for step in stage.values():
                 cost += step["total_data_length"] * step["price"]
 
-    # Range final cost estimate
+    # Range final cost estimate and round to the nearest dollar
     range_factor = 0.25
-    return (cost * (1 - range_factor), cost * (1 + range_factor))
+    return {
+        "low": math.ceil(cost * (1 - range_factor)),
+        "high": math.ceil(cost * (1 + range_factor)),
+    }
+
+
+def get_task_confirmation_details(task_id: int) -> dict:
+    """Return key information to confirm with user before proceeding with task creation process.
+
+    Args:
+        task_id (int): id of task record.
+
+    Raises:
+        AssertionError: checks if evaluation dataset exists.
+
+    Returns:
+        dict: information to confirm with user (e.g., estimated cost).
+    """
+    task = Task.query.get(task_id)
+
+    # Get the evaluation dataset from the task. If there is no evaluation dataset, return an error
+    if not task.evaluation_dataset:
+        raise AssertionError("No evaluation_dataset file associated with this task")
+
+    # Create the TaskRequest instance
+    task_request = TaskRequest(
+        dataset_file_path=task.evaluation_dataset,
+    )
+
+    # Get normalized input variables
+    input_variables = task_request.get_normalized_input_variables()
+
+    # Estimate task creation cost
+    cost_estimate = estimate_task_creation_cost(task_request=task_request)
+
+    # Return key information
+    return {"input_variables": input_variables, "cost_estimate": cost_estimate}

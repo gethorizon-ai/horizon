@@ -1,7 +1,8 @@
 import json
 from app import db
+from app.utilities.dataset_processing import dataset_processing
 from typing import TYPE_CHECKING
-from app.models.prompt.factory import PromptTemplateFactory
+import json
 
 
 if TYPE_CHECKING:
@@ -27,6 +28,7 @@ class Prompt(db.Model):
     model = db.Column(db.String(100), nullable=True)
     evaluation_job_name = db.Column(db.String(100), nullable=True)
     model_name = db.Column(db.String(100), nullable=True)
+    inference_statistics = db.Column(db.String(1000), nullable=True)
 
     def __init__(self, name, task_id, prompt_template: "BasePromptTemplate" = None):
         self.name = name
@@ -37,7 +39,7 @@ class Prompt(db.Model):
             self.template_data = json.dumps(prompt_template.to_dict())
 
     def to_dict(self):
-        prompt_dict = {
+        return {
             "id": self.id,
             "name": self.name,
             "task_id": self.task_id,
@@ -47,21 +49,52 @@ class Prompt(db.Model):
             "generation_technique": self.generation_technique,
             "prompt_type": self.prompt_type,
             "template_type": self.template_type,
-            # "template_data": self.get_template_object(),
-            "template_data": self.template_data,
+            "template_data": json.loads(self.template_data)
+            if self.template_data != None
+            else self.template_data,
             "variables": self.variables,
             "few_shot_template": self.few_shot_template,
             "few_shot_example_selector": self.few_shot_example_selector,
-            "model": self.model,
+            "model": json.loads(self.model) if self.model != None else self.model,
             "evaluation_job_name": self.evaluation_job_name,
             "model_name": self.model_name,
+            "inference_statistics": json.loads(self.inference_statistics)
+            if self.inference_statistics != None
+            else self.inference_statistics,
         }
-        return prompt_dict
 
-    # def get_template_object(self) -> "BasePromptTemplate":
-    #     if self.template_data:
-    #         template_dict = json.loads(self.template_data)
-    #         return PromptTemplateFactory.create_prompt_template(
-    #             self.template_type, **template_dict
-    #         )
-    #     return None
+    def to_dict_filtered(self):
+        # Filter to subset of keys / columns
+        filtered_keys = [
+            "id",
+            "task_id",
+            "template_type",
+            "template_data",
+            "few_shot_example_selector",
+            "model",
+            "inference_statistics",
+        ]
+
+        # Filter template_data for each prompt template type
+        filtered_keys_template_data = {
+            "prompt": ["template", "input_variables"],
+            "fewshot": ["prefix", "suffix", "input_variables"],
+        }
+
+        full_dict = self.to_dict()
+        filtered_dict = {key: full_dict[key] for key in filtered_keys}
+
+        if self.template_type != None:
+            # Refine data displayed for template data
+            filtered_dict["template_data"] = {
+                key: filtered_dict["template_data"][key]
+                for key in filtered_keys_template_data[self.template_type]
+            }
+            # Normalize input variable names
+            filtered_dict["template_data"][
+                "input_variables"
+            ] = dataset_processing.normalize_input_variable_list(
+                filtered_dict["template_data"]["input_variables"]
+            )
+
+        return filtered_dict

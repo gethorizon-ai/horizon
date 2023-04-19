@@ -3,13 +3,13 @@ from flask_restful import Resource, reqparse
 from app.models.component import Task, Prompt
 from app import db, api
 from app.routes.users import api_key_required
-from app.utilities.run.run1 import generate_prompt
+from app.utilities.run import run1
+from app.utilities.dataset_processing import dataset_processing
 from app.deploy.prompt import deploy_prompt
 import os
 import csv
 from concurrent.futures import ThreadPoolExecutor
 from flask_restful import Resource, reqparse
-
 
 ALLOWED_EXTENSIONS = {"csv"}
 
@@ -22,7 +22,7 @@ class ListTasksAPI(Resource):
     @api_key_required
     def get(self):
         tasks = Task.query.all()
-        return {"tasks": [task.to_dict() for task in tasks]}, 200
+        return {"tasks": [task.to_dict_filtered() for task in tasks]}, 200
 
 
 class CreateTaskAPI(Resource):
@@ -64,7 +64,10 @@ class CreateTaskAPI(Resource):
             db.session.rollback()
             return {"error": str(e)}, 400
 
-        return {"message": "Task created successfully", "task": task.to_dict()}, 201
+        return {
+            "message": "Task created successfully",
+            "task": task.to_dict_filtered(),
+        }, 201
 
 
 class TaskAPI(Resource):
@@ -73,7 +76,7 @@ class TaskAPI(Resource):
         task = Task.query.get(task_id)
         if not task:
             return {"error": "Task not found"}, 404
-        return task.to_dict(), 200
+        return task.to_dict_filtered(), 200
 
     @api_key_required
     def put(self, task_id):
@@ -84,7 +87,6 @@ class TaskAPI(Resource):
         parser.add_argument("description", type=str)
         parser.add_argument("task_type", type=str)
         parser.add_argument("status", type=str)
-        parser.add_argument("evaluation_data", type=str)
         args = parser.parse_args()
 
         if args["description"] is not None:
@@ -102,7 +104,10 @@ class TaskAPI(Resource):
             db.session.rollback()
             return {"error": str(e)}, 400
 
-        return {"message": "Task updated successfully", "task": task.to_dict()}, 200
+        return {
+            "message": "Task updated successfully",
+            "task": task.to_dict_filtered(),
+        }, 200
 
     @api_key_required
     def delete(self, task_id):
@@ -135,7 +140,7 @@ class GetCurrentPromptAPI(Resource):
         prompt = Prompt.query.get(task.active_prompt_id)
         if not prompt:
             return {"error": "Prompt not found"}, 404
-        return prompt.to_dict(), 200
+        return prompt.to_dict_filtered(), 200
 
 
 class SetCurrentPromptAPI(Resource):
@@ -170,7 +175,34 @@ class SetCurrentPromptAPI(Resource):
 
         return {
             "message": "Current prompt updated successfully",
-            "task": task.to_dict(),
+            "task": task.to_dict_filtered(),
+        }, 200
+
+
+class GetTaskConfirmationDetailsAPI(Resource):
+    @api_key_required
+    def get(self, task_id):
+        task = Task.query.get(task_id)
+        if not task:
+            return {"error": "Task not found"}, 404
+
+        # with open(
+        #     task.evaluation_dataset, "r", encoding="utf-8"
+        # ) as evaluation_dataset_file:
+        #     reader = csv.DictReader(evaluation_dataset_file)
+        #     evaluation_dataset = [row for row in reader]
+
+        # return {"evaluation_dataset": evaluation_dataset}, 200
+
+        # Call the get_task_confirmation_details function with the task_id
+        # try:
+        task_confirmation_details = run1.get_task_confirmation_details(task_id=task_id)
+        # except Exception as e:
+        #     return {"error": str(e)}, 400
+
+        return {
+            "message": "Task confirmation details produced",
+            "task_confirmation_details": task_confirmation_details,
         }, 200
 
 
@@ -178,7 +210,7 @@ user_executors = {}
 
 
 def process_generate_prompt(task, objective):
-    return generate_prompt(task.active_prompt_id, objective)
+    return run1.generate_prompt(task.active_prompt_id, objective)
 
 
 class GenerateTaskAPI(Resource):
@@ -272,6 +304,16 @@ class UploadEvaluationDatasetsAPI(Resource):
         # Save the file to the file path
         evaluation_dataset.save(file_path)
 
+        # Check validity of evaluation dataset
+        try:
+            dataset_processing.check_evaluation_dataset_and_data_length(
+                dataset_file_path=file_path
+            )
+        except Exception as e:
+            # If invalid dataset, remove file from storage and return error
+            os.remove(path=file_path)
+            return {"error": str(e)}, 400
+
         task.evaluation_dataset = file_path
         try:
             db.session.commit()
@@ -281,7 +323,7 @@ class UploadEvaluationDatasetsAPI(Resource):
 
         return {
             "message": "Evaluation datasets uploaded successfully",
-            "task": task.to_dict(),
+            "task": task.to_dict_filtered(),
         }, 200
 
 
@@ -339,6 +381,7 @@ class DeleteEvaluationDatasetsAPI(Resource):
                 "error": "No evaluation_dataset file associated with this task"
             }, 404
 
+        os.remove(path=task.evaluation_dataset)
         task.evaluation_dataset = None
         try:
             db.session.commit()
@@ -348,7 +391,7 @@ class DeleteEvaluationDatasetsAPI(Resource):
 
         return {
             "message": "Evaluation datasets deleted successfully",
-            "task": task.to_dict(),
+            "task": task.to_dict_filtered(),
         }, 200
 
 
@@ -358,6 +401,10 @@ def register_routes(api):
     api.add_resource(TaskAPI, "/api/tasks/<int:task_id>")
     api.add_resource(GetCurrentPromptAPI, "/api/tasks/get_curr_prompt")
     api.add_resource(SetCurrentPromptAPI, "/api/tasks/set_curr_prompt")
+    api.add_resource(
+        GetTaskConfirmationDetailsAPI,
+        "/api/tasks/<int:task_id>/get_task_confirmation_details",
+    )
     api.add_resource(GenerateTaskAPI, "/api/tasks/generate")
     api.add_resource(DeployTaskAPI, "/api/tasks/deploy")
     api.add_resource(

@@ -138,7 +138,7 @@ def test_update_task(test_client):
 
         # Test the /api/tasks/1 endpoint (PUT)
         update_data = {
-            "description": "Updated description",
+            "objective": "Updated objective",
             "task_type": "development",
             "status": "completed",
         }
@@ -150,7 +150,7 @@ def test_update_task(test_client):
 
         assert response.status_code == 200
         assert data["message"] == "Task updated successfully"
-        assert data["task"]["description"] == "Updated description"
+        assert data["task"]["objective"] == "Updated objective"
         assert data["task"]["task_type"] == "development"
         assert data["task"]["status"] == "completed"
 

@@ -9,14 +9,13 @@ from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelect
 
 class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
     def reconstruct_from_stored_data(
-        dataset_file_path: str, template_data: dict, example_selector_data: dict
+        dataset_file_path: str, template_data: dict
     ) -> "FewshotPromptTemplate":
         """Reconstructs a few shot prompt object from data stored.
 
         Args:
             dataset_file_path (str): path to evaluation dataset.
             template_data (dict): data to reconstruct few shot prompt template.
-            example_selector_data (dict): data to reconstruct few shot example selector.
 
         Returns:
             FewshotPromptTemplate: few shot prompt object to be deployed.
@@ -30,7 +29,7 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
 
         # Construct example selector
         example_selector = MaxMarginalRelevanceExampleSelector.from_examples(
-            examples, OpenAIEmbeddings(), FAISS, k=example_selector_data["k"]
+            examples, OpenAIEmbeddings(), FAISS, k=template_data["k"]
         )
 
         # Construct example prompt
@@ -56,14 +55,5 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
             "prefix": self.prefix,
             "suffix": self.suffix,
             "input_variables": self.input_variables,
+            "k": self.example_selector.k,  # Number of few shot examples
         }
-
-    def few_shot_example_selector_to_dict(self) -> dict:
-        """Return dict with information to reconstruct example selector for few-shot prompt object.
-
-        Currently just tracks number of few shot examples. Other parameters (e.g., selector type) are assumed when deploying prompt.
-
-        Returns:
-            dict: information to reconstruct example selector for few-shot prompt object.
-        """
-        return {"k": self.example_selector.k}
