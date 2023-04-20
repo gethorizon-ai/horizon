@@ -6,16 +6,15 @@ from app.utilities.adaptive_filtering import adaptive_filtering
 from app.utilities.generation import user_objective
 from app.utilities.generation import few_shot
 import pytest
-from dotenv import load_dotenv
-import openai
+import dotenv
 import os
 import pandas as pd
 
 
 def test_adaptive_filtering():
     """Test adaptive filtering method."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     num_test_data = 6
@@ -35,6 +34,7 @@ def test_adaptive_filtering():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
+        "openai_api_key": openai_api_key,
     }
 
     # Create the OpenAI instance
@@ -50,6 +50,7 @@ def test_adaptive_filtering():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
+        openai_api_key=openai_api_key,
     )
 
     # Generate few shot version of each prompt
@@ -57,6 +58,7 @@ def test_adaptive_filtering():
         task_request=task_request,
         prompt_model_candidates=intermediate_result,
         starting_prompt_model_id=starting_prompt_model_id + num_prompts,
+        openai_api_key=openai_api_key,
     )
 
     combined_prompt_model_candidates = pd.concat(
@@ -75,6 +77,7 @@ def test_adaptive_filtering():
         stage_id="test_stage",
         num_shortlist=num_shortlist,
         num_iterations=num_iterations,
+        openai_api_key=openai_api_key,
     )
 
     assert (

@@ -48,7 +48,7 @@ def register_user(username, email, password):
         result = horizon_ai.register_user(username, email, password)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 @click.command(name="authenticate")
@@ -59,7 +59,7 @@ def authenticate_user(username, password):
         result = horizon_ai.authenticate_user(username, password)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 @click.command(name="get")
@@ -75,7 +75,7 @@ def get_user(horizon_api_key):
         result = horizon_ai.get_user()
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 @click.command(name="delete")
@@ -92,7 +92,7 @@ def delete_user(user_id, horizon_api_key):
         result = horizon_ai.delete_user(user_id)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 @click.command(name="list")
@@ -108,7 +108,7 @@ def list_projects(horizon_api_key):
         result = horizon_ai.list_projects()
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 @click.command(name="create")
@@ -142,7 +142,7 @@ def create_project(name, horizon_api_key):
         # Print the formatted output
         click.echo(formatted_output)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Get Project
@@ -162,7 +162,7 @@ def get_project(project_id, horizon_api_key):
         result = horizon_ai.get_project(project_id)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Update Project
@@ -184,7 +184,7 @@ def update_project(project_id, horizon_api_key, description=None, status=None):
         result = horizon_ai.update_project(project_id, description, status)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 cli.add_command(update_project)
@@ -207,7 +207,7 @@ def delete_project(project_id, horizon_api_key):
         result = horizon_ai.delete_project(project_id)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # List Tasks
@@ -224,7 +224,7 @@ def list_tasks(horizon_api_key):
         result = horizon_ai.list_tasks()
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Create Task
@@ -277,7 +277,7 @@ def create_task(
         task_id = task_creation_response["task"]["id"]
     except Exception as e:
         click.echo("Failed in task creation")
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
         return
 
     # Upload evaluation dataset
@@ -289,7 +289,7 @@ def create_task(
         # If uploading evaluation dataset fails, then delete previously created task
         horizon_ai.delete_task(task_id)
         click.echo("Failed in dataset upload")
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
         return
 
     # Confirm key details of task creation (e.g., estimated cost) with user before proceeding
@@ -305,7 +305,7 @@ def create_task(
         horizon_ai.delete_evaluation_dataset(task_id)
         horizon_ai.delete_task(task_id)
         click.echo("Failed in task confirmation details")
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
         return
 
     click.echo("=====")
@@ -346,7 +346,7 @@ def create_task(
         horizon_ai.delete_evaluation_dataset(task_id)
         horizon_ai.delete_task(task_id)
         click.echo("Failed in task generation")
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
         return
 
     # Print info about the newly created task object
@@ -375,7 +375,7 @@ def get_task(task_id, horizon_api_key):
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # # Update Task
@@ -438,7 +438,7 @@ def delete_task(task_id, horizon_api_key):
         result = horizon_ai.delete_task(task_id)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Get the current prompt of a task
@@ -456,7 +456,7 @@ def get_task_curr_prompt(task_id, horizon_api_key):
         result = horizon_ai.get_task_curr_prompt(task_id)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Set the current prompt of a task
@@ -479,7 +479,7 @@ def set_task_curr_prompt(task_id, prompt_id, horizon_api_key):
         result = horizon_ai.set_task_curr_prompt(task_id, prompt_id)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Generate a task
@@ -507,7 +507,7 @@ def generate_task(task_id, objective, horizon_api_key, openai_api_key):
         result = horizon_ai.generate_task(task_id, objective)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Deploy a task
@@ -536,7 +536,7 @@ def deploy_task(task_id, inputs, horizon_api_key, openai_api_key):
         result = horizon_ai.deploy_task(task_id, inputs_dict)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Upload Evaluation Dataset
@@ -563,7 +563,7 @@ def upload_evaluation_dataset(task_id, file_path, horizon_api_key):
         result = horizon_ai.upload_evaluation_dataset(task_id, file_path)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # View Evaluation Dataset
@@ -585,7 +585,7 @@ def view_evaluation_dataset(task_id, horizon_api_key):
         result = horizon_ai.view_evaluation_dataset(task_id)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Get Evaluation Dataset
@@ -607,7 +607,7 @@ def get_evaluation_dataset(task_id, horizon_api_key):
         result = horizon_ai.get_evaluation_dataset(task_id)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # Delete Evaluation Dataset
@@ -629,7 +629,7 @@ def delete_evaluation_dataset(horizon_api_key, task_id):
         result = horizon_ai.delete_evaluation_dataset(task_id)
         click.echo(result)
     except Exception as e:
-        click.echo(f"Failed with exception: {str(e)}")
+        click.echo(str(e))
 
 
 # # List prompts

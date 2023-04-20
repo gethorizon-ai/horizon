@@ -7,15 +7,14 @@ from app.utilities.inference import inference
 from app.utilities.evaluation import evaluation
 from app.utilities.shortlist import shortlist
 import pytest
-from dotenv import load_dotenv
-import openai
+import dotenv
 import os
 
 
 def test_shortlist():
     """Test shortlist method."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
@@ -34,6 +33,7 @@ def test_shortlist():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
+        "openai_api_key": openai_api_key,
     }
 
     # Create the OpenAI instance
@@ -49,6 +49,7 @@ def test_shortlist():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
+        openai_api_key=openai_api_key,
     )
 
     # Run inference
@@ -63,6 +64,7 @@ def test_shortlist():
     evaluation.run_evaluation(
         task_request=task_request,
         inference_evaluation_results=inference_evaluation_results,
+        openai_api_key=openai_api_key,
     )
 
     # Run shortlist

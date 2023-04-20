@@ -20,14 +20,13 @@ from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelect
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 import os
-from dotenv import load_dotenv
-import openai
+import dotenv
 
 
 def test_factory_creation():
     """Test creation of different prompt template types using factory method."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
     # chat_prompt_template = factory.create_prompt_template("chat")
     # assert isinstance(chat_prompt_template, ChatPromptTemplate)
 
@@ -145,7 +144,7 @@ def test_factory_creation():
     ]
 
     example_selector = MaxMarginalRelevanceExampleSelector.from_examples(
-        examples, OpenAIEmbeddings(), FAISS, 2
+        examples, OpenAIEmbeddings(openai_api_key=openai_api_key), FAISS, k=2
     )
 
     dynamic_prompt_template = factory.create_prompt_template(

@@ -84,19 +84,20 @@ class TaskAPI(Resource):
         if not task:
             return {"error": "Task not found"}, 404
         parser = reqparse.RequestParser()
-        parser.add_argument("description", type=str)
+        parser.add_argument("objective", type=str)
         parser.add_argument("task_type", type=str)
         parser.add_argument("status", type=str)
+        parser.add_argument("evaluation_dataset", type=str)
         args = parser.parse_args()
 
-        if args["description"] is not None:
-            task.description = args["description"]
+        if args["objective"] is not None:
+            task.objective = args["objective"]
         if args["task_type"] is not None:
             task.task_type = args["task_type"]
         if args["status"] is not None:
             task.status = args["status"]
-        if args["evaluation_data"] is not None:
-            task.evaluation_data = args["evaluation_dataset"]
+        if args["evaluation_dataset"] is not None:
+            task.evaluation_dataset = args["evaluation_dataset"]
 
         try:
             db.session.commit()
@@ -306,7 +307,8 @@ class UploadEvaluationDatasetsAPI(Resource):
             return {"error": "Task not found"}, 404
 
         if "evaluation_dataset" not in request.files:
-            return {"error": "No file provided"}, 400
+            return {"error": f"No file provided\n{request.files}"}, 400
+
         # Get the current working directory (your project folder)
         project_dir = os.getcwd()
 
@@ -353,7 +355,7 @@ class ViewEvaluationDatasetsAPI(Resource):
 
         if not task.evaluation_dataset:
             return {
-                "error": "No evaluation_dataset file associated with this task"
+                "error": "No evaluation dataset file associated with this task"
             }, 404
 
         with open(
@@ -395,7 +397,7 @@ class DeleteEvaluationDatasetsAPI(Resource):
 
         if not task.evaluation_dataset:
             return {
-                "error": "No evaluation_dataset file associated with this task"
+                "error": "No evaluation dataset file associated with this task"
             }, 404
 
         os.remove(path=task.evaluation_dataset)

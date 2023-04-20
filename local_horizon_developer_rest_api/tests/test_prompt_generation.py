@@ -10,14 +10,13 @@ from app.utilities.generation import few_shot
 from app.utilities.generation import temperature_variation
 import pytest
 import os
-from dotenv import load_dotenv
-import openai
+import dotenv
 
 
 def test_prompt_generation_user_objective():
     """Test prompt generation with user objective."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
@@ -36,6 +35,7 @@ def test_prompt_generation_user_objective():
         "model_name": "text-davinci-003",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
+        "openai_api_key": openai_api_key,
     }
 
     # Create the OpenAI instance
@@ -52,6 +52,7 @@ def test_prompt_generation_user_objective():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
+        openai_api_key=openai_api_key,
     )
     assert len(result) > 0, "No prompts generated"
     assert len(result) <= num_prompts, "Generated more prompts than expected"
@@ -66,8 +67,8 @@ def test_prompt_generation_user_objective():
 
 def test_prompt_generation_pattern_role_play():
     """Test prompt generation with role play pattern."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
@@ -86,6 +87,7 @@ def test_prompt_generation_pattern_role_play():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
+        "openai_api_key": openai_api_key,
     }
 
     # Create the OpenAI instance
@@ -102,6 +104,7 @@ def test_prompt_generation_pattern_role_play():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
+        openai_api_key=openai_api_key,
     )
     assert len(result) > 0, "No prompts generated"
     assert len(result) <= num_prompts, "Generated more prompts than expected"
@@ -116,8 +119,8 @@ def test_prompt_generation_pattern_role_play():
 
 def test_prompt_generation_user_objective_training_data():
     """Test prompt generation with user objective and training data."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
@@ -136,6 +139,7 @@ def test_prompt_generation_user_objective_training_data():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
+        "openai_api_key": openai_api_key,
     }
 
     # Create the OpenAI instance
@@ -153,6 +157,7 @@ def test_prompt_generation_user_objective_training_data():
             model_object=openai_instance,
             num_prompts=num_prompts,
             starting_prompt_model_id=starting_prompt_model_id,
+            openai_api_key=openai_api_key,
         )
     )
     assert len(result) > 0, "No prompts generated"
@@ -170,8 +175,8 @@ def test_prompt_generation_user_objective_training_data():
 
 def test_prompt_generation_variants():
     """Test prompt generation of syntactic variants."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
@@ -190,6 +195,7 @@ def test_prompt_generation_variants():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
+        "openai_api_key": openai_api_key,
     }
 
     # Create the OpenAI instance
@@ -207,6 +213,7 @@ def test_prompt_generation_variants():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
+        openai_api_key=openai_api_key,
     )
 
     # Generate variants of each prompt
@@ -216,6 +223,7 @@ def test_prompt_generation_variants():
         prompt_model_candidates=intermediate_result,
         num_variants=num_variants,
         starting_prompt_model_id=starting_prompt_model_id + num_prompts,
+        openai_api_key=openai_api_key,
     )
 
     assert len(result) > 0, "No prompts generated"
@@ -233,8 +241,8 @@ def test_prompt_generation_variants():
 
 def test_prompt_generation_few_shots():
     """Test prompt generation of few-shot based prompts."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
@@ -253,6 +261,7 @@ def test_prompt_generation_few_shots():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
+        "openai_api_key": openai_api_key,
     }
 
     # Create the OpenAI instance
@@ -270,6 +279,7 @@ def test_prompt_generation_few_shots():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
+        openai_api_key=openai_api_key,
     )
 
     # Generate few shot version of each prompt
@@ -277,6 +287,7 @@ def test_prompt_generation_few_shots():
         task_request=task_request,
         prompt_model_candidates=intermediate_result,
         starting_prompt_model_id=starting_prompt_model_id + num_prompts,
+        openai_api_key=openai_api_key,
     )
 
     assert len(result) > 0, "No prompts generated"
@@ -294,8 +305,8 @@ def test_prompt_generation_few_shots():
 
 def test_prompt_generation_temperature_variation():
     """Test prompt generation of temperature variants."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
@@ -314,6 +325,7 @@ def test_prompt_generation_temperature_variation():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
+        "openai_api_key": openai_api_key,
     }
 
     # Create the OpenAI instance
@@ -331,6 +343,7 @@ def test_prompt_generation_temperature_variation():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
+        openai_api_key=openai_api_key,
     )
 
     # Generate few shot version of each prompt
@@ -338,6 +351,7 @@ def test_prompt_generation_temperature_variation():
         task_request=task_request,
         prompt_model_candidates=intermediate_result,
         starting_prompt_model_id=starting_prompt_model_id + num_prompts,
+        openai_api_key=openai_api_key,
     )
 
     # Generate temperature variant of each few shot prompt

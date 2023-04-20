@@ -2,15 +2,9 @@
 
 import json
 import pytest
-from app.models.component import TaskRequest, Project, Prompt, Task, User
+from app.models.component import Project, User
 from app import create_app, db
-import os
-from io import BytesIO
-import tempfile
-import csv
 from werkzeug.datastructures import CombinedMultiDict, MultiDict
-import requests
-import base64
 
 
 @pytest.fixture
@@ -167,91 +161,5 @@ def test_delete_project(test_client):
         assert data["message"] == "Project deleted successfully"
 
         # Clean up
-        db.session.delete(u)
-        db.session.commit()
-
-
-def create_csv_temp_file(rows):
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
-    with open(temp_file.name, mode="w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
-        writer.writeheader()
-        for row in rows:
-            writer.writerow(row)
-    return temp_file.name
-
-
-def test_upload_evaluation_datasets(test_client):
-    """Test API method to upload evaluation dataset."""
-    with test_client.application.app_context():
-        # Create a sample user and project
-        u = User(username="john", email="john@example.com", password="cat")
-        db.session.add(u)
-        db.session.commit()
-
-        p = Project(name="Sample Project", user_id=u.id)
-        db.session.add(p)
-        db.session.commit()
-
-        # Test the /api/projects/1/upload_evaluation_datasets endpoint (POST)
-        evaluation_datasets = [
-            {"field1": "value1", "field2": "value2"},
-            {"field1": "value3", "field2": "value4"},
-        ]
-        temp_file_name = create_csv_temp_file(evaluation_datasets)
-        with open(temp_file_name, "rb") as f:
-            response = test_client.post(
-                f"/api/projects/{p.id}/upload_evaluation_datasets",
-                data={"evaluation_datasets": f},
-                headers={"X-Api-Key": u.api_key},
-            )
-
-        os.remove(temp_file_name)
-
-        assert response.status_code == 200
-
-        # Clean up
-        db.session.delete(p)
-        db.session.delete(u)
-        db.session.commit()
-
-
-def test_view_evaluation_datasets(test_client):
-    """Test API method to view evaluation datasets."""
-    with test_client.application.app_context():
-        # Create a sample user and project
-        u = User(username="john", email="john@example.com", password="cat")
-        db.session.add(u)
-        db.session.commit()
-
-        p = Project(name="Sample Project", user_id=u.id)
-        db.session.add(p)
-        db.session.commit()
-
-        # Add evaluation datasets
-        evaluation_datasets = [
-            {"field1": "value1", "field2": "value2"},
-            {"field1": "value3", "field2": "value4"},
-        ]
-        temp_file_name = create_csv_temp_file(evaluation_datasets)
-        with open(temp_file_name, "rb") as f:
-            p.evaluation_datasets = f.read()
-
-        db.session.commit()
-        os.remove(temp_file_name)
-
-        # Test the /api/projects/1/view_evaluation_datasets endpoint (GET)
-        response = test_client.get(
-            f"/api/projects/{p.id}/view_evaluation_datasets",
-            headers={"X-Api-Key": u.api_key},
-        )
-
-        data = json.loads(response.data)
-
-        assert response.status_code == 200
-        assert data["evaluation_datasets"] == evaluation_datasets
-
-        # Clean up
-        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()

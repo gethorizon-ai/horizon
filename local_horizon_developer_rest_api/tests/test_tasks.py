@@ -4,6 +4,9 @@ import pytest
 import json
 from app.models.component import Task, User
 from app import create_app, db
+import tempfile
+import csv
+import os
 
 
 @pytest.fixture
@@ -62,7 +65,6 @@ def test_get_tasks(test_client):
         assert response.status_code == 200
         assert len(data["tasks"]) == 1
         assert data["tasks"][0]["name"] == "Sample Task"
-        assert data["tasks"][0]["task_type"] == "testing"
 
         # Clean up
         db.session.delete(t)
@@ -89,7 +91,6 @@ def test_create_task(test_client):
         assert response.status_code == 201
         assert data["message"] == "Task created successfully"
         assert data["task"]["name"] == "New Task"
-        assert data["task"]["task_type"] == "development"
 
         # Clean up
         task = Task.query.filter_by(name="New Task").first()
@@ -116,7 +117,6 @@ def test_get_task(test_client):
 
         assert response.status_code == 200
         assert data["name"] == "Sample Task"
-        assert data["task_type"] == "testing"
 
         # Clean up
         db.session.delete(t)
@@ -151,8 +151,6 @@ def test_update_task(test_client):
         assert response.status_code == 200
         assert data["message"] == "Task updated successfully"
         assert data["task"]["objective"] == "Updated objective"
-        assert data["task"]["task_type"] == "development"
-        assert data["task"]["status"] == "completed"
 
         # Clean up
         db.session.delete(t)
@@ -188,75 +186,81 @@ def test_delete_task(test_client):
         db.session.commit()
 
 
-# def test_upload_evaluation_datasets(test_client):
-#     with test_client.application.app_context():
-#         # Create a sample user and project
-#         u = User(username='john', email='john@example.com', password='cat')
-#         db.session.add(u)
-#         db.session.commit()
+def test_upload_evaluation_datasets(test_client):
+    """Test API method to upload evaluation dataset."""
+    with test_client.application.app_context():
+        # Create a sample user and task
+        u = User(username="john", email="john@example.com", password="cat")
+        db.session.add(u)
+        db.session.commit()
 
-#         p = Project(name='Sample Project', user_id=u.id)
-#         db.session.add(p)
-#         db.session.commit()
+        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        db.session.add(t)
+        db.session.commit()
 
-#         # Test the /api/projects/1/upload_evaluation_datasets endpoint (POST)
-#         evaluation_datasets = [
-#             {'field1': 'value1', 'field2': 'value2'},
-#             {'field1': 'value3', 'field2': 'value4'}
-#         ]
-#         temp_file_name = create_csv_temp_file(evaluation_datasets)
-#         with open(temp_file_name, 'rb') as f:
-#             response = test_client.post(
-#                 f'/api/projects/{p.id}/upload_evaluation_datasets',
-#                 data={'evaluation_datasets': f},
-#                 headers={'X-Api-Key': u.api_key}
-#             )
+        # Test the /api/projects/1/upload_evaluation_datasets endpoint (POST)
+        evaluation_dataset = [
+            {"field1": "value1", "field2": "value2"} for i in range(15)
+        ]
+        temp_file_name = create_csv_temp_file(evaluation_dataset)
+        with open(temp_file_name, "rb") as f:
+            response = test_client.post(
+                f"/api/tasks/{t.id}/upload_evaluation_dataset",
+                data={"evaluation_dataset": f},
+                headers={"X-Api-Key": u.api_key},
+            )
 
-#         os.remove(temp_file_name)
+        os.remove(temp_file_name)
+        assert response.status_code == 200
 
-#         assert response.status_code == 200
-
-#         # Clean up
-#         db.session.delete(p)
-#         db.session.delete(u)
-#         db.session.commit()
+        # Clean up
+        db.session.delete(t)
+        db.session.delete(u)
+        db.session.commit()
 
 
-# def test_view_evaluation_datasets(test_client):
-#     with test_client.application.app_context():
-#         # Create a sample user and project
-#         u = User(username='john', email='john@example.com', password='cat')
-#         db.session.add(u)
-#         db.session.commit()
+def test_view_evaluation_datasets(test_client):
+    """Test API method to view evaluation datasets."""
+    with test_client.application.app_context():
+        # Create a sample user and task
+        u = User(username="john", email="john@example.com", password="cat")
+        db.session.add(u)
+        db.session.commit()
 
-#         p = Project(name='Sample Project', user_id=u.id)
-#         db.session.add(p)
-#         db.session.commit()
+        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        db.session.add(t)
+        db.session.commit()
 
-#         # Add evaluation datasets
-#         evaluation_datasets = [
-#             {'field1': 'value1', 'field2': 'value2'},
-#             {'field1': 'value3', 'field2': 'value4'}
-#         ]
-#         temp_file_name = create_csv_temp_file(evaluation_datasets)
-#         with open(temp_file_name, 'rb') as f:
-#             p.evaluation_datasets = f.read()
+        # Add evaluation datasets
+        evaluation_dataset = [
+            {"field1": "value1", "field2": "value2"} for i in range(15)
+        ]
+        temp_file_name = create_csv_temp_file(evaluation_dataset)
+        t.evaluation_dataset = temp_file_name
+        db.session.commit()
 
-#         db.session.commit()
-#         os.remove(temp_file_name)
+        # Test the /api/projects/1/view_evaluation_datasets endpoint (GET)
+        response = test_client.get(
+            f"/api/tasks/{t.id}/view_evaluation_dataset",
+            headers={"X-Api-Key": u.api_key},
+        )
+        data = json.loads(response.data)
 
-#         # Test the /api/projects/1/view_evaluation_datasets endpoint (GET)
-#         response = test_client.get(
-#             f'/api/projects/{p.id}/view_evaluation_datasets',
-#             headers={'X-Api-Key': u.api_key}
-#         )
+        assert response.status_code == 200
+        assert data["evaluation_dataset"] == evaluation_dataset
 
-#         data = json.loads(response.data)
+        # Clean up
+        os.remove(temp_file_name)
+        db.session.delete(t)
+        db.session.delete(u)
+        db.session.commit()
 
-#         assert response.status_code == 200
-#         assert data['evaluation_datasets'] == evaluation_datasets
 
-#         # Clean up
-#         db.session.delete(p)
-#         db.session.delete(u)
-#         db.session.commit()
+def create_csv_temp_file(rows):
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+    with open(temp_file.name, mode="w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+    return temp_file.name

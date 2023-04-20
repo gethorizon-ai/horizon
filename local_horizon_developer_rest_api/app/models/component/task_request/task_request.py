@@ -27,6 +27,7 @@ class TaskRequest:
                 assignment of test data points Defaults to None.
 
         Raises:
+            ValueError: checks that user objective is provided and has >0 characters.
             ValueError: checks that user objective is at most 500 characters to manage token limits.
             AssertionError: checks if input and output data lengths exceed token limits of available llms.
             AssertionError: checks if input and output data lengths exceed token limits of available llms.

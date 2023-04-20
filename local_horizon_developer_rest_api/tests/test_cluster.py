@@ -8,16 +8,14 @@ from app.utilities.evaluation import evaluation
 from app.utilities.clustering import cluster_data
 from app.utilities.clustering import cluster_prompts
 import pytest
-from dotenv import load_dotenv
-import openai
+import dotenv
 import os
-import numpy as np
 
 
 def test_cluster_shortlist_data():
     """Test method to cluster and shortlist data from train or test evaluation datasets."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     num_test_data = 8
@@ -36,6 +34,7 @@ def test_cluster_shortlist_data():
         task_request=task_request,
         num_clusters=num_clusters,
         train_or_test_dataset="test",
+        openai_api_key=openai_api_key,
     )
 
     # Check output
@@ -44,8 +43,8 @@ def test_cluster_shortlist_data():
 
 def test_cluster_shortlist_prompts():
     """Test method to cluster and shortlist prompt-model candidates based on prompt prefixes."""
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    dotenv.load_dotenv()
+    openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Create the TaskRequest instance
     num_test_data = 2
@@ -65,6 +64,7 @@ def test_cluster_shortlist_prompts():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
+        "openai_api_key": openai_api_key,
     }
 
     # Create the OpenAI instance
@@ -80,12 +80,15 @@ def test_cluster_shortlist_prompts():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
+        openai_api_key=openai_api_key,
     )
 
     # Shortlist prompt-model candidates
     num_clusters = 5
     shortlisted_prompt_model_candidates = cluster_prompts.cluster_shortlist_prompts(
-        prompt_model_candidates=prompt_model_candidates, num_clusters=num_clusters
+        prompt_model_candidates=prompt_model_candidates,
+        num_clusters=num_clusters,
+        openai_api_key=openai_api_key,
     )
 
     # Check output

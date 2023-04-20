@@ -54,12 +54,16 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
         openai_api_key (str): OpenAI API key to use.
 
     Raises:
+        ValueError: checks if user objective is provided.
         ValueError: checks if prompt record exists.
         AssertionError: checks if evaluation datatset exists.
 
     Returns:
         dict: overview of task and generated prompt-model candidate.
     """
+    if user_objective == None or len(user_objective) == 0:
+        raise ValueError("Must provide user objective")
+
     # Get the prompt from the database using the prompt_id
     prompt = Prompt.query.get(prompt_id)
     if not prompt:
