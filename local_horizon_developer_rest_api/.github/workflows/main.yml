@@ -3,7 +3,7 @@ name: Deploy to EC2 using CodeDeploy
 on:
   push:
     branches:
-      - main
+      - lina
 
 jobs:
   deploy:
