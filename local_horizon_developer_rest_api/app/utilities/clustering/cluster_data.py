@@ -9,7 +9,10 @@ from typing import List
 
 
 def cluster_shortlist_data(
-    task_request: TaskRequest, num_clusters: int, train_or_test_dataset: str
+    task_request: TaskRequest,
+    num_clusters: int,
+    train_or_test_dataset: str,
+    openai_api_key: str,
 ) -> List[dict]:
     """Embeds input and output data, clusters them into num_clusters, and outputs selected data as list of dicts.
 
@@ -17,6 +20,7 @@ def cluster_shortlist_data(
         task_request (TaskRequest): data structure holding task request information such input variables and input dataset.
         num_clusters (int): number of clusters to produce and count of data to reduce to.
         train_or_test_dataset (str): indicates which dataset to use; must be either "train" or "test".
+        openai_api_key (str): OpenAI API key to use.
 
     Returns:
         List(dict): list containing a dict representing each selected data point.
@@ -41,7 +45,9 @@ def cluster_shortlist_data(
         for key, value in example.items():
             example_string += f"<{key}>: {value}\n"
         example_string = example_string.strip()
-        return OpenAIEmbeddings().embed_query(example_string)
+        return OpenAIEmbeddings(openai_api_key=openai_api_key).embed_query(
+            example_string
+        )
 
     # Calculate embedding of each example data
     example_embeddings = combined_data.apply(

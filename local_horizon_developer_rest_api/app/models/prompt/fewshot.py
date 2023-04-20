@@ -9,13 +9,14 @@ from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelect
 
 class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
     def reconstruct_from_stored_data(
-        dataset_file_path: str, template_data: dict
+        dataset_file_path: str, template_data: dict, openai_api_key: str
     ) -> "FewshotPromptTemplate":
         """Reconstructs a few shot prompt object from data stored.
 
         Args:
             dataset_file_path (str): path to evaluation dataset.
             template_data (dict): data to reconstruct few shot prompt template.
+            openai_api_key (str): user's OpenAI API key.
 
         Returns:
             FewshotPromptTemplate: few shot prompt object to be deployed.
@@ -29,7 +30,10 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
 
         # Construct example selector
         example_selector = MaxMarginalRelevanceExampleSelector.from_examples(
-            examples, OpenAIEmbeddings(), FAISS, k=template_data["k"]
+            examples,
+            OpenAIEmbeddings(openai_api_key=openai_api_key),
+            FAISS,
+            k=template_data["k"],
         )
 
         # Construct example prompt

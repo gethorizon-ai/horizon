@@ -209,8 +209,12 @@ class GetTaskConfirmationDetailsAPI(Resource):
 user_executors = {}
 
 
-def process_generate_prompt(task, objective):
-    return run1.generate_prompt(task.active_prompt_id, objective)
+def process_generate_prompt(task: Task, objective: str, openai_api_key: str):
+    return run1.generate_prompt(
+        user_objective=objective,
+        prompt_id=task.active_prompt_id,
+        openai_api_key=openai_api_key,
+    )
 
 
 class GenerateTaskAPI(Resource):
@@ -222,6 +226,9 @@ class GenerateTaskAPI(Resource):
         )
         parser.add_argument(
             "objective", type=str, required=True, help="Objective is required"
+        )
+        parser.add_argument(
+            "openai_api_key", type=str, required=True, help="OpenAI API key is required"
         )
         args = parser.parse_args()
 
@@ -240,7 +247,7 @@ class GenerateTaskAPI(Resource):
 
         # Call the process_generate_prompt function with the provided objective and prompt_id
         future = user_executors[api_key].submit(
-            process_generate_prompt, task, args["objective"]
+            process_generate_prompt, task, args["objective"], args["openai_api_key"]
         )
 
         try:
@@ -268,6 +275,9 @@ class DeployTaskAPI(Resource):
             required=True,
             help="Input variables are required as a dictionary",
         )
+        parser.add_argument(
+            "openai_api_key", type=str, required=True, help="OpenAI API key is required"
+        )
         args = parser.parse_args()
 
         task = Task.query.get(args["task_id"])
@@ -277,8 +287,15 @@ class DeployTaskAPI(Resource):
             return {"error": "Active prompt not found for the task"}, 404
 
         # Call the deploy function with the provided task.active_prompt_id and inputs
-        return_value = deploy_prompt(task.active_prompt_id, args["inputs"])
-        return {"completion": return_value}, 200
+        try:
+            return_value = deploy_prompt(
+                prompt_id=task.active_prompt_id,
+                input_values=args["inputs"],
+                openai_api_key=args["openai_api_key"],
+            )
+            return {"completion": return_value}, 200
+        except Exception as e:
+            return {"error": f"Failed with exception: {str(e)}"}, 400
 
 
 class UploadEvaluationDatasetsAPI(Resource):

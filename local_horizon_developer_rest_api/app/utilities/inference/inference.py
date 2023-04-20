@@ -16,7 +16,7 @@ def run_inference(
     stage_id: str,
     evaluation_data_id_list: List[int] = None,
 ) -> InferenceEvaluationResults:
-    """Run inference with given set of prompt candidates and either train or test input dataset.
+    """Run inference with given set of prompt candidates on either train or test input dataset.
 
     Args:
         task_request (TaskRequest): data structure holding task request information such input variables and input dataset.

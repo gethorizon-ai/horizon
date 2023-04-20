@@ -1,8 +1,5 @@
 from app.models.component.prompt import Prompt
 from app.models.component.task import Task
-import os
-from dotenv import load_dotenv
-import openai
 from app import db
 from app.models.llm.factory import LLMFactory
 from app.models.prompt.factory import PromptTemplateFactory
@@ -10,21 +7,18 @@ from app.models.prompt.chat import HumanMessage
 import json
 
 
-def deploy_prompt(prompt_id, input_values):
+def deploy_prompt(prompt_id: int, input_values: dict, openai_api_key: str) -> str:
     """
     Deploy a prompt with the given prompt_id and input_values.
 
     Args:
-        prompt_id (int): The ID of the prompt to deploy.
-        input_values (dict): A dictionary of key-value pairs representing the input variables for the prompt.
+        prompt_id (int): ID of prompt to deploy.
+        input_values (dict): dict of key-value pairs representing the input variables for prompt.
+        openai_api_key (str): user's OpenAI API key.
 
     Returns:
         str: The return value of the deployed prompt.
     """
-
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-
     # Get the prompt from the database using the prompt_id
     prompt = Prompt.query.get(prompt_id)
     if not prompt:
@@ -35,6 +29,9 @@ def deploy_prompt(prompt_id, input_values):
 
     # get the model_params from the prompt
     model_params = json.loads(prompt.model)
+
+    # Add OpenAI API key
+    model_params["openai_api_key"] = openai_api_key
 
     # define the LLM factory instance
     llm_factory = LLMFactory()
@@ -65,6 +62,7 @@ def deploy_prompt(prompt_id, input_values):
             template_type=template_type,
             dataset_file_path=dataset_file_path,
             template_data=template_data,
+            openai_api_key=openai_api_key,
         )
 
     # Modify input variables by prepending "var_" as done in Task creation process (to prevent names from matching internal horizonai

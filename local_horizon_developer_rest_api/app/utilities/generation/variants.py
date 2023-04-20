@@ -15,6 +15,7 @@ def prompt_generation_variants(
     prompt_model_candidates: PromptModelCandidates,
     num_variants: int,
     starting_prompt_model_id: int,
+    openai_api_key: str,
 ) -> PromptModelCandidates:
     """Generates syntactic variants of the given prompts that are semantically similar to the original. Assumes prompts are
     PromptTemplate objects.
@@ -24,6 +25,7 @@ def prompt_generation_variants(
         prompt_model_candidates (PromptModelCandidates): data structure with current set of prompt-model candidates.
         num_variants (int): number of syntatic variants to generate for each existing prompt-model candidate.
         starting_prompt_model_id (int): starting id for new prompt-model candidates.
+        openai_api_key (str): OpenAI API key to use.
 
     Returns:
         PromptModelCandidates: new set of variant prompt-model candidates.
@@ -34,9 +36,11 @@ def prompt_generation_variants(
 
     # Get llms to generate and check new prompt prefixes
     metaprompt_model_generation = prompt_generation_models.get_model_variants(
-        num_prompts=num_variants
+        num_prompts=num_variants, openai_api_key=openai_api_key
     )
-    metaprompt_model_check = prompt_generation_models.get_model_variants_check()
+    metaprompt_model_check = prompt_generation_models.get_model_variants_check(
+        openai_api_key=openai_api_key
+    )
 
     prompt_suffix = base.generate_prompt_suffix(
         input_variables=task_request.input_variables
@@ -91,7 +95,7 @@ def prompt_generation_variants(
             except:
                 continue
 
-            # add the few shot prompt to the prompt_candidates list
+            # add the generated prompt to the prompt_candidates list
             prompt_model_id_list.append(starting_prompt_model_id)
             starting_prompt_model_id += 1
             generation_id_list.append(row["generation_id"] + "_[variant]")

@@ -17,18 +17,14 @@ from app.utilities.inference import inference
 from app.utilities.evaluation import evaluation
 from app.models.component.prompt import Prompt
 from app.models.component.task import Task
-from app.models.component.project import Project
 from app.utilities.adaptive_filtering import adaptive_filtering
 from app.utilities.shortlist import shortlist
 from app import db
-import openai
 import pandas as pd
-import os
 import json
 import math
-from dotenv import load_dotenv, find_dotenv
 
-# Define parameters for algorithm#
+# Define parameters for algorithm
 # TODO: update to parameters for full prompt generation algorithm
 PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
     "stage_1": {
@@ -49,10 +45,21 @@ PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
 }
 
 
-def generate_prompt(user_objective: str, prompt_id: int) -> dict:
-    load_dotenv()
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) -> dict:
+    """Generate the optimal prompt-model candidate for a given objective and evaluation dataset.
 
+    Args:
+        user_objective (str): objectuse of the use case.
+        prompt_id (int): id of prompt record to assign.
+        openai_api_key (str): OpenAI API key to use.
+
+    Raises:
+        ValueError: checks if prompt record exists.
+        AssertionError: checks if evaluation datatset exists.
+
+    Returns:
+        dict: overview of task and generated prompt-model candidate.
+    """
     # Get the prompt from the database using the prompt_id
     prompt = Prompt.query.get(prompt_id)
     if not prompt:
@@ -73,7 +80,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
         dataset_file_path=task.evaluation_dataset,
         num_test_data_input=1,  # TODO: remove test data points constraint
     )
-    # print("TaskRequest instance created", task_request, "\n")
+    print("TaskRequest instance created", task_request, "\n")
 
     # Define the starting prompt-model candidate id
     starting_prompt_model_id = 0
@@ -87,19 +94,21 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
 
     # Iterate over applicable llms for this task
     for llm, llm_info in task_request.applicable_llms.items():
-        # print(f"working on {llm}")
+        print(f"working on {llm}")
 
         # Define the OpenAI instance parameters
         openai_params = {
             "model_name": llm,
             "temperature": 0.7,
             "max_tokens": llm_info["max_output_length"],
+            "openai_api_key": openai_api_key,
         }
 
         # Create the OpenAI instance
         openai_instance = llm_factory.create_llm(
             openai_params["model_name"], **openai_params
         )
+        print(f"Created llm instance for {llm}")
 
         # STAGE 1 - Initial prompt generation
         # Generate prompt-model candidates using user objective method
@@ -111,12 +120,13 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
                     "num_prompts_user_objective"
                 ],
                 starting_prompt_model_id=starting_prompt_model_id,
+                openai_api_key=openai_api_key,
             )
         )
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_prompts_user_objective"
         ]
-        # print("finished prompt_generation_user_objective")
+        print("finished prompt_generation_user_objective")
 
         # Generate prompt-model candidates using role play pattern method
         prompt_model_candidates_pattern_role_play = (
@@ -127,12 +137,13 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
                     "num_prompts_pattern_role_play"
                 ],
                 starting_prompt_model_id=starting_prompt_model_id,
+                openai_api_key=openai_api_key,
             )
         )
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_prompts_pattern_role_play"
         ]
-        # print("finished prompt_generation_pattern_role_play")
+        print("finished prompt_generation_pattern_role_play")
 
         # Generate prompt-model candidates using user objective with training data method
         prompt_model_candidates_user_objective_training_data = (
@@ -143,12 +154,13 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
                     "num_prompts_user_objective_training_data"
                 ],
                 starting_prompt_model_id=starting_prompt_model_id,
+                openai_api_key=openai_api_key,
             )
         )
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_prompts_user_objective_training_data"
         ]
-        # print("finished prompt_generation_user_objective_training_data")
+        print("finished prompt_generation_user_objective_training_data")
 
         # Concatenate current set of prompt-model candidates
         prompt_model_candidates_stage_1_initial = pd.concat(
@@ -169,6 +181,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
                     "num_variants"
                 ],
                 starting_prompt_model_id=starting_prompt_model_id,
+                openai_api_key=openai_api_key,
             )
         )
         prompt_model_candidates_stage_1 = pd.concat(
@@ -189,7 +202,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
                 "num_prompts_user_objective_training_data"
             ]
         ) * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"]["num_variants"]
-        # print("finished prompt_generation_variants")
+        print("finished prompt_generation_variants")
 
         # Cluster shortlist current set of prompt-model candidates
         prompt_model_candidates_stage_1 = cluster_prompts.cluster_shortlist_prompts(
@@ -197,8 +210,9 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
             num_clusters=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                 "num_clusters"
             ],
+            openai_api_key=openai_api_key,
         )
-        # print("finished cluster_shortlist_prompts")
+        print("finished cluster_shortlist_prompts")
 
         # Run adaptive filtering and aggregate inference and evaluation results
         (
@@ -214,12 +228,13 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
             num_iterations=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                 "num_iterations"
             ],
+            openai_api_key=openai_api_key,
         )
         aggregated_inference_evaluation_results = pd.concat(
             [aggregated_inference_evaluation_results, inference_evaluation_results],
             axis=0,
         ).reset_index(drop=True)
-        # print("finished adaptive_filtering for stage_1")
+        print("finished adaptive_filtering for stage_1")
 
         # STAGE 2 - Few shots
         # Generate few shot-based prompts
@@ -227,11 +242,12 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
             task_request=task_request,
             prompt_model_candidates=prompt_model_candidates_stage_1_shortlisted,
             starting_prompt_model_id=starting_prompt_model_id,
+            openai_api_key=openai_api_key,
         )
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_shortlist"
         ]
-        # print("finished prompt_generation_few_shots")
+        print("finished prompt_generation_few_shots")
 
         # Run inference and evaluation of few-shot based prompts, and store in aggregated results
         inference_evaluation_results_stage_2 = inference.run_inference(
@@ -243,6 +259,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
         evaluation.run_evaluation(
             task_request=task_request,
             inference_evaluation_results=inference_evaluation_results_stage_2,
+            openai_api_key=openai_api_key,
         )
         aggregated_inference_evaluation_results = pd.concat(
             [
@@ -270,7 +287,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
                 stage_id_list=["stage_1", "stage_2"],
             )
         )
-        # print("finished inference, evaluation, and shortlist for stage_2")
+        print("finished inference, evaluation, and shortlist for stage_2")
 
         # STAGE 3 - Temperature variation
         # Generate temperature variants
@@ -286,7 +303,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
             "num_prompts_temperature_variation"
         ]
-        # print("finished prompt_generation_temperature_variation")
+        print("finished prompt_generation_temperature_variation")
 
         # Run adaptive filtering
         (
@@ -302,12 +319,13 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
             num_iterations=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
                 "num_iterations"
             ],
+            openai_api_key=openai_api_key,
         )
         aggregated_inference_evaluation_results = pd.concat(
             [aggregated_inference_evaluation_results, inference_evaluation_results],
             axis=0,
         ).reset_index(drop=True)
-        # print("finished adaptive_filtering for stage_3")
+        print("finished adaptive_filtering for stage_3")
 
         # Store best prompt-model candidate for this llm
         prompt_model_candidates_selected = pd.concat(
@@ -330,7 +348,7 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
     final_prompt_object = prompt_model_candidates_final["prompt_object"].iloc[0]
     final_model_object = prompt_model_candidates_final["model_object"].iloc[0]
 
-    # save the model to the database
+    # Save the model to the database. DO NOT STORE USER LLM API KEY!
     prompt.model_name = final_model_object.model_name
     if final_model_object.model_name == "gpt-3.5-turbo":
         model_params = {
@@ -346,38 +364,6 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
         }
     prompt.model = json.dumps(model_params)
 
-<<<<<<< HEAD
-    # Define the global prompt ID
-    global_prompt_id = [0]
-    prompt_template_type = "prompt"
-
-    # Generate the prompts using the pattern roleplay method
-    num_prompt = 1
-    prompts_pattern_role_play = prompt_generation_pattern_roleplay(
-        experiment_instance, openai_instance, num_prompt, global_prompt_id, prompt_template_type)
-
-    # Generate the prompts using the user objective method
-    num_prompt = 1
-    prompts_user_objective = prompt_generation_user_objective(
-        experiment_instance, openai_instance, num_prompt, global_prompt_id, prompt_template_type)
-
-    # combine the prompts from the two methods
-    prompts_generated = prompts_pattern_role_play.append(
-        prompts_user_objective)
-
-    # run the prompts through the inference engine
-    inference_results = run_inference(
-        experiment_instance, prompts_generated, "test")
-
-    # run the infrence results through the evaluation engine
-    run_evaluation(inference_results)
-
-    # put the evaluation results through a shortlist engine
-    winning_prompt = prompt_shortlist(inference_results, 1, 0)
-
-    # store the winning prompt template type in the database
-    prompt.template_type = prompt_template_type
-=======
     # look up the prompt template type for the final prompt and store in the database
     prompt.template_type = list(
         factory.PromptTemplateFactory.prompt_template_classes.keys()
@@ -386,7 +372,6 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
             type(final_prompt_object)
         )
     ]
->>>>>>> 5f9861b (Initial porting of POC functionality)
 
     # Store the winning prompt in the database
     serialized_prompt_object = final_prompt_object.to_dict()
@@ -422,10 +407,10 @@ def generate_prompt(user_objective: str, prompt_id: int) -> dict:
     }
     task.evaluation_statistics = json.dumps(evaluation_statistics)
 
-    # commit the changes to the database
+    # Commit the changes to the database
     db.session.commit()
 
-    # return the winning prompt
+    # Return task overview with selected prompt-model candidate
     return task.to_dict_filtered()
 
 

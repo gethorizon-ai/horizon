@@ -30,12 +30,13 @@ INSTRUCTION:"""
 
 
 def get_metaprompt_user_objective_training_data(
-    task_request: TaskRequest,
+    task_request: TaskRequest, openai_api_key: str
 ) -> FewshotPromptTemplate:
     """Produces metaprompt for prompt generation method of user objective with training data.
 
     Args:
         task_request (TaskRequest): TaskRequest object with training data
+        openai_api_key (str): OpenAI API key to use.
 
     Returns:
         FewshotPromptTemplate: prompt object to serve as prompt generation metaprompt.
@@ -63,12 +64,13 @@ INSTRUCTION:"""
     # Each example should be dict with keys as input variables and values as values for those input variables
     # Allow at most half the max number of few shots possible to leave tokens to generate prompts
     examples = cluster_data.cluster_shortlist_data(
-        task_request,
-        min(
+        task_request=task_request,
+        num_clusters=min(
             task_request.applicable_llms["text-davinci-003"]["max_few_shots"] // 2,
             task_request.num_train_data,
         ),
-        "train",
+        train_or_test_dataset="train",
+        openai_api_key=openai_api_key,
     )
 
     # Iterate through each input variable to create example prompt template

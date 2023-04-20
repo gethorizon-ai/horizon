@@ -17,6 +17,7 @@ def adaptive_filtering(
     stage_id: str,
     num_shortlist: int,
     num_iterations: int,
+    openai_api_key: str,
 ) -> Tuple[PromptModelCandidates, InferenceEvaluationResults]:
     """Runs inference, evaluation, and shortlist iterations to efficiently filter down prompt-model candidates.
 
@@ -28,6 +29,7 @@ def adaptive_filtering(
         stage_id (str): id for this inference and evaluation stage.
         num_shortlist (int): target number of shortlisted prompt-model candidates.
         num_iterations (int): number of iterations to run adaptive filtering.
+        openai_api_key (str): OpenAI API key to use.
 
     Raises:
         ValueError: checks that provided number of prompt-model candidates exceeds the target shortlist amount.
@@ -91,6 +93,7 @@ def adaptive_filtering(
         evaluation.run_evaluation(
             task_request=task_request,
             inference_evaluation_results=inference_evaluation_results,
+            openai_api_key=openai_api_key,
         )
         # print("Finished evaluation")
 

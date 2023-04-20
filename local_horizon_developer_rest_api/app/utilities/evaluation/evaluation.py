@@ -6,7 +6,9 @@ from app.models.component.task_request import TaskRequest
 
 
 def run_evaluation(
-    task_request: TaskRequest, inference_evaluation_results: InferenceEvaluationResults
+    task_request: TaskRequest,
+    inference_evaluation_results: InferenceEvaluationResults,
+    openai_api_key: str,
 ) -> None:
     """Evaluates inference for each combination of output and ground truth.
 
@@ -20,4 +22,5 @@ def run_evaluation(
     cosine_similarity.get_semantic_cosine_similarity_openAI(
         task_request=task_request,
         inference_evaluation_results=inference_evaluation_results,
+        openai_api_key=openai_api_key,
     )

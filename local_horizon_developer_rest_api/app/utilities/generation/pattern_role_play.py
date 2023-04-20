@@ -21,6 +21,7 @@ def prompt_generation_pattern_role_play(
     model_object: BaseLLM,
     num_prompts: int,
     starting_prompt_model_id: int,
+    openai_api_key: str,
 ) -> PromptModelCandidates:
     """Generates prompt candidates in a role play pattern based on user-provided objective and input variables.
 
@@ -29,6 +30,7 @@ def prompt_generation_pattern_role_play(
         model_object (BaseLLM): LLM to use with generated prompt
         num_prompts (int): number of prompt candidates to generate
         starting_prompt_model_id (int): starting id for prompt-model candidates
+        openai_api_key (str): OpenAI API key to use.
 
     Returns:
         PromptModelCandidates: data structure with generated prompt-model candidates
@@ -44,7 +46,7 @@ def prompt_generation_pattern_role_play(
 
     # Get LLM
     metaprompt_model = prompt_generation_models.get_model_pattern_role_play(
-        num_prompts=num_prompts
+        num_prompts=num_prompts, openai_api_key=openai_api_key
     )
 
     # Generate prompt candidates

@@ -15,6 +15,7 @@ def prompt_generation_few_shots(
     task_request: TaskRequest,
     prompt_model_candidates: PromptModelCandidates,
     starting_prompt_model_id: int,
+    openai_api_key: str,
 ) -> PromptModelCandidates:
     """Generates few-shot based prompts for each of the given prompts.
 
@@ -58,7 +59,7 @@ def prompt_generation_few_shots(
         # k: This is the number of examples to produce.
         example_selector = MaxMarginalRelevanceExampleSelector.from_examples(
             examples,
-            OpenAIEmbeddings(),
+            OpenAIEmbeddings(openai_api_key=openai_api_key),
             FAISS,
             k=task_request.applicable_llms[model_name]["max_few_shots"],
         )

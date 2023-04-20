@@ -8,7 +8,9 @@ import numpy as np
 
 
 def get_semantic_cosine_similarity_openAI(
-    task_request: TaskRequest, inference_evaluation_results: InferenceEvaluationResults
+    task_request: TaskRequest,
+    inference_evaluation_results: InferenceEvaluationResults,
+    openai_api_key: str,
 ) -> None:
     """Computes cosine similarity for each combination of output and ground truth.
 
@@ -17,6 +19,7 @@ def get_semantic_cosine_similarity_openAI(
     Args:
         task_request (TaskRequest): data structure holding task request information such ground truth dataset.
         inference_evaluation_results (InferenceEvaluationResults): data structure with inference results.
+        openai_api_key (str): OpenAI API key to use.
     """
     # Get ground truth data corresponding to each evaluation_data_id
     reference_table = inference_evaluation_results.join(
@@ -30,8 +33,12 @@ def get_semantic_cosine_similarity_openAI(
     for index, row in reference_table.iterrows():
         start_time = time.time()
         if row["output"] != "":
-            output_embedding = OpenAIEmbeddings().embed_query(row["output"])
-            ground_truth_embedding = OpenAIEmbeddings().embed_query(row["ground_truth"])
+            output_embedding = OpenAIEmbeddings(
+                openai_api_key=openai_api_key
+            ).embed_query(row["output"])
+            ground_truth_embedding = OpenAIEmbeddings(
+                openai_api_key=openai_api_key
+            ).embed_query(row["ground_truth"])
             cosine_similarity = np.dot(output_embedding, ground_truth_embedding) / (
                 np.linalg.norm(output_embedding)
                 * np.linalg.norm(ground_truth_embedding)

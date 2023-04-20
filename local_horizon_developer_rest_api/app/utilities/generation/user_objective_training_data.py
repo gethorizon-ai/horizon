@@ -21,6 +21,7 @@ def prompt_generation_user_objective_training_data(
     model_object: BaseLLM,
     num_prompts: int,
     starting_prompt_model_id: int,
+    openai_api_key: str,
 ) -> PromptModelCandidates:
     """Generates prompt candidates based on user-provided objective, input variables, and training data.
 
@@ -29,6 +30,7 @@ def prompt_generation_user_objective_training_data(
         model_object (BaseLLM): LLM to use with generated prompt.
         num_prompts (int): number of prompt candidates to generate.
         starting_prompt_model_id (int): starting id for prompt-model candidates.
+        openai_api_key (str): OpenAI API key to use.
 
     Returns:
         PromptModelCandidates: data structure with generated prompt-model candidates.
@@ -36,7 +38,7 @@ def prompt_generation_user_objective_training_data(
     # Get metaprompt and format it
     few_shot_metaprompt = (
         prompt_generation_metaprompts.get_metaprompt_user_objective_training_data(
-            task_request=task_request
+            task_request=task_request, openai_api_key=openai_api_key
         )
     )
     formatted_metaprompt = few_shot_metaprompt.format(
@@ -48,7 +50,7 @@ def prompt_generation_user_objective_training_data(
 
     # Get LLM
     metaprompt_model = prompt_generation_models.get_model_user_objective_training_data(
-        num_prompts=num_prompts
+        num_prompts=num_prompts, openai_api_key=openai_api_key
     )
 
     # Generate prompt candidates
