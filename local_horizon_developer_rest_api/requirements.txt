@@ -51,8 +51,8 @@ multidict==6.0.4
 mypy-extensions==1.0.0
 mysql-connector-python==8.0.32
 mysqlclient==2.1.1
-numpy==1.24.2
-openai==0.27.2
+numpy
+openai
 ordered-set==4.1.0
 packaging==23.0
 pandas==2.0.0
