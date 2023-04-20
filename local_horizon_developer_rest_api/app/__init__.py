@@ -5,7 +5,7 @@ from flask_restful import Api
 from flask_httpauth import HTTPBasicAuth
 from flask_cors import CORS
 from config import Config
-
+import os
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -16,7 +16,8 @@ cors = CORS()
 
 def create_app():
     app = Flask(__name__)
-    app.config.from_object(Config)
+    # app.config.from_object(Config)
+    app.config.from_object(os.environ.get('APP_SETTINGS', Config))
 
     db.init_app(app)
     migrate.init_app(app, db)
