@@ -80,7 +80,7 @@ s3transfer
 scipy
 shellingham
 six
-sklearn
+scikit-learn
 SQLAlchemy
 stack-data
 tenacity
