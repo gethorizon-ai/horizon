@@ -740,7 +740,7 @@ cli.add_command(user)
 cli.add_command(project)
 cli.add_command(task)
 cli.add_command(evaluation_dataset)
-cli.add_command(prompt)
+# cli.add_command(prompt)
 
 # User-related commands
 user.add_command(register_user)
