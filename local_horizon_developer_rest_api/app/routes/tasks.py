@@ -1,6 +1,6 @@
 from flask import request, send_file, make_response, g
 from flask_restful import Resource, reqparse
-from app.models.component import Task, Prompt
+from app.models.component import Task, Prompt, Project
 from app import db, api
 from app.routes.users import api_key_required
 from app.utilities.run import run1
@@ -21,8 +21,17 @@ def allowed_file(filename):
 class ListTasksAPI(Resource):
     @api_key_required
     def get(self):
-        tasks = Task.query.all()
-        return {"tasks": [task.to_dict_filtered() for task in tasks]}, 200
+        # Fetch tasks associated with user
+        tasks = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Project.user_id == g.user.id)
+            .all()
+        )
+
+        return {
+            "message": "Tasks retrieved successfully",
+            "tasks": [task.to_dict_filtered() for task in tasks],
+        }, 200
 
 
 class CreateTaskAPI(Resource):
@@ -39,6 +48,13 @@ class CreateTaskAPI(Resource):
             "project_id", type=int, required=True, help="Project ID is required"
         )
         args = parser.parse_args()
+
+        # Check that project exists and is associated with user
+        project = Project.query.filter_by(
+            id=args["project_id"], user_id=g.user.id
+        ).first()
+        if not project:
+            return {"error": "Project not found or not associated with user"}, 400
 
         # Create a new task
         task = Task(
@@ -73,16 +89,30 @@ class CreateTaskAPI(Resource):
 class TaskAPI(Resource):
     @api_key_required
     def get(self, task_id):
-        task = Task.query.get(task_id)
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
-        return task.to_dict_filtered(), 200
+            return {"error": "Task not found or not associated with user"}, 404
+        return {
+            "message": "Task retrieved successfully",
+            "task": task.to_dict_filtered(),
+        }, 200
 
     @api_key_required
     def put(self, task_id):
-        task = Task.query.get(task_id)
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
+            return {"error": "Task not found or not associated with user"}, 404
+
         parser = reqparse.RequestParser()
         parser.add_argument("objective", type=str)
         parser.add_argument("task_type", type=str)
@@ -112,9 +142,14 @@ class TaskAPI(Resource):
 
     @api_key_required
     def delete(self, task_id):
-        task = Task.query.get(task_id)
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
+            return {"error": "Task not found or not associated with user"}, 404
 
         try:
             db.session.delete(task)
@@ -128,46 +163,61 @@ class TaskAPI(Resource):
 
 class GetCurrentPromptAPI(Resource):
     @api_key_required
-    def get(self, task_id):
+    def get(self):
         parser = reqparse.RequestParser()
         parser.add_argument(
             "task_id", type=int, required=True, help="Task ID is required"
         )
         args = parser.parse_args()
 
-        task = Task.query.get(args["task_id"])
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
+            return {"error": "Task not found or not associated with user"}, 404
         prompt = Prompt.query.get(task.active_prompt_id)
         if not prompt:
-            return {"error": "Prompt not found"}, 404
-        return prompt.to_dict_filtered(), 200
+            return {"error": "Prompt not found or not associated with user"}, 404
+        return {
+            "message": "Prompt retrieved successfully",
+            "prompt": prompt.to_dict_filtered(),
+        }, 200
 
 
 class SetCurrentPromptAPI(Resource):
     @api_key_required
-    def put(self, task_id):
+    def put(self):
         parser = reqparse.RequestParser()
         parser.add_argument(
             "task_id", type=int, required=True, help="Task ID is required"
         )
-        args = parser.parse_args()
-
-        task = Task.query.get(args["task_id"])
-        if not task:
-            return {"error": "Task not found"}, 404
-
-        parser = reqparse.RequestParser()
         parser.add_argument(
             "prompt_id", type=int, required=True, help="Prompt ID is required"
         )
         args = parser.parse_args()
 
-        prompt = Prompt.query.get(args["prompt_id"])
-        if not prompt:
-            return {"error": "Prompt not found"}, 404
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .first()
+        )
+        if not task:
+            return {"error": "Task not found or not associated with user"}, 404
 
-        task.active_prompt_id = args["prompt_id"]
+        # Fetch task and check it is associated with task
+        prompt = (
+            Prompt.query.join(Task)
+            .filter(Prompt.id == args["prompt_id"], Task.id == task.id)
+            .first()
+        )
+        if not prompt:
+            return {"error": "Prompt not found or not associated with user"}, 404
+
+        task.active_prompt_id = prompt.id
         try:
             db.session.commit()
         except Exception as e:
@@ -183,23 +233,22 @@ class SetCurrentPromptAPI(Resource):
 class GetTaskConfirmationDetailsAPI(Resource):
     @api_key_required
     def get(self, task_id):
-        task = Task.query.get(task_id)
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
-
-        # with open(
-        #     task.evaluation_dataset, "r", encoding="utf-8"
-        # ) as evaluation_dataset_file:
-        #     reader = csv.DictReader(evaluation_dataset_file)
-        #     evaluation_dataset = [row for row in reader]
-
-        # return {"evaluation_dataset": evaluation_dataset}, 200
+            return {"error": "Task not found or not associated with user"}, 404
 
         # Call the get_task_confirmation_details function with the task_id
-        # try:
-        task_confirmation_details = run1.get_task_confirmation_details(task_id=task_id)
-        # except Exception as e:
-        #     return {"error": str(e)}, 400
+        try:
+            task_confirmation_details = run1.get_task_confirmation_details(
+                task_id=task_id
+            )
+        except Exception as e:
+            return {"error": str(e)}, 400
 
         return {
             "message": "Task confirmation details produced",
@@ -233,9 +282,14 @@ class GenerateTaskAPI(Resource):
         )
         args = parser.parse_args()
 
-        task = Task.query.get(args["task_id"])
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
+            return {"error": "Task not found or not associated with user"}, 404
 
         if not task.active_prompt_id:
             return {"error": "Active prompt not found for the task"}, 404
@@ -281,20 +335,29 @@ class DeployTaskAPI(Resource):
         )
         args = parser.parse_args()
 
-        task = Task.query.get(args["task_id"])
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
+            return {"error": "Task not found or not associated with user"}, 404
+
         if not task.active_prompt_id:
             return {"error": "Active prompt not found for the task"}, 404
 
-        # Call the deploy function with the provided task.active_prompt_id and inputs
+        # Call the deploy function with the active prompt id and provided inputs
         try:
             return_value = deploy_prompt(
                 prompt_id=task.active_prompt_id,
                 input_values=args["inputs"],
                 openai_api_key=args["openai_api_key"],
             )
-            return {"completion": return_value}, 200
+            return {
+                "message": "Task deployed successfully",
+                "completion": return_value,
+            }, 200
         except Exception as e:
             return {"error": f"Failed with exception: {str(e)}"}, 400
 
@@ -302,9 +365,14 @@ class DeployTaskAPI(Resource):
 class UploadEvaluationDatasetsAPI(Resource):
     @api_key_required
     def post(self, task_id):
-        task = Task.query.get(task_id)
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
+            return {"error": "Task not found or not associated with user"}, 404
 
         if "evaluation_dataset" not in request.files:
             return {"error": f"No file provided\n{request.files}"}, 400
@@ -349,9 +417,14 @@ class UploadEvaluationDatasetsAPI(Resource):
 class ViewEvaluationDatasetsAPI(Resource):
     @api_key_required
     def get(self, task_id):
-        task = Task.query.get(task_id)
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
+            return {"error": "Task not found or not associated with user"}, 404
 
         if not task.evaluation_dataset:
             return {
@@ -364,15 +437,23 @@ class ViewEvaluationDatasetsAPI(Resource):
             reader = csv.DictReader(evaluation_dataset_file)
             evaluation_dataset = [row for row in reader]
 
-        return {"evaluation_dataset": evaluation_dataset}, 200
+        return {
+            "message": "Evaluation dataset retrieved successfully",
+            "evaluation_dataset": evaluation_dataset,
+        }, 200
 
 
 class EvaluationDatasetsAPI(Resource):
     @api_key_required
     def get(self, task_id):
-        task = Task.query.get(task_id)
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
+            return {"error": "Task not found or not associated with user"}, 404
 
         if not task.evaluation_dataset:
             return {"error": "No evaluation datasets available"}, 404
@@ -391,9 +472,14 @@ class EvaluationDatasetsAPI(Resource):
 class DeleteEvaluationDatasetsAPI(Resource):
     @api_key_required
     def delete(self, task_id):
-        task = Task.query.get(task_id)
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not task:
-            return {"error": "Task not found"}, 404
+            return {"error": "Task not found or not associated with user"}, 404
 
         if not task.evaluation_dataset:
             return {
@@ -419,7 +505,7 @@ def register_routes(api):
     api.add_resource(CreateTaskAPI, "/api/tasks/create")
     api.add_resource(TaskAPI, "/api/tasks/<int:task_id>")
     api.add_resource(GetCurrentPromptAPI, "/api/tasks/get_curr_prompt")
-    api.add_resource(SetCurrentPromptAPI, "/api/tasks/set_curr_prompt")
+    # api.add_resource(SetCurrentPromptAPI, "/api/tasks/set_curr_prompt")
     api.add_resource(
         GetTaskConfirmationDetailsAPI,
         "/api/tasks/<int:task_id>/get_task_confirmation_details",

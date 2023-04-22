@@ -60,6 +60,7 @@ def _handle_response(response):
 
 
 # User-related methods
+# TODO: remove this function once user registration is triggered automatically through cognito sign-up
 def register_user(username, email, password):
     data = {"username": username, "email": email, "password": password}
     headers = {"Content-Type": "application/json"}
@@ -67,11 +68,11 @@ def register_user(username, email, password):
     return response
 
 
-def authenticate_user(username, password):
+def generate_new_api_key(username, password):
     data = {"username": username, "password": password}
     headers = {"Content-Type": "application/json"}
     response = _post(
-        endpoint="/api/users/authenticate",
+        endpoint="/api/users/generate_new_api_key",
         json=data,
         headers=headers,
     )
@@ -87,13 +88,13 @@ def get_user():
     return response
 
 
-def delete_user():
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key, "Content-Type": "application/json"}
-    response = _delete(endpoint="/api/users/", headers=headers)
-    return response
+# def delete_user():
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"X-Api-Key": api_key, "Content-Type": "application/json"}
+#     response = _delete(endpoint="/api/users/", headers=headers)
+#     return response
 
 
 # Project-related methods
@@ -133,7 +134,6 @@ def update_project(
     project_id,
     description=None,
     status=None,
-    delete_evaluation_dataset=False,
 ):
     global api_key
     if api_key == None:
@@ -142,7 +142,6 @@ def update_project(
     data = {
         "description": description,
         "status": status,
-        "delete_evaluation_dataset": delete_evaluation_dataset,
     }
     response = _put(endpoint=f"/api/projects/{project_id}", json=data, headers=headers)
     return response
@@ -236,16 +235,29 @@ def get_task_curr_prompt(task_id):
     return response
 
 
-# Set the current prompt of a task
-def set_task_curr_prompt(task_id, prompt_id):
+# # Set the current prompt of a task
+# def set_task_curr_prompt(task_id, prompt_id):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+#     payload = {"task_id": task_id, "prompt_id": prompt_id}
+#     response = _put(
+#         endpoint="/api/tasks/set_curr_prompt",
+#         json=payload,
+#         headers=headers,
+#     )
+#     return response
+
+
+# Get information to confirm with user (e.g., estimated cost) before proceeding with task creation
+def get_task_confirmation_details(task_id):
     global api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
-    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
-    payload = {"task_id": task_id, "prompt_id": prompt_id}
-    response = _put(
-        endpoint="/api/tasks/set_curr_prompt",
-        json=payload,
+    headers = {"X-Api-Key": api_key}
+    response = _get(
+        endpoint=f"/api/tasks/{task_id}/get_task_confirmation_details",
         headers=headers,
     )
     return response
@@ -366,89 +378,80 @@ def delete_evaluation_dataset(task_id):
 #     return response_data
 
 
-# Get information to confirm with user (e.g., estimated cost) before proceeding with task creation
-def get_task_confirmation_details(task_id):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key}
-    response = _get(
-        endpoint=f"/api/tasks/{task_id}/get_task_confirmation_details",
-        headers=headers,
-    )
-    return response
-
-
 # Prompt-related methods
-# List prompts
-def list_prompts():
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key}
-    response = _get(endpoint="/api/prompts", headers=headers)
-    return response
+# # List prompts
+# def list_prompts():
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"X-Api-Key": api_key}
+#     response = _get(endpoint="/api/prompts", headers=headers)
+#     return response
 
 
-# Create a new prompt
-def create_prompt(name, task_id):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
-    payload = {"name": name, "task_id": task_id}
-    response = _post(endpoint="/api/prompts/new", json=payload, headers=headers)
-    return response
+# # Create a new prompt
+# def create_prompt(name, task_id):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+#     payload = {"name": name, "task_id": task_id}
+#     response = _post(endpoint="/api/prompts/new", json=payload, headers=headers)
+#     return response
 
 
-# Get prompt information
-def get_prompt(prompt_id):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key}
-    response = _get(f"/api/prompts/{prompt_id}", headers=headers)
-    return response
+# # Get prompt information
+# def get_prompt(prompt_id):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"X-Api-Key": api_key}
+#     response = _get(f"/api/prompts/{prompt_id}", headers=headers)
+#     return response
 
 
-# Update a prompt
-def update_prompt(prompt_id, **kwargs):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
-    payload = {k: v for k, v in kwargs.items() if v is not None}
-    response = _put(endpoint=f"/api/prompts/{prompt_id}", json=payload, headers=headers)
-    return response
+# # Update a prompt
+# def update_prompt(prompt_id, **kwargs):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+#     payload = {k: v for k, v in kwargs.items() if v is not None}
+#     response = _put(endpoint=f"/api/prompts/{prompt_id}", json=payload, headers=headers)
+#     return response
 
 
-# Delete a prompt
-def delete_prompt(prompt_id):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key}
-    response = _delete(endpoint=f"/api/prompts/{prompt_id}", headers=headers)
-    return response
+# # Delete a prompt
+# def delete_prompt(prompt_id):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"X-Api-Key": api_key}
+#     response = _delete(endpoint=f"/api/prompts/{prompt_id}", headers=headers)
+#     return response
 
 
-# Generate a prompt
-def generate_prompt(objective, prompt_id):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
-    payload = {"objective": objective, "prompt_id": prompt_id}
-    response = _post(endpoint="/api/prompts/generate", json=payload, headers=headers)
-    return response
+# # Generate a prompt
+# def generate_prompt(objective, prompt_id, openai_api_key):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+#     payload = {
+#         "objective": objective,
+#         "prompt_id": prompt_id,
+#         "openai_api_key": openai_api_key,
+#     }
+#     response = _post(endpoint="/api/prompts/generate", json=payload, headers=headers)
+#     return response
 
 
-# Deploy a prompt
-def deploy_prompt(prompt_id, inputs):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
-    payload = {"prompt_id": prompt_id, "inputs": inputs}
-    response = _post(endpoint="/api/prompts/deploy", json=payload, headers=headers)
-    return response
+# # Deploy a prompt
+# def deploy_prompt(prompt_id, inputs):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+#     payload = {"prompt_id": prompt_id, "inputs": inputs}
+#     response = _post(endpoint="/api/prompts/deploy", json=payload, headers=headers)
+#     return response

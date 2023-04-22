@@ -21,8 +21,11 @@ ALLOWED_EXTENSIONS = {"csv"}
 class ListProjectsAPI(Resource):
     @api_key_required
     def get(self):
-        projects = Project.query.all()
-        return {"projects": [project.to_dict() for project in projects]}, 200
+        projects = Project.query.filter_by(user_id=g.user.id).all()
+        return {
+            "message": "Projects retrieved successfully",
+            "projects": [project.to_dict() for project in projects],
+        }, 200
 
 
 class CreateProjectAPI(Resource):
@@ -52,16 +55,16 @@ class CreateProjectAPI(Resource):
 class ProjectAPI(Resource):
     @api_key_required
     def get(self, project_id):
-        project = Project.query.get(project_id)
+        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
         if not project:
-            return {"error": "Project not found"}, 404
+            return {"error": "Project not found or not associated with user"}, 404
         return project.to_dict(), 200
 
     @api_key_required
     def put(self, project_id):
-        project = Project.query.get(project_id)
+        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
         if not project:
-            return {"error": "Project not found"}, 404
+            return {"error": "Project not found or not associated with user"}, 404
 
         parser = reqparse.RequestParser()
         parser.add_argument("description", type=str)
@@ -86,16 +89,10 @@ class ProjectAPI(Resource):
 
     @api_key_required
     def delete(self, project_id):
-        project = Project.query.get(project_id)
+        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
         if not project:
-            return {"error": "Project not found"}, 404
+            return {"error": "Project not found or not associated with user"}, 404
 
-        try:
-            db.session.delete(project)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            return {"error": str(e)}, 400
         try:
             db.session.delete(project)
             db.session.commit()

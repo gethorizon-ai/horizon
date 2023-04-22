@@ -10,9 +10,11 @@ import base64
 
 def create_secret_hash(client_id, client_secret, name):
     message = name + client_id
-    dig = hmac.new(client_secret.encode('utf-8'),
-                   msg=message.encode('utf-8'),
-                   digestmod=hashlib.sha256).digest()
+    dig = hmac.new(
+        client_secret.encode("utf-8"),
+        msg=message.encode("utf-8"),
+        digestmod=hashlib.sha256,
+    ).digest()
     return base64.b64encode(dig).decode()
 
 
@@ -24,58 +26,61 @@ class User(db.Model):
     id = db.Column(db.String(64), primary_key=True)
     name = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    api_key = db.Column(db.String(36), unique=True,
-                        nullable=False, default=generate_api_key)
-    projects = db.relationship('Project', backref='user', lazy='dynamic')
+    api_key_hash = db.Column(db.String(128), unique=True, nullable=False)
+    projects = db.relationship("Project", backref="user", lazy="dynamic")
 
     # Initialize the Cognito client
-    cognito = boto3.client('cognito-idp',
-                           region_name=Config.AWS_REGION)
+    cognito = boto3.client("cognito-idp", region_name=Config.AWS_REGION)
 
     def __init__(self, name, email, password=None, cognito_user=None):
         self.name = name
         self.email = email
-        self.api_key = generate_api_key()
+        api_key = generate_api_key()
+        self.api_key_hash = hashlib.sha256(api_key.encode("UTF-8")).hexdigest()
         if cognito_user:
-            self.id = cognito_user['UserSub']
+            self.id = cognito_user["UserSub"]
         elif password:
             self.create_cognito_user(password)
 
     def create_cognito_user(self, password):
-        secret_hash = create_secret_hash(Config.COGNITO_CLIENT_ID,
-                                         Config.COGNITO_CLIENT_SECRET,
-                                         self.email)
+        secret_hash = create_secret_hash(
+            Config.COGNITO_CLIENT_ID, Config.COGNITO_CLIENT_SECRET, self.email
+        )
         response = self.cognito.sign_up(
             ClientId=Config.COGNITO_CLIENT_ID,
             SecretHash=secret_hash,
             Username=self.email,
             Password=password,
             UserAttributes=[
-                {'Name': 'email', 'Value': self.email},
-                {'Name': 'name', 'Value': self.name}
-            ]
+                {"Name": "email", "Value": self.email},
+                {"Name": "name", "Value": self.name},
+            ],
         )
-        self.id = response['UserSub']
+        self.id = response["UserSub"]
 
     @classmethod
     def authenticate(cls, email, password):
         try:
             response = cls.cognito.initiate_auth(
                 ClientId=Config.COGNITO_CLIENT_ID,
-                AuthFlow='USER_PASSWORD_AUTH',
-                AuthParameters={
-                    'USERNAME': email,
-                    'PASSWORD': password
-                }
+                AuthFlow="USER_PASSWORD_AUTH",
+                AuthParameters={"USERNAME": email, "PASSWORD": password},
             )
             return cls.query.filter_by(email=email).first()
         except Exception as e:
             return None
 
+    def generate_new_api_key(self):
+        api_key = generate_api_key()
+        self.api_key_hash = hashlib.sha256(api_key.encode("UTF-8")).hexdigest()
+        return api_key
+
+    def check_api_key(self, api_key):
+        api_key_hash = hashlib.sha256(api_key.encode("UTF-8")).hexdigest()
+        return self.api_key_hash == api_key_hash
+
     def to_dict(self):
         return {
-            'id': self.id,
-            'name': self.name,
-            'email': self.email,
-            'api_key': self.api_key
+            "name": self.name,
+            "email": self.email,
         }

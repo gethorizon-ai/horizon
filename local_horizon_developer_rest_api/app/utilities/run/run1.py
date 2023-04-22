@@ -411,6 +411,9 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
     }
     task.evaluation_statistics = json.dumps(evaluation_statistics)
 
+    # Set newly created prompt as the active prompt for the task if it is not already so
+    task.active_prompt_id = prompt_id
+
     # Commit the changes to the database
     db.session.commit()
 

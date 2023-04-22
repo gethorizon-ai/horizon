@@ -1,6 +1,6 @@
-from flask import request
+from flask import request, g
 from flask_restful import Resource, reqparse
-from app.models.component import Prompt
+from app.models.component import Prompt, Task, Project, User
 from app import db, api
 from app.routes.users import api_key_required
 from app.utilities.run.run1 import generate_prompt
@@ -10,7 +10,13 @@ from app.deploy.prompt import deploy_prompt
 class ListPromptsAPI(Resource):
     @api_key_required
     def get(self):
-        prompts = Prompt.query.all()
+        # Fetch prompts associated with user
+        prompts = (
+            Prompt.query.join(Task, Task.id == Prompt.task_id)
+            .join(Project)
+            .filter(Project.user_id == g.user.id)
+            .all()
+        )
         return {"prompts": [prompt.to_dict() for prompt in prompts]}, 200
 
 
@@ -26,6 +32,16 @@ class CreatePromptAPI(Resource):
         )
         args = parser.parse_args()
 
+        # Check that task exists and is associated with user
+        task = (
+            Task.query.join(Project)
+            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .first()
+        )
+        if not task:
+            return {"error": "Task not found or not associated with user"}, 404
+
+        # Create prompt and associate with given task id
         prompt = Prompt(name=args["name"], task_id=args["task_id"])
 
         try:
@@ -43,16 +59,28 @@ class CreatePromptAPI(Resource):
 class PromptAPI(Resource):
     @api_key_required
     def get(self, prompt_id):
-        prompt = Prompt.query.get(prompt_id)
+        # Fetch prompt and check it is associated with user
+        prompt = (
+            Prompt.query.join(Task, Task.id == Prompt.task_id)
+            .join(Project)
+            .filter(Prompt.id == prompt_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not prompt:
-            return {"error": "Prompt not found"}, 404
+            return {"error": "Prompt not found or not associated with user"}, 404
         return prompt.to_dict(), 200
 
     @api_key_required
     def put(self, prompt_id):
-        prompt = Prompt.query.get(prompt_id)
+        # Fetch prompt and check it is associated with user
+        prompt = (
+            Prompt.query.join(Task, Task.id == Prompt.task_id)
+            .join(Project)
+            .filter(Prompt.id == prompt_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not prompt:
-            return {"error": "Prompt not found"}, 404
+            return {"error": "Prompt not found or not associated with user"}, 404
 
         parser = reqparse.RequestParser()
         parser.add_argument("version", type=str)
@@ -104,9 +132,15 @@ class PromptAPI(Resource):
 
     @api_key_required
     def delete(self, prompt_id):
-        prompt = Prompt.query.get(prompt_id)
+        # Fetch prompt and check it is associated with user
+        prompt = (
+            Prompt.query.join(Task, Task.id == Prompt.task_id)
+            .join(Project)
+            .filter(Prompt.id == prompt_id, Project.user_id == g.user.id)
+            .first()
+        )
         if not prompt:
-            return {"error": "Prompt not found"}, 404
+            return {"error": "Prompt not found or not associated with user"}, 404
 
         try:
             db.session.delete(prompt)
@@ -128,11 +162,32 @@ class GeneratePromptAPI(Resource):
         parser.add_argument(
             "prompt_id", type=int, required=True, help="Prompt ID is required"
         )
+        parser.add_argument(
+            "openai_api_key", type=str, required=True, help="OpenAI API key is required"
+        )
         args = parser.parse_args()
 
-        # Call the generate_prompt function with the provided objective and prompt_id
-        generated_prompt = generate_prompt(args["objective"], args["prompt_id"])
-        generated_prompt_dict = generated_prompt.to_dict()
+        # Fetch prompt and check it is associated with user
+        prompt = (
+            Prompt.query.join(Task, Task.id == Prompt.task_id)
+            .join(Project)
+            .filter(Prompt.id == args["prompt_id"], Project.user_id == g.user.id)
+            .first()
+        )
+        if not prompt:
+            return {"error": "Prompt not found or not associated with user"}, 404
+
+        # Call generate_prompt function with provided objective and prompt_id
+        try:
+            generated_prompt = generate_prompt(
+                user_objective=args["objective"],
+                prompt_id=args["prompt_id"],
+                openai_api_key=args["openai_api_key"],
+            )
+            generated_prompt_dict = generated_prompt.to_dict()
+        except Exception as e:
+            return {"error": str(e)}, 400
+
         return {
             "message": "Prompt generation completed",
             "generated_prompt": generated_prompt_dict,
@@ -154,8 +209,21 @@ class DeployPromptAPI(Resource):
         )
         args = parser.parse_args()
 
-        # Call the deploy function with the provided prompt_id and inputs
-        return_value = deploy_prompt(args["prompt_id"], args["inputs"])
+        # Fetch prompt and check it is associated with user
+        prompt = (
+            Prompt.query.join(Task, Task.id == Prompt.task_id)
+            .join(Project)
+            .filter(Prompt.id == args["prompt_id"], Project.user_id == g.user.id)
+            .first()
+        )
+        if not prompt:
+            return {"error": "Prompt not found or not associated with user"}, 404
+
+        # Call deploy function with provided prompt_id and inputs
+        try:
+            return_value = deploy_prompt(args["prompt_id"], args["inputs"])
+        except Exception as e:
+            return {"error": str(e)}, 400
 
         return {
             "message": "Prompt deployment completed",
@@ -163,9 +231,9 @@ class DeployPromptAPI(Resource):
         }, 200
 
 
-def register_routes(api):
-    api.add_resource(ListPromptsAPI, "/api/prompts")
-    api.add_resource(CreatePromptAPI, "/api/prompts/new")
-    api.add_resource(PromptAPI, "/api/prompts/<int:prompt_id>")
-    api.add_resource(GeneratePromptAPI, "/api/prompts/generate")
-    api.add_resource(DeployPromptAPI, "/api/prompts/deploy")
+# def register_routes(api):
+#     api.add_resource(ListPromptsAPI, "/api/prompts")
+#     api.add_resource(CreatePromptAPI, "/api/prompts/new")
+#     api.add_resource(PromptAPI, "/api/prompts/<int:prompt_id>")
+#     api.add_resource(GeneratePromptAPI, "/api/prompts/generate")
+#     api.add_resource(DeployPromptAPI, "/api/prompts/deploy")

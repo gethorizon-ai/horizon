@@ -10,6 +10,7 @@ import os
 import boto3
 from config import Config
 import logging
+import hashlib
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -20,31 +21,36 @@ cognito_pool_id = config.COGNITO_POOL_ID
 cognito_client_id = config.COGNITO_CLIENT_ID
 cognito_client_secret = config.COGNITO_CLIENT_SECRET
 
-cognito = Cognito(cognito_pool_id, cognito_client_id,
-                  client_secret=cognito_client_secret)
+cognito = Cognito(
+    cognito_pool_id, cognito_client_id, client_secret=cognito_client_secret
+)
 
 
 def api_key_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        api_key = request.headers.get('X-Api-Key')
+        api_key = request.headers.get("X-Api-Key")
         if not api_key:
             return {"error": "API key required"}, 401
 
-        user = User.query.filter_by(api_key=api_key).first()
+        # Hash API key and look up user
+        api_key_hash = hashlib.sha256(api_key.encode("UTF-8")).hexdigest()
+        user = User.query.filter_by(api_key_hash=api_key_hash).first()
         if not user:
             return {"error": "Invalid API key"}, 401
 
+        # Attach user object to app context for function to reference
         g.user = user
 
         return f(*args, **kwargs)
+
     return decorated_function
 
 
 def cognito_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        auth_header = request.headers.get('Authorization')
+        auth_header = request.headers.get("Authorization")
         if not auth_header:
             return {"error": "Authorization header required"}, 401
 
@@ -53,29 +59,29 @@ def cognito_auth_required(f):
             return {"error": "Access token required"}, 401
 
         try:
-            cognito.verify_token(access_token, 'access_token')
+            cognito.verify_token(access_token, "access_token")
         except Exception as e:
             return {"error": str(e)}, 401
 
         g.user = cognito.get_user()
 
         return f(*args, **kwargs)
+
     return decorated_function
 
 
 class RegisterAPI(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, required=True,
-                            help='Name is required')
-        parser.add_argument('email', type=str, required=True,
-                            help='Email is required')
-        parser.add_argument('password', type=str,
-                            required=True, help='Password is required')
+        parser.add_argument("name", type=str, required=True, help="Name is required")
+        parser.add_argument("email", type=str, required=True, help="Email is required")
+        parser.add_argument(
+            "password", type=str, required=True, help="Password is required"
+        )
         args = parser.parse_args()
 
         try:
-            user = User(args['name'], args['email'], password=args['password'])
+            user = User(args["name"], args["email"], password=args["password"])
             db.session.add(user)
             db.session.commit()
         except Exception as e:
@@ -84,22 +90,23 @@ class RegisterAPI(Resource):
         return {"message": "User registered successfully", "api_key": user.api_key}, 201
 
 
-class AuthenticateAPI(Resource):
+class GenerateAPIKeyAPI(Resource):
+    @cognito_auth_required
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('email', type=str, required=True,
-                            help='Email is required')
-        parser.add_argument('password', type=str,
-                            required=True, help='Password is required')
-        args = parser.parse_args()
-
-        user = User.authenticate(args['email'], args['password'])
+        user = g.user
         if not user:
-            return {"error": "Authentication failed"}, 401
+            return {"error": "User not found"}, 404
+
+        api_key = user.generate_new_api_key()
+        try:
+            db.session.commit()
+        except IntegrityError as e:
+            db.session.rollback()
+            return {"error": str(e)}, 400
 
         return {
-            "api_key": user.api_key,
-            "message": "User authenticated successfully"
+            "api_key": api_key,
+            "message": "API key generated successfully. Please store this securely as it cannot be retrieved. If lost, a new API key will need to be generated.",
         }, 200
 
 
@@ -128,10 +135,11 @@ class DeleteUserAPI(Resource):
 
 
 def register_routes(api):
-    api.add_resource(RegisterAPI, '/api/users/register')
-    api.add_resource(AuthenticateAPI, '/api/users/authenticate')
-    api.add_resource(GetUserAPI, '/api/users/')
-    api.add_resource(DeleteUserAPI, '/api/users/')
+    api.add_resource(RegisterAPI, "/api/users/register")
+    # api.add_resource(AuthenticateAPI, '/api/users/authenticate')
+    api.add_resource(GenerateAPIKeyAPI, "/api/users/generate_new_api_key")
+    api.add_resource(GetUserAPI, "/api/users/")
+    api.add_resource(DeleteUserAPI, "/api/users/")
 
 
 # Register a new user:
