@@ -47,7 +47,9 @@ def prompt():
 @click.command(name="register")
 @click.option("--username", prompt="Username", help="The username for the new user.")
 @click.option("--email", prompt="Email", help="The email for the new user.")
-@click.option("--password", prompt="Password", help="The password for the new user.")
+@click.password_option(
+    "--password", prompt="Password", help="The password for the new user."
+)
 def register_user(username, email, password):
     try:
         result = horizon_ai.register_user(username, email, password)
@@ -60,7 +62,9 @@ def register_user(username, email, password):
 # Generate new Horizon API key for user
 @click.command(name="api-key")
 @click.option("--username", prompt="Username", help="The username for the user.")
-@click.option("--password", prompt="Password", help="The password for the user.")
+@click.password_option(
+    "--password", prompt="Password", help="The password for the user."
+)
 def authenticate_user(username, password):
     try:
         result = horizon_ai.generate_new_api_key(username, password)

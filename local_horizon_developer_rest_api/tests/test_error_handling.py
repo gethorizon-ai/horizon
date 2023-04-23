@@ -26,16 +26,25 @@ def test_client():
 def test_invalid_horizon_api_key(test_client):
     """Test error handling when user provides invalid Horizon API key."""
     with test_client.application.app_context():
-        # Create sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
         # Use the create task API
-        task_data = {"name": "New Task", "task_type": "development", "project_id": 1}
+        task_data = {"name": "New Task", "task_type": "development", "project_id": p.id}
         create_task_response = test_client.post(
-            "/api/tasks/create", json=task_data, headers={"X-Api-Key": u.api_key}
+            "/api/tasks/create", json=task_data, headers={"X-Api-Key": api_key}
         )
+
+        # Check that request succeeded
+        assert create_task_response.status_code in [200, 201]
 
         # Try to get the task using the wrong Horizon API key. Should fail
         get_task_response = test_client.get(
@@ -48,6 +57,7 @@ def test_invalid_horizon_api_key(test_client):
         # Clean up
         task = Task.query.filter_by(name="New Task").first()
         db.session.delete(task)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -55,12 +65,19 @@ def test_invalid_horizon_api_key(test_client):
 def test_invalid_openai_api_key(test_client):
     """Test error handling when user provides invalid OpenAI API key."""
     with test_client.application.app_context():
-        # Create sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        project = Project(name="Sample Project", user_id=u.id)
+        db.session.add(project)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=project.id)
         db.session.add(t)
         db.session.commit()
 
@@ -87,12 +104,12 @@ def test_invalid_openai_api_key(test_client):
         db.session.commit()
 
         # Try to deploy task with wrong OpenAI API key. Should fail
-        headers = {"Content-Type": "application/json", "X-Api-Key": u.api_key}
+        headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
         payload = {
             "task_id": t.id,
             "inputs": {
-                "input": "test"
-            },  # Program prepends "var_" to input variable name
+                "input": "test"  # Program prepends "var_" to input variable name
+            },
             "openai_api_key": "wrong_openai_api_key",
         }
         response = test_client.post("/api/tasks/deploy", json=payload, headers=headers)
@@ -101,6 +118,7 @@ def test_invalid_openai_api_key(test_client):
         # Clean up
         db.session.delete(p)
         db.session.delete(t)
+        db.session.delete(project)
         db.session.delete(u)
         db.session.commit()
 
@@ -109,12 +127,19 @@ def test_invalid_evaluation_dataset_file_type(test_client):
     """Test that error is raised when trying to upload evaluation dataset with invalid file type."""
 
     with test_client.application.app_context():
-        # Create sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
@@ -123,13 +148,14 @@ def test_invalid_evaluation_dataset_file_type(test_client):
             response = test_client.post(
                 f"/api/tasks/{t.id}/upload_evaluation_dataset",
                 data={"evaluation_dataset": f},
-                headers={"X-Api-Key": u.api_key},
+                headers={"X-Api-Key": api_key},
             )
 
         assert response.status_code not in [200, 201]
 
         # Clean up
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -137,12 +163,19 @@ def test_invalid_evaluation_dataset_file_type(test_client):
 def test_invalid_evaluation_dataset_file_type(test_client):
     """Test that error is raised when trying to upload evaluation dataset with invalid file type."""
     with test_client.application.app_context():
-        # Create sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
@@ -152,13 +185,14 @@ def test_invalid_evaluation_dataset_file_type(test_client):
             response = test_client.post(
                 f"/api/tasks/{t.id}/upload_evaluation_dataset",
                 data={"evaluation_dataset": f},
-                headers={"X-Api-Key": u.api_key},
+                headers={"X-Api-Key": api_key},
             )
 
         assert response.status_code not in [200, 201]
 
         # Clean up
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -166,12 +200,19 @@ def test_invalid_evaluation_dataset_file_type(test_client):
 def test_invalid_evaluation_dataset_num_rows(test_client):
     """Test that error is raised when trying to upload evaluation dataset with <15 rows."""
     with test_client.application.app_context():
-        # Create sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
@@ -188,7 +229,7 @@ def test_invalid_evaluation_dataset_num_rows(test_client):
             response = test_client.post(
                 f"/api/tasks/{t.id}/upload_evaluation_dataset",
                 data={"evaluation_dataset": f},
-                headers={"X-Api-Key": u.api_key},
+                headers={"X-Api-Key": api_key},
             )
         assert response.status_code not in [200, 201]
 
@@ -197,6 +238,7 @@ def test_invalid_evaluation_dataset_num_rows(test_client):
 
         # Clean up
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -204,12 +246,19 @@ def test_invalid_evaluation_dataset_num_rows(test_client):
 def test_invalid_evaluation_dataset_header_names(test_client):
     """Test that error is raised when trying to upload evaluation dataset with invalid header names."""
     with test_client.application.app_context():
-        # Create sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
@@ -228,7 +277,7 @@ def test_invalid_evaluation_dataset_header_names(test_client):
             response = test_client.post(
                 f"/api/tasks/{t.id}/upload_evaluation_dataset",
                 data={"evaluation_dataset": f},
-                headers={"X-Api-Key": u.api_key},
+                headers={"X-Api-Key": api_key},
             )
         assert response.status_code not in [200, 201]
 
@@ -237,6 +286,7 @@ def test_invalid_evaluation_dataset_header_names(test_client):
 
         # Clean up
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -244,12 +294,19 @@ def test_invalid_evaluation_dataset_header_names(test_client):
 def test_invalid_evaluation_dataset_token_length(test_client):
     """Test that error is raised when trying to upload evaluation dataset with values that exceed llm token length"""
     with test_client.application.app_context():
-        # Create sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
@@ -268,7 +325,7 @@ def test_invalid_evaluation_dataset_token_length(test_client):
             response = test_client.post(
                 f"/api/tasks/{t.id}/upload_evaluation_dataset",
                 data={"evaluation_dataset": f},
-                headers={"X-Api-Key": u.api_key},
+                headers={"X-Api-Key": api_key},
             )
         assert response.status_code not in [200, 201]
 
@@ -277,6 +334,7 @@ def test_invalid_evaluation_dataset_token_length(test_client):
 
         # Clean up
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -284,20 +342,26 @@ def test_invalid_evaluation_dataset_token_length(test_client):
 def test_invalid_task_id(test_client):
     """Test that error is raised when trying to access task with invalid id."""
     with test_client.application.app_context():
-        # Create sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
         # Use the create task API
-        task_data = {"name": "New Task", "task_type": "development", "project_id": 1}
+        task_data = {"name": "New Task", "task_type": "development", "project_id": p.id}
         create_task_response = test_client.post(
-            "/api/tasks/create", json=task_data, headers={"X-Api-Key": u.api_key}
+            "/api/tasks/create", json=task_data, headers={"X-Api-Key": api_key}
         )
 
         # Try to get the task using the wrong Horizon task id. Should fail
         get_task_response = test_client.get(
-            "/api/tasks/0", headers={"X-Api-Key": u.api_key}
+            "/api/tasks/0", headers={"X-Api-Key": api_key}
         )
 
         # Check that request failed
@@ -306,6 +370,7 @@ def test_invalid_task_id(test_client):
         # Clean up
         task = Task.query.filter_by(name="New Task").first()
         db.session.delete(task)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -313,17 +378,19 @@ def test_invalid_task_id(test_client):
 def test_invalid_project_id(test_client):
     """Test that error is raised when trying to access project with invalid id."""
     with test_client.application.app_context():
-        # Create a sample user and project
+        # Create a sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        p = Project(name="Sample Project", user_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
         db.session.add(p)
         db.session.commit()
 
         # Try to get the project using the wrong id. Should fail
-        response = test_client.get("/api/projects/0", headers={"X-Api-Key": u.api_key})
+        response = test_client.get("/api/projects/0", headers={"X-Api-Key": api_key})
 
         # Check that request failed
         assert response.status_code not in [200, 201]

@@ -26,6 +26,7 @@ def test_list_projects(test_client):
     with test_client.application.app_context():
         # Create a sample user and project
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
@@ -34,7 +35,7 @@ def test_list_projects(test_client):
         db.session.commit()
 
         # Test the /api/projects endpoint (GET)
-        response = test_client.get("/api/projects", headers={"X-Api-Key": u.api_key})
+        response = test_client.get("/api/projects", headers={"X-Api-Key": api_key})
 
         # Check if the response is JSON before attempting to parse it
         if response.content_type == "application/json":
@@ -58,6 +59,7 @@ def test_create_project(test_client):
     with test_client.application.app_context():
         # Create a sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
@@ -65,7 +67,7 @@ def test_create_project(test_client):
         new_project = {"name": "New Project", "user_id": u.id}
 
         response = test_client.post(
-            "/api/projects/create", json=new_project, headers={"X-Api-Key": u.api_key}
+            "/api/projects/create", json=new_project, headers={"X-Api-Key": api_key}
         )
         data = json.loads(response.data)
 
@@ -85,6 +87,7 @@ def test_get_project(test_client):
     with test_client.application.app_context():
         # Create a sample user and project
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
@@ -93,7 +96,7 @@ def test_get_project(test_client):
         db.session.commit()
 
         # Test the /api/projects/1 endpoint (GET)
-        response = test_client.get("/api/projects/1", headers={"X-Api-Key": u.api_key})
+        response = test_client.get("/api/projects/1", headers={"X-Api-Key": api_key})
         data = json.loads(response.data)
 
         assert response.status_code == 200
@@ -110,6 +113,7 @@ def test_update_project(test_client):
     with test_client.application.app_context():
         # Create a sample user and project
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
@@ -124,7 +128,7 @@ def test_update_project(test_client):
         }
 
         response = test_client.put(
-            f"/api/projects/{u.id}", json=update_data, headers={"X-Api-Key": u.api_key}
+            f"/api/projects/{u.id}", json=update_data, headers={"X-Api-Key": api_key}
         )
         data = json.loads(response.data)
 
@@ -144,6 +148,7 @@ def test_delete_project(test_client):
     with test_client.application.app_context():
         # Create a sample user and project
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
@@ -152,9 +157,7 @@ def test_delete_project(test_client):
         db.session.commit()
 
         # Test the /api/projects/1 endpoint (DELETE)
-        response = test_client.delete(
-            "/api/projects/1", headers={"X-Api-Key": u.api_key}
-        )
+        response = test_client.delete("/api/projects/1", headers={"X-Api-Key": api_key})
         data = json.loads(response.data)
 
         assert response.status_code == 200

@@ -2,7 +2,7 @@
 
 import pytest
 import json
-from app.models.component import Task, User
+from app.models.component import Task, User, Project
 from app import create_app, db
 
 
@@ -28,9 +28,9 @@ def test_login_with_wrong_password(test_client):
         db.session.add(u)
         db.session.commit()
 
-        # Try authenticating with wrong password. Should fail
+        # Try generating an API key with wrong password. Should fail
         response = test_client.post(
-            "/api/users/authenticate",
+            "/api/users/generate_new_api_key",
             json={
                 "username": "john",
                 "password": "wrong_password",
@@ -51,29 +51,40 @@ def test_get_data_with_different_api_key(test_client):
     with test_client.application.app_context():
         # Create two sample users
         u_1 = User(username="john", email="john@example.com", password="cat")
+        u_1_api_key = u_1.generate_new_api_key()
         db.session.add(u_1)
         db.session.commit()
 
         u_2 = User(username="tom", email="tom@example.com", password="dog")
+        u_2_api_key = u_2.generate_new_api_key()
         db.session.add(u_2)
+        db.session.commit()
+
+        # Create project for each user
+        p_1 = Project(name="Sample Project", user_id=u_1.id)
+        db.session.add(p_1)
+        db.session.commit()
+
+        p_2 = Project(name="Sample Project", user_id=u_2.id)
+        db.session.add(p_2)
         db.session.commit()
 
         # Create task for each user
         task_data_1 = {
             "name": "New Task 1",
             "task_type": "development",
-            "project_id": 1,
+            "project_id": p_1.id,
         }
         create_task_response_1 = test_client.post(
-            "/api/tasks/create", json=task_data_1, headers={"X-Api-Key": u_1.api_key}
+            "/api/tasks/create", json=task_data_1, headers={"X-Api-Key": u_1_api_key}
         )
         task_data_2 = {
             "name": "New Task 2",
             "task_type": "development",
-            "project_id": 2,
+            "project_id": p_2.id,
         }
         create_task_response_2 = test_client.post(
-            "/api/tasks/create", json=task_data_2, headers={"X-Api-Key": u_2.api_key}
+            "/api/tasks/create", json=task_data_2, headers={"X-Api-Key": u_2_api_key}
         )
         assert create_task_response_1.status_code == 201
         assert create_task_response_2.status_code == 201
@@ -82,7 +93,7 @@ def test_get_data_with_different_api_key(test_client):
 
         # Try to get task from user 2 using Horizon API key from user 1. Should fail
         get_task_response = test_client.get(
-            f"/api/tasks/{task_id_2}", headers={"X-Api-Key": u_1.api_key}
+            f"/api/tasks/{task_id_2}", headers={"X-Api-Key": u_1_api_key}
         )
         assert get_task_response.status_code not in [200, 201]
 
@@ -91,6 +102,8 @@ def test_get_data_with_different_api_key(test_client):
         task2 = Task.query.filter_by(name="New Task 2").first()
         db.session.delete(task1)
         db.session.delete(task2)
+        db.session.delete(p_1)
+        db.session.delete(p_2)
         db.session.delete(u_1)
         db.session.delete(u_2)
         db.session.commit()

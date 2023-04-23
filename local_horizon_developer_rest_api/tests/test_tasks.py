@@ -2,7 +2,7 @@
 
 import pytest
 import json
-from app.models.component import Task, User
+from app.models.component import Task, User, Project
 from app import create_app, db
 import tempfile
 import csv
@@ -26,13 +26,18 @@ def test_client():
 def test_task_creation(test_client):
     """Test API method for task creation."""
     with test_client.application.app_context():
-        # Create a sample user to associate the task with
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
         db.session.add(u)
         db.session.commit()
 
-        # Create a new task
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create new task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
@@ -41,7 +46,8 @@ def test_task_creation(test_client):
         assert task is not None
 
         # Clean up
-        db.session.delete(task)
+        db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -49,17 +55,24 @@ def test_task_creation(test_client):
 def test_get_tasks(test_client):
     """Test API method to get tasks."""
     with test_client.application.app_context():
-        # Create a sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
         # Test the /api/tasks endpoint (GET)
-        response = test_client.get("/api/tasks", headers={"X-Api-Key": u.api_key})
+        response = test_client.get("/api/tasks", headers={"X-Api-Key": api_key})
         data = json.loads(response.data)
 
         assert response.status_code == 200
@@ -68,6 +81,7 @@ def test_get_tasks(test_client):
 
         # Clean up
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -75,16 +89,22 @@ def test_get_tasks(test_client):
 def test_create_task(test_client):
     """Test API method to create task."""
     with test_client.application.app_context():
-        # Create a sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
+        # Create sample project for user
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
         # Test the /api/tasks/create endpoint (POST)
-        task_data = {"name": "New Task", "task_type": "development", "project_id": 1}
+        task_data = {"name": "New Task", "task_type": "development", "project_id": p.id}
 
         response = test_client.post(
-            "/api/tasks/create", json=task_data, headers={"X-Api-Key": u.api_key}
+            "/api/tasks/create", json=task_data, headers={"X-Api-Key": api_key}
         )
         data = json.loads(response.data)
 
@@ -95,6 +115,7 @@ def test_create_task(test_client):
         # Clean up
         task = Task.query.filter_by(name="New Task").first()
         db.session.delete(task)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -102,24 +123,32 @@ def test_create_task(test_client):
 def test_get_task(test_client):
     """Test API method to get task."""
     with test_client.application.app_context():
-        # Create a sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
         # Test the /api/tasks/1 endpoint (GET)
-        response = test_client.get("/api/tasks/1", headers={"X-Api-Key": u.api_key})
+        response = test_client.get("/api/tasks/1", headers={"X-Api-Key": api_key})
         data = json.loads(response.data)
 
         assert response.status_code == 200
-        assert data["name"] == "Sample Task"
+        assert data["task"]["name"] == "Sample Task"
 
         # Clean up
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -127,12 +156,18 @@ def test_get_task(test_client):
 def test_update_task(test_client):
     """Test API method to update task."""
     with test_client.application.app_context():
-        # Create a sample user and task
+        # Create a sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
@@ -144,7 +179,7 @@ def test_update_task(test_client):
         }
 
         response = test_client.put(
-            "/api/tasks/1", json=update_data, headers={"X-Api-Key": u.api_key}
+            "/api/tasks/1", json=update_data, headers={"X-Api-Key": api_key}
         )
         data = json.loads(response.data)
 
@@ -154,6 +189,7 @@ def test_update_task(test_client):
 
         # Clean up
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -161,17 +197,24 @@ def test_update_task(test_client):
 def test_delete_task(test_client):
     """Test API method to delete task."""
     with test_client.application.app_context():
-        # Create a sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
         # Test the /api/tasks/1 endpoint (DELETE)
-        response = test_client.delete("/api/tasks/1", headers={"X-Api-Key": u.api_key})
+        response = test_client.delete("/api/tasks/1", headers={"X-Api-Key": api_key})
         data = json.loads(response.data)
 
         assert response.status_code == 200
@@ -182,6 +225,7 @@ def test_delete_task(test_client):
         assert task is None
 
         # Clean up
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -189,12 +233,19 @@ def test_delete_task(test_client):
 def test_upload_evaluation_datasets(test_client):
     """Test API method to upload evaluation dataset."""
     with test_client.application.app_context():
-        # Create a sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
@@ -207,7 +258,7 @@ def test_upload_evaluation_datasets(test_client):
             response = test_client.post(
                 f"/api/tasks/{t.id}/upload_evaluation_dataset",
                 data={"evaluation_dataset": f},
-                headers={"X-Api-Key": u.api_key},
+                headers={"X-Api-Key": api_key},
             )
 
         os.remove(temp_file_name)
@@ -215,6 +266,7 @@ def test_upload_evaluation_datasets(test_client):
 
         # Clean up
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
@@ -222,12 +274,19 @@ def test_upload_evaluation_datasets(test_client):
 def test_view_evaluation_datasets(test_client):
     """Test API method to view evaluation datasets."""
     with test_client.application.app_context():
-        # Create a sample user and task
+        # Create sample user
         u = User(username="john", email="john@example.com", password="cat")
+        api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=1)
+        # Create sample project
+        p = Project(name="Sample Project", user_id=u.id)
+        db.session.add(p)
+        db.session.commit()
+
+        # Create sample task
+        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
         db.session.add(t)
         db.session.commit()
 
@@ -242,7 +301,7 @@ def test_view_evaluation_datasets(test_client):
         # Test the /api/projects/1/view_evaluation_datasets endpoint (GET)
         response = test_client.get(
             f"/api/tasks/{t.id}/view_evaluation_dataset",
-            headers={"X-Api-Key": u.api_key},
+            headers={"X-Api-Key": api_key},
         )
         data = json.loads(response.data)
 
@@ -252,6 +311,7 @@ def test_view_evaluation_datasets(test_client):
         # Clean up
         os.remove(temp_file_name)
         db.session.delete(t)
+        db.session.delete(p)
         db.session.delete(u)
         db.session.commit()
 
