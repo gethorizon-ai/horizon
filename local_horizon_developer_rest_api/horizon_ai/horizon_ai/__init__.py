@@ -61,15 +61,15 @@ def _handle_response(response):
 
 # User-related methods
 # TODO: remove this function once user registration is triggered automatically through cognito sign-up
-def register_user(username, email, password):
-    data = {"username": username, "email": email, "password": password}
+def register_user(email, password):
+    data = {"email": email, "password": password}
     headers = {"Content-Type": "application/json"}
     response = _post(endpoint="/api/users/register", json=data, headers=headers)
     return response
 
 
-def generate_new_api_key(username, password):
-    data = {"username": username, "password": password}
+def generate_new_api_key(email, password):
+    data = {"email": email, "password": password}
     headers = {"Content-Type": "application/json"}
     response = _post(
         endpoint="/api/users/generate_new_api_key",

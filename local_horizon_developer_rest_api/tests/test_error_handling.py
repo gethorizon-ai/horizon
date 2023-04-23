@@ -27,7 +27,7 @@ def test_invalid_horizon_api_key(test_client):
     """Test error handling when user provides invalid Horizon API key."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -66,7 +66,7 @@ def test_invalid_openai_api_key(test_client):
     """Test error handling when user provides invalid OpenAI API key."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -128,7 +128,7 @@ def test_invalid_evaluation_dataset_file_type(test_client):
 
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -164,7 +164,7 @@ def test_invalid_evaluation_dataset_file_type(test_client):
     """Test that error is raised when trying to upload evaluation dataset with invalid file type."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -201,7 +201,7 @@ def test_invalid_evaluation_dataset_num_rows(test_client):
     """Test that error is raised when trying to upload evaluation dataset with <15 rows."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -247,7 +247,7 @@ def test_invalid_evaluation_dataset_header_names(test_client):
     """Test that error is raised when trying to upload evaluation dataset with invalid header names."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -295,7 +295,7 @@ def test_invalid_evaluation_dataset_token_length(test_client):
     """Test that error is raised when trying to upload evaluation dataset with values that exceed llm token length"""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -343,7 +343,7 @@ def test_invalid_task_id(test_client):
     """Test that error is raised when trying to access task with invalid id."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -379,7 +379,7 @@ def test_invalid_project_id(test_client):
     """Test that error is raised when trying to access project with invalid id."""
     with test_client.application.app_context():
         # Create a sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()

@@ -25,7 +25,7 @@ def test_list_projects(test_client):
     """Test API method to list projects."""
     with test_client.application.app_context():
         # Create a sample user and project
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -58,7 +58,7 @@ def test_create_project(test_client):
     """Test API method to create project."""
     with test_client.application.app_context():
         # Create a sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -86,7 +86,7 @@ def test_get_project(test_client):
     """Test API method to get project."""
     with test_client.application.app_context():
         # Create a sample user and project
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -112,7 +112,7 @@ def test_update_project(test_client):
     """Test API method to update project."""
     with test_client.application.app_context():
         # Create a sample user and project
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -147,7 +147,7 @@ def test_delete_project(test_client):
     """Test API method to delete project."""
     with test_client.application.app_context():
         # Create a sample user and project
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()

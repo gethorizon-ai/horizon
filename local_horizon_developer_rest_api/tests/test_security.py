@@ -24,19 +24,29 @@ def test_login_with_wrong_password(test_client):
     """Test ability of user to authenticate with wrong password."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         db.session.add(u)
         db.session.commit()
 
-        # Try generating an API key with wrong password. Should fail
-        response = test_client.post(
+        # Try generating an API key with the right password. Should succeed
+        correct_response = test_client.post(
             "/api/users/generate_new_api_key",
             json={
-                "username": "john",
+                "email": u.email,
+                "password": "cat",
+            },
+        )
+        assert correct_response.status_code in [200, 201]
+
+        # Try generating an API key with wrong password. Should fail
+        incorrect_response = test_client.post(
+            "/api/users/generate_new_api_key",
+            json={
+                "email": u.email,
                 "password": "wrong_password",
             },
         )
-        assert response.status_code not in [200, 201]
+        assert incorrect_response.status_code not in [200, 201]
 
         # Clean up
         db.session.delete(u)
@@ -50,12 +60,12 @@ def test_get_data_with_different_api_key(test_client):
     different Horizon API key."""
     with test_client.application.app_context():
         # Create two sample users
-        u_1 = User(username="john", email="john@example.com", password="cat")
+        u_1 = User(email="john@example.com", password="cat")
         u_1_api_key = u_1.generate_new_api_key()
         db.session.add(u_1)
         db.session.commit()
 
-        u_2 = User(username="tom", email="tom@example.com", password="dog")
+        u_2 = User(email="tom@example.com", password="dog")
         u_2_api_key = u_2.generate_new_api_key()
         db.session.add(u_2)
         db.session.commit()

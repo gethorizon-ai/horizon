@@ -23,7 +23,7 @@ def test_client():
 def test_password_hashing(test_client):
     """Test hashing of user password."""
     with test_client.application.app_context():
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         db.session.add(u)
         db.session.commit()
         assert u.check_password("cat")
@@ -36,7 +36,7 @@ def test_password_verification():
     """Test verification of user password."""
     password = "cat"
     hashed_password = generate_password_hash(password)
-    user = User(username="testuser", email="test@example.com", password=password)
+    user = User(email="test@example.com", password=password)
     assert user.check_password(password) == check_password_hash(
         hashed_password, password
     )
@@ -48,7 +48,6 @@ def test_user_registration(test_client):
     response = test_client.post(
         "/api/users/register",
         json={
-            "username": "testuser",
             "email": "test@example.com",
             "password": "TestPass123#",
         },
@@ -59,14 +58,14 @@ def test_user_registration(test_client):
 
 def test_generate_new_api_key(test_client):
     """Test generation of new API key."""
-    user = User(username="testuser", email="test@example.com", password="TestPass123#")
+    user = User(email="test@example.com", password="TestPass123#")
     db.session.add(user)
     db.session.commit()
 
     response = test_client.post(
         "/api/users/generate_new_api_key",
         json={
-            "username": "testuser",
+            "email": user.email,
             "password": "TestPass123#",
         },
     )

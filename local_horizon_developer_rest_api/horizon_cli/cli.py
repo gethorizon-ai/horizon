@@ -45,14 +45,13 @@ def prompt():
 # Register user
 # TODO: remove after account creation triggered automatically from cognito sign-up
 @click.command(name="register")
-@click.option("--username", prompt="Username", help="The username for the new user.")
 @click.option("--email", prompt="Email", help="The email for the new user.")
 @click.password_option(
     "--password", prompt="Password", help="The password for the new user."
 )
-def register_user(username, email, password):
+def register_user(email, password):
     try:
-        result = horizon_ai.register_user(username, email, password)
+        result = horizon_ai.register_user(email, password)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:
@@ -61,13 +60,13 @@ def register_user(username, email, password):
 
 # Generate new Horizon API key for user
 @click.command(name="api-key")
-@click.option("--username", prompt="Username", help="The username for the user.")
+@click.option("--email", prompt="Email", help="The email for the user.")
 @click.password_option(
     "--password", prompt="Password", help="The password for the user."
 )
-def authenticate_user(username, password):
+def authenticate_user(email, password):
     try:
-        result = horizon_ai.generate_new_api_key(username, password)
+        result = horizon_ai.generate_new_api_key(email, password)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:

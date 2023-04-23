@@ -27,7 +27,7 @@ def test_task_creation(test_client):
     """Test API method for task creation."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         db.session.add(u)
         db.session.commit()
 
@@ -56,7 +56,7 @@ def test_get_tasks(test_client):
     """Test API method to get tasks."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -90,7 +90,7 @@ def test_create_task(test_client):
     """Test API method to create task."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -124,7 +124,7 @@ def test_get_task(test_client):
     """Test API method to get task."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -157,7 +157,7 @@ def test_update_task(test_client):
     """Test API method to update task."""
     with test_client.application.app_context():
         # Create a sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -198,7 +198,7 @@ def test_delete_task(test_client):
     """Test API method to delete task."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -234,7 +234,7 @@ def test_upload_evaluation_datasets(test_client):
     """Test API method to upload evaluation dataset."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
@@ -275,7 +275,7 @@ def test_view_evaluation_datasets(test_client):
     """Test API method to view evaluation datasets."""
     with test_client.application.app_context():
         # Create sample user
-        u = User(username="john", email="john@example.com", password="cat")
+        u = User(email="john@example.com", password="cat")
         api_key = u.generate_new_api_key()
         db.session.add(u)
         db.session.commit()
