@@ -387,7 +387,7 @@ def get_applicable_llms(
     for llm, llm_info in LLMFactory.llm_classes.items():
         if llm_info["data_unit"] == "token":
             if zero_shot_tokens > llm_info["data_limit"]:
-                pass
+                continue
             tokens_left_for_few_shots = llm_info["data_limit"] - zero_shot_tokens
             # Assume up to 10 few shot examples
             max_few_shots = min(
@@ -400,7 +400,7 @@ def get_applicable_llms(
             }
         elif llm_info["data_unit"] == "character":
             if zero_shot_characters > llm_info["data_limit"]:
-                pass
+                continue
             characters_left_for_few_shots = (
                 llm_info["data_limit"] - zero_shot_characters
             )
