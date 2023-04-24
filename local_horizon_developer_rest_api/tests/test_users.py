@@ -1,5 +1,5 @@
 import pytest
-from app.models import User
+from app.models.component import User
 from werkzeug.security import check_password_hash
 from app import create_app, db
 
@@ -48,7 +48,8 @@ def test_user_registration(test_client):
         }
     )
     assert response.status_code == 201
-    assert response.json == {'message': 'User registered successfully'}
+    assert response.json == {
+        'message': 'User registered successfully', 'user_id': 1}
 
 
 def test_user_authentication(test_client):

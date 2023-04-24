@@ -11,7 +11,8 @@ if TYPE_CHECKING:
 class Prompt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False)
-    task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+    task_id = db.Column(db.Integer, db.ForeignKey(
+        'task.id', ondelete='CASCADE'), nullable=False)
     version = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(50), nullable=True)
     source = db.Column(db.String(50), nullable=True)

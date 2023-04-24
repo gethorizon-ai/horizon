@@ -1,6 +1,6 @@
 import json
 import pytest
-from app.models import User, Prompt
+from app.models.component import User, Prompt
 from app import create_app, db
 
 

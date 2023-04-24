@@ -76,6 +76,7 @@ class TaskAPI(Resource):
         parser.add_argument('description', type=str)
         parser.add_argument('task_type', type=str)
         parser.add_argument('status', type=str)
+        parser.add_argument('evaluation_data', type=str)
         args = parser.parse_args()
 
         if args['description'] is not None:
