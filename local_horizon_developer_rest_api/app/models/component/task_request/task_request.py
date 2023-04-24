@@ -14,6 +14,7 @@ class TaskRequest:
         self,
         dataset_file_path: str,
         user_objective: str = None,
+        allowed_models: list = None,
         synthetic_data_generation: bool = False,
         num_test_data_input: int = None,
     ):
@@ -22,6 +23,7 @@ class TaskRequest:
         Args:
             dataset_file_path (str): path to evaluation dataset.
             user_objective (str, optional): task objective. Defaults to None.
+            allowed_models (list, optional): list of allowed models for this task. Defaults to None.
             synthetic_data_generation (bool, optional): whether this task request is to generate synthetic data. Defaults to False.
             num_test_data (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
                 assignment of test data points Defaults to None.
@@ -45,6 +47,7 @@ class TaskRequest:
         self.max_ground_truth_tokens = None
         self.max_input_characters = None
         self.max_ground_truth_characters = None
+        self.allowed_models = allowed_models
         self.applicable_llms = None
 
         if user_objective != None and len(user_objective) > 500:

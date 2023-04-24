@@ -52,6 +52,7 @@ mypy-extensions==1.0.0
 mysql-connector-python==8.0.32
 mysqlclient==2.1.1
 numpy
+anthropic
 openai
 ordered-set==4.1.0
 packaging==23.0

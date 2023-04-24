@@ -270,6 +270,12 @@ def list_tasks(horizon_api_key):
     prompt="OpenAI API Key" if not os.environ.get("OPENAI_API_KEY") else False,
     help="The OpenAI API key for the user.",
 )
+@click.option(
+    "--anthropic_api_key",
+    default=os.environ.get("ANTHROPIC_API_KEY"),
+    prompt="Anthropic API Key" if not os.environ.get("ANTHROPIC_API_KEY") else False,
+    help="The Anthropic API key for the user.",
+)
 def generate_task(
     name,
     project_id,
@@ -278,13 +284,31 @@ def generate_task(
     file_path,
     horizon_api_key,
     openai_api_key,
+    anthropic_api_key,
 ):
     horizon_ai.api_key = horizon_api_key
     horizon_ai.openai_api_key = openai_api_key
+    horizon_ai.anthropic_api_key = anthropic_api_key
+
+    # Ask user which models they'd like to include
+    allowed_models = []
+    if click.confirm("Do you want to include gpt-3.5-turbo?"):
+        allowed_models.append("gpt-3.5-turbo")
+    if click.confirm("Do you want to include text-davinci-003?"):
+        allowed_models.append("text-davinci-003")
+    if click.confirm("Do you want to include claude-instant-v1?"):
+        allowed_models.append("claude-instant-v1")
+    if click.confirm("Do you want to include claude-v1?"):
+        allowed_models.append("claude-v1")
+    if len(allowed_models) == 0:
+        raise Exception("Must select at least one model to include")
+    print(f"Evaluating the following models for task generation: {allowed_models}")
 
     # Create task record
     try:
-        task_creation_response = horizon_ai.create_task(name, task_type, project_id)
+        task_creation_response = horizon_ai.create_task(
+            name, task_type, project_id, allowed_models
+        )
         task_id = task_creation_response["task"]["id"]
     except Exception as e:
         click.echo("Failed in task creation")
@@ -332,7 +356,7 @@ def generate_task(
     )
     click.echo("")
     click.echo(
-        f"3) Estimated LLM provider cost: ${task_confirmation_details['cost_estimate']['low']}-{task_confirmation_details['cost_estimate']['high']}"
+        f"3) Estimated LLM provider cost: ${task_confirmation_details['cost_estimate']['total_cost']['low']}-{task_confirmation_details['cost_estimate']['total_cost']['high']}"
     )
     click.echo(
         "* This is entirely the LLM provider cost and not a Horizon charge. Actual cost may vary."
@@ -540,9 +564,18 @@ def delete_task(task_id, horizon_api_key):
     prompt="OpenAI API Key" if not os.environ.get("OPENAI_API_KEY") else False,
     help="The OpenAI API key for the user.",
 )
-def deploy_task(task_id, inputs, horizon_api_key, openai_api_key):
+@click.option(
+    "--anthropic_api_key",
+    default=os.environ.get("ANTHROPIC_API_KEY"),
+    prompt="Anthropic API Key (type 'skip' if you're not using Anthropic)"
+    if not os.environ.get("ANTHROPIC_API_KEY")
+    else False,
+    help="The Anthropic API key for the user.",
+)
+def deploy_task(task_id, inputs, horizon_api_key, openai_api_key, anthropic_api_key):
     horizon_ai.api_key = horizon_api_key
     horizon_ai.openai_api_key = openai_api_key
+    horizon_ai.anthropic_api_key = anthropic_api_key
     try:
         inputs_dict = json.loads(inputs)
         result = horizon_ai.deploy_task(task_id, inputs_dict)

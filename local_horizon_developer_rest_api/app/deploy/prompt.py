@@ -2,36 +2,60 @@ from app.models.component.prompt import Prompt
 from app.models.component.task import Task
 from app import db
 from app.models.llm.factory import LLMFactory
+from app.models.llm.open_ai import ChatOpenAI
+from app.models.llm.anthropic import Anthropic
 from app.models.prompt.factory import PromptTemplateFactory
 from app.models.prompt.chat import HumanMessage
 import json
 
 
-def deploy_prompt(prompt_id: int, input_values: dict, openai_api_key: str) -> str:
-    """
-    Deploy a prompt with the given prompt_id and input_values.
+def deploy_prompt(
+    prompt: Prompt,
+    input_values: dict,
+    openai_api_key: str,
+    anthropic_api_key: str = None,
+) -> str:
+    """Deploy a prompt with the given prompt_id and input_values.
 
     Args:
-        prompt_id (int): ID of prompt to deploy.
+        prompt (Prompt): prompt object from db.
         input_values (dict): dict of key-value pairs representing the input variables for prompt.
-        openai_api_key (str): user's OpenAI API key.
+        openai_api_key (str): OpenAI API key to use.
+        anthropic_api_key (str, optional): Anthropic API key to use if selected model is from Anthropic. Defaults to None.
+
+    Raises:
+        ValueError: if selected model is from Anthropic, then need to provide Anthropic API key
 
     Returns:
         str: The return value of the deployed prompt.
-    """
-    # Get the prompt from the database using the prompt_id
-    prompt = Prompt.query.get(prompt_id)
-    if not prompt:
-        raise ValueError("Prompt not found")
 
+    Args:
+        prompt (Prompt): _description_
+        input_values (dict): _description_
+        openai_api_key (str): _description_
+        anthropic_api_key (str, optional): _description_. Defaults to None.
+
+    Raises:
+        ValueError: _description_
+
+    Returns:
+        str: _description_
+    """
     # get the model_name from the prompt
     model_name = prompt.model_name
 
     # get the model_params from the prompt
     model_params = json.loads(prompt.model)
 
-    # Add OpenAI API key
-    model_params["openai_api_key"] = openai_api_key
+    # Add llm api key
+    if LLMFactory.llm_classes[model_name]["provider"] == "OpenAI":
+        model_params["openai_api_key"] = openai_api_key
+    elif LLMFactory.llm_classes[model_name]["provider"] == "Anthropic":
+        if anthropic_api_key == None:
+            raise ValueError(
+                "Need Anthropic API key since selected LLM is from Anthropic."
+            )
+        model_params["anthropic_api_key"] = anthropic_api_key
 
     # define the LLM factory instance
     llm_factory = LLMFactory()
@@ -73,9 +97,12 @@ def deploy_prompt(prompt_id: int, input_values: dict, openai_api_key: str) -> st
     # format the prompt
     formatted_prompt = prompt_instance.format(**input_values)
 
-    # If model is ChatOpenAI, then wrap message around a HumanMessage object
-    if model_name == "gpt-3.5-turbo":
+    # If model is ChatOpenAI, then wrap message with HumanMessage object
+    if type(model_instance) == ChatOpenAI:
         formatted_prompt = [HumanMessage(content=formatted_prompt)]
+    # If model is Anthropic, then wrap message with Human and AI prompts
+    elif type(model_instance) == Anthropic:
+        formatted_prompt = f"{model_instance.HUMAN_PROMPT} {formatted_prompt}{model_instance.AI_PROMPT}"
 
     # generate the output
     output = model_instance.generate([formatted_prompt]).generations[0][0].text.strip()

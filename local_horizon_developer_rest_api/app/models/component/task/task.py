@@ -23,6 +23,7 @@ class Task(db.Model):
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
     create_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    allowed_models = db.Column(db.String(200), nullable=False)
     prompts = db.relationship(
         "Prompt",
         backref="task",
@@ -44,6 +45,9 @@ class Task(db.Model):
             "status": self.status,
             "create_timestamp": datetime.isoformat(self.create_timestamp),
             "project_id": self.project_id,
+            "allowed_models": json.loads(self.allowed_models)
+            if self.allowed_models != None
+            else self.allowed_models,
             "active_prompt_id": self.active_prompt_id,
             "prompts": [prompt.to_dict() for prompt in self.prompts.all()],
             "evaluation_statistics": json.loads(self.evaluation_statistics)
@@ -58,6 +62,7 @@ class Task(db.Model):
             "name",
             "objective",
             "project_id",
+            "allowed_models",
             "active_prompt_id",
             "evaluation_statistics",
         ]

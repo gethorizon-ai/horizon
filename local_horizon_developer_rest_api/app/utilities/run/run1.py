@@ -45,18 +45,26 @@ PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
 }
 
 
-def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) -> dict:
+def generate_prompt(
+    user_objective: str,
+    task: Task,
+    prompt: Prompt,
+    openai_api_key: str,
+    anthropic_api_key: str = None,
+) -> dict:
     """Generate the optimal prompt-model candidate for a given objective and evaluation dataset.
 
     Args:
         user_objective (str): objectuse of the use case.
-        prompt_id (int): id of prompt record to assign.
+        task (Task): db record corresponding to task.
+        prompt (Prompt): db record corresponding to prompt.
         openai_api_key (str): OpenAI API key to use.
+        anthropic_api_key (str, optional): Anthropic API key to use if wanting to consider Anthropic models. Defaults to None.
 
     Raises:
         ValueError: checks if user objective is provided.
-        ValueError: checks if prompt record exists.
         AssertionError: checks if evaluation datatset exists.
+        ValueError: checks if Anthropic API key provided to evaluate Anthropic models.
 
     Returns:
         dict: overview of task and generated prompt-model candidate.
@@ -64,14 +72,7 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
     if user_objective == None or len(user_objective) == 0:
         raise ValueError("Must provide user objective")
 
-    # Get the prompt from the database using the prompt_id
-    prompt = Prompt.query.get(prompt_id)
-    if not prompt:
-        raise ValueError("Prompt not found")
-
-    # Get the task associated with the prompt and log the user objective
-    task_id = prompt.task_id
-    task = Task.query.get(task_id)
+    # Log user objective with task
     task.objective = user_objective
 
     # Get the evaluation dataset from the task. If there is no evaluation dataset, return an error
@@ -80,7 +81,8 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
-        user_objective=user_objective,
+        user_objective=task.objective,
+        allowed_models=json.loads(task.allowed_models),
         dataset_file_path=task.evaluation_dataset,
         num_test_data_input=1,  # TODO: remove test data points constraint
     )
@@ -98,20 +100,34 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
 
     # Iterate over applicable llms for this task
     for llm, llm_info in task_request.applicable_llms.items():
+        # Skip if not one of the allowed models
+        if (
+            task_request.allowed_models != None
+            and llm not in task_request.allowed_models
+        ):
+            continue
         print(f"working on {llm}")
 
-        # Define the OpenAI instance parameters
-        openai_params = {
-            "model_name": llm,
-            "temperature": 0.7,
-            "max_tokens": llm_info["max_output_length"],
-            "openai_api_key": openai_api_key,
-        }
+        # Determine llm api key
+        if LLMFactory.llm_classes[llm]["provider"] == "OpenAI":
+            llm_api_key = openai_api_key
+        elif LLMFactory.llm_classes[llm]["provider"] == "Anthropic":
+            # Evaluate Anthropic models only if Anthropic API key is provided
+            if anthropic_api_key == None:
+                raise ValueError(
+                    "Anthropic API key required to evaluate Anthropic models"
+                )
+            llm_api_key = anthropic_api_key
 
-        # Create the OpenAI instance
-        openai_instance = llm_factory.create_llm(
-            openai_params["model_name"], **openai_params
+        # Define the llm instance parameters
+        llm_instance_params = LLMFactory.create_model_params(
+            llm=llm,
+            max_output_length=llm_info["max_output_length"],
+            llm_api_key=llm_api_key,
         )
+
+        # Create the llm instance
+        llm_instance = llm_factory.create_llm(llm, **llm_instance_params)
         print(f"Created llm instance for {llm}")
 
         # STAGE 1 - Initial prompt generation
@@ -119,7 +135,7 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
         prompt_model_candidates_user_objective = (
             prompt_generation_user_objective.prompt_generation_user_objective(
                 task_request=task_request,
-                model_object=openai_instance,
+                model_object=llm_instance,
                 num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                     "num_prompts_user_objective"
                 ],
@@ -136,7 +152,7 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
         prompt_model_candidates_pattern_role_play = (
             pattern_role_play.prompt_generation_pattern_role_play(
                 task_request=task_request,
-                model_object=openai_instance,
+                model_object=llm_instance,
                 num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                     "num_prompts_pattern_role_play"
                 ],
@@ -153,7 +169,7 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
         prompt_model_candidates_user_objective_training_data = (
             user_objective_training_data.prompt_generation_user_objective_training_data(
                 task_request=task_request,
-                model_object=openai_instance,
+                model_object=llm_instance,
                 num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                     "num_prompts_user_objective_training_data"
                 ],
@@ -352,20 +368,9 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
     final_prompt_object = prompt_model_candidates_final["prompt_object"].iloc[0]
     final_model_object = prompt_model_candidates_final["model_object"].iloc[0]
 
-    # Save the model to the database. DO NOT STORE USER LLM API KEY!
-    prompt.model_name = final_model_object.model_name
-    if final_model_object.model_name == "gpt-3.5-turbo":
-        model_params = {
-            "model_name": final_model_object.model_name,
-            "temperature": final_model_object.model_kwargs["temperature"],
-            "max_tokens": final_model_object.max_tokens,
-        }
-    elif final_model_object.model_name == "text-davinci-003":
-        model_params = {
-            "model_name": final_model_object.model_name,
-            "temperature": final_model_object.temperature,
-            "max_tokens": final_model_object.max_tokens,
-        }
+    # Save the model parameters to the database to later reconstruct model. DO NOT STORE USER LLM API KEY!
+    prompt.model_name = final_model_object.get_model_name()
+    model_params = final_model_object.get_model_params_to_store()
     prompt.model = json.dumps(model_params)
 
     # look up the prompt template type for the final prompt and store in the database
@@ -412,7 +417,7 @@ def generate_prompt(user_objective: str, prompt_id: int, openai_api_key: str) ->
     task.evaluation_statistics = json.dumps(evaluation_statistics)
 
     # Set newly created prompt as the active prompt for the task if it is not already so
-    task.active_prompt_id = prompt_id
+    task.active_prompt_id = prompt.id
 
     # Commit the changes to the database
     db.session.commit()
@@ -430,16 +435,29 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
     Returns:
         dict: estimated low and high end of task creation cost range.
     """
-    # Setup variable to track overall cost
-    cost = 0
+    # Setup dict to track cost
+    cost = {}
+
+    # Set percentage from which to determine low and high end of range from estimated cost
+    range_factor = 0.25
 
     # Iterate over each of the selected LLMs
     for llm, llm_info in task_request.applicable_llms.items():
+        # Skip if not one of the allowed models
+        if (
+            task_request.allowed_models != None
+            and llm not in task_request.allowed_models
+        ):
+            continue
+
+        # Prepare necessary parameters (e.g., data length, number of few shots used, llm price)
         if LLMFactory.llm_classes[llm]["data_unit"] == "token":
             instruction_length = LLMFactory.llm_data_assumptions["instruction_tokens"]
             input_length = task_request.max_input_tokens
             output_length = task_request.max_ground_truth_tokens
-            metaprompt_context = 500
+            metaprompt_context = (
+                LLMFactory.llm_data_assumptions["instruction_tokens"] * 3
+            )
         elif LLMFactory.llm_classes[llm]["data_unit"] == "character":
             instruction_length = LLMFactory.llm_data_assumptions[
                 "instruction_characters"
@@ -447,55 +465,79 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
             input_length = task_request.max_input_characters
             output_length = task_request.max_ground_truth_characters
             metaprompt_context = (
-                500 / LLMFactory.llm_data_assumptions["tokens_per_character"]
+                LLMFactory.llm_data_assumptions["instruction_tokens"]
+                * 3
+                / LLMFactory.llm_data_assumptions["tokens_per_character"]
             )
         few_shot_length = input_length + output_length
         num_few_shots = llm_info["max_few_shots"]
         num_test_data = task_request.num_test_data
-        generation_price = LLMFactory.llm_classes["text-davinci-003"][
-            "price_per_data_unit"
+        generation_price_prompt = LLMFactory.llm_classes["text-davinci-003"][
+            "price_per_data_unit_prompt"
         ]
-        inference_price = LLMFactory.llm_classes[llm]["price_per_data_unit"]
+        generation_price_completion = LLMFactory.llm_classes["text-davinci-003"][
+            "price_per_data_unit_completion"
+        ]
+        inference_price_prompt = LLMFactory.llm_classes[llm][
+            "price_per_data_unit_prompt"
+        ]
+        inference_price_completion = LLMFactory.llm_classes[llm][
+            "price_per_data_unit_completion"
+        ]
 
         llm_usage = {
             # STAGE 1 - initial prompt generation
             "stage_1": {
                 # Prompt generation based on user objective has instruction string with the same assumed instruction length
                 "prompt_generation_user_objective": {
-                    "total_data_length": instruction_length
-                    + instruction_length
+                    "data_length_prompt": instruction_length,
+                    "data_length_completion": instruction_length
                     * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                         "num_prompts_user_objective"
                     ],
-                    "price": generation_price,
+                    "price_prompt": generation_price_prompt,
+                    "price_completion": generation_price_completion,
                 },
                 # Prompt generation based on role play pattern uses few shot examples (accounted for in metaprompt_context) and
                 # produces prompt candidates with assumed instruction length
                 "prompt_generation_pattern_role_play": {
-                    "total_data_length": instruction_length
-                    + metaprompt_context
-                    + instruction_length
+                    "data_length_prompt": instruction_length + metaprompt_context,
+                    "data_length_completion": instruction_length
                     * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                         "num_prompts_pattern_role_play"
                     ],
-                    "price": generation_price,
+                    "price_prompt": generation_price_prompt,
+                    "price_completion": generation_price_completion,
                 },
                 # Prompt generation based on user objective with training data uses few shot examples from evaluation dataset and
                 # produces prompt candidates with assumed instruction length
                 "prompt_generation_user_objective_training_data": {
-                    "total_data_length": instruction_length
+                    "data_length_prompt": instruction_length
                     + few_shot_length
-                    * task_request.applicable_llms["text-davinci-003"]["max_few_shots"]
-                    + instruction_length
+                    * task_request.applicable_llms["text-davinci-003"]["max_few_shots"],
+                    "data_length_completion": instruction_length
                     * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                         "num_prompts_user_objective_training_data"
                     ],
-                    "price": generation_price,
+                    "price_prompt": generation_price_prompt,
+                    "price_completion": generation_price_completion,
                 },
                 # Prompt variant generations generates variant prompts for each original prompt candidate from prior prompt
                 # generation methods, then checks for overfitting (accounted for in metaprompt_context)
                 "prompt_generation_variants": {
-                    "total_data_length": (
+                    "data_length_prompt": (
+                        PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                            "num_prompts_user_objective"
+                        ]
+                        + PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                            "num_prompts_pattern_role_play"
+                        ]
+                        + PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                            "num_prompts_user_objective_training_data"
+                        ]
+                    )
+                    * (instruction_length + metaprompt_context),
+                    "data_length_completion": (
                         PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                             "num_prompts_user_objective"
                         ]
@@ -508,19 +550,16 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
                     )
                     * (
                         instruction_length
-                        + metaprompt_context
-                        + instruction_length
                         * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                             "num_variants"
                         ]
                     ),
-                    "price": generation_price,
+                    "price_prompt": generation_price_prompt,
+                    "price_completion": generation_price_completion,
                 },
                 # Stage 1 inference and evaluation with adaptive filtering
                 "inference_evaluation": {
-                    "total_data_length": (
-                        instruction_length + input_length + output_length
-                    )
+                    "data_length_prompt": (instruction_length + input_length)
                     * adaptive_filtering.get_total_num_inferences(
                         num_original_prompt_model_candidates=PROMPT_GENERATION_ALGORITHM_PARAMETERS[
                             "stage_1"
@@ -535,7 +574,23 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
                             "stage_1"
                         ]["num_iterations"],
                     ),
-                    "price": inference_price,
+                    "data_length_completion": output_length
+                    * adaptive_filtering.get_total_num_inferences(
+                        num_original_prompt_model_candidates=PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                            "stage_1"
+                        ][
+                            "num_clusters"
+                        ],
+                        num_data=num_test_data,
+                        num_shortlist=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                            "num_shortlist"
+                        ],
+                        num_iterations=PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                            "stage_1"
+                        ]["num_iterations"],
+                    ),
+                    "price_prompt": inference_price_prompt,
+                    "price_completion": inference_price_completion,
                 },
             },
             # STAGE 2 - Few shots
@@ -543,7 +598,7 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
                 # Generation of few shots generation does not cost anything
                 # Inference and evaluation of new few shot prompts incurs fee
                 "inference_evaluation": {
-                    "total_data_length": PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                    "data_length_prompt": PROMPT_GENERATION_ALGORITHM_PARAMETERS[
                         "stage_1"
                     ]["num_shortlist"]
                     * (
@@ -553,7 +608,13 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
                         + output_length
                     )
                     * num_test_data,
-                    "price": inference_price,
+                    "data_length_completion": PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                        "stage_1"
+                    ]["num_shortlist"]
+                    * output_length
+                    * num_test_data,
+                    "price_prompt": inference_price_prompt,
+                    "price_completion": inference_price_completion,
                 }
             },
             # STAGE 3 - Temperature variant
@@ -561,7 +622,7 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
                 # Generation of temperature variants does not use llms
                 # For inference and evaluation, run different temperature variants assuming use of a few shot prompt
                 "inference_evaluation": {
-                    "total_data_length": PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                    "data_length_prompt": PROMPT_GENERATION_ALGORITHM_PARAMETERS[
                         "stage_2"
                     ]["num_shortlist"]
                     * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
@@ -571,32 +632,52 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
                         instruction_length
                         + num_few_shots * few_shot_length
                         + input_length
-                        + output_length
                     )
                     * num_test_data,
-                    "price": inference_price,
+                    "data_length_completion": PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                        "stage_2"
+                    ]["num_shortlist"]
+                    * PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
+                        "num_prompts_temperature_variation"
+                    ]
+                    * output_length
+                    * num_test_data,
+                    "price_prompt": inference_price_prompt,
+                    "price_completion": inference_price_completion,
                 }
             },
         }
 
         # Sum up costs across all stages
+        llm_cost = 0
         for stage in llm_usage.values():
             for step in stage.values():
-                cost += step["total_data_length"] * step["price"]
+                llm_cost += (step["data_length_prompt"] * step["price_prompt"]) + (
+                    step["data_length_completion"] * step["price_completion"]
+                )
 
-    # Range final cost estimate and round to the nearest dollar
-    range_factor = 0.25
-    return {
-        "low": math.ceil(cost * (1 - range_factor)),
-        "high": math.ceil(cost * (1 + range_factor)),
-    }
+        # Store llm cost
+        cost[llm] = {
+            "low": math.ceil(llm_cost * (1 - range_factor)),
+            "high": math.ceil(llm_cost * (1 + range_factor)),
+        }
+
+    # Store total cost across llms
+    total_cost_low = 0
+    total_cost_high = 0
+    for llm_cost in cost.values():
+        total_cost_low += llm_cost["low"]
+        total_cost_high += llm_cost["high"]
+    cost["total_cost"] = {"low": total_cost_low, "high": total_cost_high}
+
+    return cost
 
 
-def get_task_confirmation_details(task_id: int) -> dict:
+def get_task_confirmation_details(task: Task) -> dict:
     """Return key information to confirm with user before proceeding with task creation process.
 
     Args:
-        task_id (int): id of task record.
+        task (Task): db record corresponding to task.
 
     Raises:
         AssertionError: checks if evaluation dataset exists.
@@ -604,8 +685,6 @@ def get_task_confirmation_details(task_id: int) -> dict:
     Returns:
         dict: information to confirm with user (e.g., estimated cost).
     """
-    task = Task.query.get(task_id)
-
     # Get the evaluation dataset from the task. If there is no evaluation dataset, return an error
     if not task.evaluation_dataset:
         raise AssertionError("No evaluation_dataset file associated with this task")
@@ -613,6 +692,7 @@ def get_task_confirmation_details(task_id: int) -> dict:
     # Create the TaskRequest instance
     task_request = TaskRequest(
         dataset_file_path=task.evaluation_dataset,
+        allowed_models=json.loads(task.allowed_models),
     )
 
     # Get normalized input variables

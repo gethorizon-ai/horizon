@@ -50,7 +50,7 @@ def prompt_generation_few_shots(
     # Iterate through each prompt-model candidate and produce a few shot version of it
     for index, row in prompt_model_candidates.iterrows():
         few_shot_prompt_prefix = row["prompt_prefix"] + "\n\n==\nEXAMPLES:"
-        model_name = row["model_object"].model_name
+        model_name = row["model_object"].get_model_name()
 
         # create the example selector
         # examples: This is the list of examples available to select from.

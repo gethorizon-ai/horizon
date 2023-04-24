@@ -1,6 +1,7 @@
 # horizon_ai/__init__.py
 
 import requests
+import json
 from urllib.parse import urljoin
 
 # Base url for API calls
@@ -11,6 +12,9 @@ api_key = None
 
 # OpenAI API key (to be set by user)
 openai_api_key = None
+
+# Anthropic API key (to be set by user)
+anthropic_api_key = None
 
 
 def _get(endpoint, headers=None):
@@ -168,12 +172,24 @@ def list_tasks():
 
 
 # Create a new task
-def create_task(name, task_type, project_id):
+def create_task(
+    name: str,
+    task_type: str,
+    project_id: int,
+    allowed_models: list,
+):
     global api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
+    if type(allowed_models) != list or len(allowed_models) == 0:
+        raise Exception("Must provide list with at least one allowed model.")
     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
-    payload = {"name": name, "task_type": task_type, "project_id": project_id}
+    payload = {
+        "name": name,
+        "task_type": task_type,
+        "project_id": project_id,
+        "allowed_models": allowed_models,
+    }
     response = _post(endpoint="/api/tasks/create", json=payload, headers=headers)
     return response
 
@@ -265,7 +281,7 @@ def get_task_confirmation_details(task_id):
 
 # Generate a task
 def generate_task(task_id, objective):
-    global api_key, openai_api_key
+    global api_key, openai_api_key, anthropic_api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
     if openai_api_key == None:
@@ -275,6 +291,7 @@ def generate_task(task_id, objective):
         "task_id": task_id,
         "objective": objective,
         "openai_api_key": openai_api_key,
+        "anthropic_api_key": anthropic_api_key,
     }
     response = _post(endpoint="/api/tasks/generate", json=payload, headers=headers)
     return response
@@ -282,7 +299,7 @@ def generate_task(task_id, objective):
 
 # Deploy a task using the current prompt
 def deploy_task(task_id, inputs):
-    global api_key, openai_api_key
+    global api_key, openai_api_key, anthropic_api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
     if openai_api_key == None:
@@ -292,6 +309,7 @@ def deploy_task(task_id, inputs):
         "task_id": task_id,
         "inputs": inputs,
         "openai_api_key": openai_api_key,
+        "anthropic_api_key": anthropic_api_key,
     }
     response = _post(endpoint="/api/tasks/deploy", json=payload, headers=headers)
     return response

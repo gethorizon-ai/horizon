@@ -25,7 +25,7 @@ class Prompt(db.Model):
     variables = db.Column(db.String(100), nullable=True)
     few_shot_template = db.Column(db.String(100), nullable=True)
     few_shot_example_selector = db.Column(db.String(100), nullable=True)
-    model = db.Column(db.String(100), nullable=True)
+    model = db.Column(db.String(200), nullable=True)
     evaluation_job_name = db.Column(db.String(100), nullable=True)
     model_name = db.Column(db.String(100), nullable=True)
     inference_statistics = db.Column(db.String(1000), nullable=True)

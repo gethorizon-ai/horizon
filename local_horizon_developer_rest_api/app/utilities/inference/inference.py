@@ -1,7 +1,8 @@
 """Runs inference on a given set of prompt-model candidates and input dataset."""
 
-from app.models.schema import HumanMessage
 from app.models.llm.open_ai import ChatOpenAI
+from app.models.llm.anthropic import Anthropic
+from app.models.schema import HumanMessage
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.inference_evaluation_results import InferenceEvaluationResults
@@ -68,16 +69,19 @@ def run_inference(
         # )
         # print(row["generation_id"])
         # print(row["prompt_object"])
+
         formatted_prompt = row["prompt_object"].format(**input_values)
-        if type(row["model_object"]) == ChatOpenAI:
+        model_object = row["model_object"]
+        # If model is ChatOpenAI, then wrap message with HumanMessage object
+        if type(model_object) == ChatOpenAI:
             formatted_prompt = [HumanMessage(content=formatted_prompt)]
+        # If model is Anthropic, then wrap message with Human and AI prompts
+        elif type(model_object) == Anthropic:
+            formatted_prompt = f"{model_object.HUMAN_PROMPT} {formatted_prompt}{model_object.AI_PROMPT}"
         start_time = time.time()
 
         output = (
-            row["model_object"]
-            .generate([formatted_prompt])
-            .generations[0][0]
-            .text.strip()
+            model_object.generate([formatted_prompt]).generations[0][0].text.strip()
         )
         end_time = time.time()
         inference_latency = end_time - start_time

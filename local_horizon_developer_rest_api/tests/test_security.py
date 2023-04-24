@@ -84,6 +84,7 @@ def test_get_data_with_different_api_key(test_client):
             "name": "New Task 1",
             "task_type": "development",
             "project_id": p_1.id,
+            "allowed_models": ["gpt-3.5-turbo"],
         }
         create_task_response_1 = test_client.post(
             "/api/tasks/create", json=task_data_1, headers={"X-Api-Key": u_1_api_key}
@@ -92,6 +93,7 @@ def test_get_data_with_different_api_key(test_client):
             "name": "New Task 2",
             "task_type": "development",
             "project_id": p_2.id,
+            "allowed_models": ["gpt-3.5-turbo"],
         }
         create_task_response_2 = test_client.post(
             "/api/tasks/create", json=task_data_2, headers={"X-Api-Key": u_2_api_key}

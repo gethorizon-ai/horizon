@@ -4,23 +4,42 @@ from .open_ai import (
     OpenAI,
     ChatOpenAI,
 )
+from .anthropic import Anthropic
 
 
 class LLMFactory:
     llm_classes = {
         "gpt-3.5-turbo": {
             "class": ChatOpenAI,
+            "provider": "OpenAI",
             "data_unit": "token",
             "data_limit": 4096,
-            "encoding": "cl100k_base",
-            "price_per_data_unit": 0.002 / 1000,
+            "price_per_data_unit_prompt": 0.002 / 1000,
+            "price_per_data_unit_completion": 0.002 / 1000,
         },
         "text-davinci-003": {
             "class": OpenAI,
+            "provider": "OpenAI",
             "data_unit": "token",
             "data_limit": 4097,
-            "encoding": "p50k_base",
-            "price_per_data_unit": 0.02 / 1000,
+            "price_per_data_unit_prompt": 0.02 / 1000,
+            "price_per_data_unit_completion": 0.02 / 1000,
+        },
+        "claude-instant-v1": {
+            "class": Anthropic,
+            "provider": "Anthropic",
+            "data_unit": "token",
+            "data_limit": 9000,
+            "price_per_data_unit_prompt": 1.63 / 1000000,
+            "price_per_data_unit_completion": 5.51 / 1000000,
+        },
+        "claude-v1": {
+            "class": Anthropic,
+            "provider": "Anthropic",
+            "data_unit": "token",
+            "data_limit": 9000,
+            "price_per_data_unit_prompt": 11.02 / 1000000,
+            "price_per_data_unit_completion": 32.68 / 1000000,
         },
     }
 
@@ -29,7 +48,7 @@ class LLMFactory:
         "tokens_per_character": 0.3,  # assumes 0.75 words / token and 4.7 characters / word
         "instruction_tokens": 250,
         "instruction_characters": 250 / 0.3,
-        "input_output_multiplier": 1.1,  # multiplier for input and output data length as buffer
+        "input_output_multiplier": 1.25,  # multiplier for input and output data length as buffer
         "buffer_tokens": 250,
         "buffer_characters": 250 / 0.3,
     }
@@ -40,3 +59,24 @@ class LLMFactory:
             raise ValueError(f"Invalid llm_type: {llm_type}")
 
         return LLMFactory.llm_classes[llm_type]["class"](**kwargs)
+
+    @staticmethod
+    def create_model_params(
+        llm: str, max_output_length: int, llm_api_key: str, temperature: float = 0.7
+    ) -> dict:
+        if LLMFactory.llm_classes[llm]["provider"] == "OpenAI":
+            model_params = {
+                "model_name": llm,
+                "temperature": temperature,
+                "max_tokens": max_output_length,
+                "openai_api_key": llm_api_key,
+            }
+        elif LLMFactory.llm_classes[llm]["provider"] == "Anthropic":
+            model_params = {
+                "model": llm,
+                "temperature": temperature,
+                "max_tokens_to_sample": max_output_length,
+                "anthropic_api_key": llm_api_key,
+            }
+
+        return model_params

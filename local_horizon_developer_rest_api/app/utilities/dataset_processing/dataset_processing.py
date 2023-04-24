@@ -1,12 +1,13 @@
 """Contains helper functions to process and extract info from evaluation dataset."""
 
 from app.models.llm.factory import LLMFactory
+from app.models.llm.open_ai import OpenAI, ChatOpenAI
+from app.models.llm.anthropic import Anthropic
 import os
 import csv
 import re
 import pandas as pd
 from typing import List
-import tiktoken
 
 
 def check_evaluation_dataset_and_data_length(
@@ -263,13 +264,12 @@ def get_evaluation_data_length(
 
     # Calculate data length used for input values and ground truth for each row based on
     # count of tokens and characters. Use max value of different encodings to be conservative
-    encoding_turbo = tiktoken.encoding_for_model("gpt-3.5-turbo")
-    encoding_davinci = tiktoken.encoding_for_model("text-davinci-003")
-
     def count_tokens(row: dict):
         string = "\n".join([f"<{key}>: {value}" for key, value in row.items()])
         token_count = max(
-            len(encoding_turbo.encode(string)), len(encoding_davinci.encode(string))
+            OpenAI.get_data_length(string),
+            ChatOpenAI.get_data_length(string),
+            Anthropic.get_data_length(string),
         )
         return token_count
 
@@ -291,17 +291,18 @@ def get_evaluation_data_length(
         lambda row: count_chars(row.to_dict()), axis=1
     ).max()
 
-    # Correct for fact that "<OUTPUT>:" is part of prompt, while "<ground_truth>: " is not
-    # part of LLM completion
+    # Correct for fact that "<OUTPUT>:" is part of prompt, while "<ground_truth>: " is not part of LLM completion
     output_string = "\n<OUTPUT>:"
     ground_truth_string = "\n<ground_truth>: "
     max_input_tokens += max(
-        len(encoding_turbo.encode(output_string)),
-        len(encoding_davinci.encode(output_string)),
+        OpenAI.get_data_length(output_string),
+        ChatOpenAI.get_data_length(output_string),
+        Anthropic.get_data_length(output_string),
     )
-    max_ground_truth_tokens -= max(
-        len(encoding_turbo.encode(ground_truth_string)),
-        len(encoding_davinci.encode(ground_truth_string)),
+    max_ground_truth_tokens -= min(
+        OpenAI.get_data_length(ground_truth_string),
+        ChatOpenAI.get_data_length(ground_truth_string),
+        Anthropic.get_data_length(ground_truth_string),
     )
     max_input_characters += len(output_string)
     max_ground_truth_characters -= len(ground_truth_string)

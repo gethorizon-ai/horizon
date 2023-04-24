@@ -6,10 +6,12 @@ from app.routes.users import api_key_required
 from app.utilities.run import run1
 from app.utilities.dataset_processing import dataset_processing
 from app.deploy.prompt import deploy_prompt
+from app.models.llm.factory import LLMFactory
 import os
 import csv
 from concurrent.futures import ThreadPoolExecutor
 from flask_restful import Resource, reqparse
+import json
 
 ALLOWED_EXTENSIONS = {"csv"}
 
@@ -47,6 +49,13 @@ class CreateTaskAPI(Resource):
         parser.add_argument(
             "project_id", type=int, required=True, help="Project ID is required"
         )
+        parser.add_argument(
+            "allowed_models",
+            type=list,
+            required=True,
+            location="json",
+            help="Models allowed to be used for this task",
+        )
         args = parser.parse_args()
 
         # Check that project exists and is associated with user
@@ -56,11 +65,21 @@ class CreateTaskAPI(Resource):
         if not project:
             return {"error": "Project not found or not associated with user"}, 400
 
+        # Check that there is at least one allowed model and all are valid
+        if len(args["allowed_models"]) == 0:
+            return {"error": "At least one allowed model must be provided"}, 400
+        for model in args["allowed_models"]:
+            if model not in LLMFactory.llm_classes:
+                return {
+                    "error": f"{args['allowed_models']}\nInvalid model {model} provided as allowed model"
+                }, 400
+
         # Create a new task
         task = Task(
             name=args["name"],
             task_type=args["task_type"],
             project_id=args["project_id"],
+            allowed_models=json.dumps(args["allowed_models"]),
         )
 
         try:
@@ -244,9 +263,7 @@ class GetTaskConfirmationDetailsAPI(Resource):
 
         # Call the get_task_confirmation_details function with the task_id
         try:
-            task_confirmation_details = run1.get_task_confirmation_details(
-                task_id=task_id
-            )
+            task_confirmation_details = run1.get_task_confirmation_details(task=task)
         except Exception as e:
             return {"error": str(e)}, 400
 
@@ -259,11 +276,19 @@ class GetTaskConfirmationDetailsAPI(Resource):
 user_executors = {}
 
 
-def process_generate_prompt(task: Task, objective: str, openai_api_key: str):
+def process_generate_prompt(
+    user_objective: str,
+    task: Task,
+    prompt: Prompt,
+    openai_api_key: str,
+    anthropic_api_key: str,
+):
     return run1.generate_prompt(
-        user_objective=objective,
-        prompt_id=task.active_prompt_id,
+        user_objective=user_objective,
+        task=task,
+        prompt=prompt,
         openai_api_key=openai_api_key,
+        anthropic_api_key=anthropic_api_key,
     )
 
 
@@ -280,6 +305,13 @@ class GenerateTaskAPI(Resource):
         parser.add_argument(
             "openai_api_key", type=str, required=True, help="OpenAI API key is required"
         )
+        parser.add_argument(
+            "anthropic_api_key",
+            type=str,
+            required=False,
+            default=None,
+            help="Anthropic API key needed to evaluate Anthropic models",
+        )
         args = parser.parse_args()
 
         # Fetch task and check it is associated with user
@@ -291,8 +323,12 @@ class GenerateTaskAPI(Resource):
         if not task:
             return {"error": "Task not found or not associated with user"}, 404
 
+        # Fetch prompt
         if not task.active_prompt_id:
             return {"error": "Active prompt not found for the task"}, 404
+        prompt = Prompt.query.get(task.active_prompt_id)
+        if not prompt:
+            return {"error": "Active prompt does not exist for the task"}, 404
 
         # Extract the API key from the g variable
         api_key = g.user.api_key
@@ -302,7 +338,12 @@ class GenerateTaskAPI(Resource):
 
         # Call the process_generate_prompt function with the provided objective and prompt_id
         future = user_executors[api_key].submit(
-            process_generate_prompt, task, args["objective"], args["openai_api_key"]
+            process_generate_prompt,
+            args["objective"],
+            task,
+            prompt,
+            args["openai_api_key"],
+            args["anthropic_api_key"],
         )
 
         try:
@@ -333,6 +374,13 @@ class DeployTaskAPI(Resource):
         parser.add_argument(
             "openai_api_key", type=str, required=True, help="OpenAI API key is required"
         )
+        parser.add_argument(
+            "anthropic_api_key",
+            type=str,
+            required=True,
+            default=None,
+            help="Provide Anthropic API key to evaluate Anthropic models",
+        )
         args = parser.parse_args()
 
         # Fetch task and check it is associated with user
@@ -344,19 +392,24 @@ class DeployTaskAPI(Resource):
         if not task:
             return {"error": "Task not found or not associated with user"}, 404
 
+        # Fetch prompt
         if not task.active_prompt_id:
             return {"error": "Active prompt not found for the task"}, 404
+        prompt = Prompt.query.get(task.active_prompt_id)
+        if not prompt:
+            return {"error": "Active prompt does not exist for the task"}, 404
 
         # Call the deploy function with the active prompt id and provided inputs
         try:
-            return_value = deploy_prompt(
-                prompt_id=task.active_prompt_id,
+            output = deploy_prompt(
+                prompt=prompt,
                 input_values=args["inputs"],
                 openai_api_key=args["openai_api_key"],
+                anthropic_api_key=args["anthropic_api_key"],
             )
             return {
                 "message": "Task deployed successfully",
-                "completion": return_value,
+                "completion": output,
             }, 200
         except Exception as e:
             return {"error": f"Failed with exception: {str(e)}"}, 400

@@ -38,7 +38,12 @@ def test_invalid_horizon_api_key(test_client):
         db.session.commit()
 
         # Use the create task API
-        task_data = {"name": "New Task", "task_type": "development", "project_id": p.id}
+        task_data = {
+            "name": "New Task",
+            "task_type": "development",
+            "project_id": p.id,
+            "allowed_models": ["gpt-3.5-turbo"],
+        }
         create_task_response = test_client.post(
             "/api/tasks/create", json=task_data, headers={"X-Api-Key": api_key}
         )
@@ -77,7 +82,12 @@ def test_invalid_openai_api_key(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=project.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=project.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -139,7 +149,12 @@ def test_invalid_evaluation_dataset_file_type(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -175,7 +190,12 @@ def test_invalid_evaluation_dataset_file_type(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -212,7 +232,12 @@ def test_invalid_evaluation_dataset_num_rows(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -258,7 +283,12 @@ def test_invalid_evaluation_dataset_header_names(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -306,7 +336,12 @@ def test_invalid_evaluation_dataset_token_length(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -354,7 +389,12 @@ def test_invalid_task_id(test_client):
         db.session.commit()
 
         # Use the create task API
-        task_data = {"name": "New Task", "task_type": "development", "project_id": p.id}
+        task_data = {
+            "name": "New Task",
+            "task_type": "development",
+            "project_id": p.id,
+            "allowed_models": ["gpt-3.5-turbo"],
+        }
         create_task_response = test_client.post(
             "/api/tasks/create", json=task_data, headers={"X-Api-Key": api_key}
         )

@@ -37,7 +37,12 @@ def test_task_creation(test_client):
         db.session.commit()
 
         # Create new task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -67,7 +72,12 @@ def test_get_tasks(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -101,7 +111,12 @@ def test_create_task(test_client):
         db.session.commit()
 
         # Test the /api/tasks/create endpoint (POST)
-        task_data = {"name": "New Task", "task_type": "development", "project_id": p.id}
+        task_data = {
+            "name": "New Task",
+            "task_type": "development",
+            "project_id": p.id,
+            "allowed_models": ["gpt-3.5-turbo"],
+        }
 
         response = test_client.post(
             "/api/tasks/create", json=task_data, headers={"X-Api-Key": api_key}
@@ -135,7 +150,12 @@ def test_get_task(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -167,7 +187,12 @@ def test_update_task(test_client):
         db.session.add(p)
         db.session.commit()
 
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -209,7 +234,12 @@ def test_delete_task(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -245,7 +275,12 @@ def test_upload_evaluation_datasets(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
@@ -286,7 +321,12 @@ def test_view_evaluation_datasets(test_client):
         db.session.commit()
 
         # Create sample task
-        t = Task(name="Sample Task", task_type="testing", project_id=p.id)
+        t = Task(
+            name="Sample Task",
+            task_type="testing",
+            project_id=p.id,
+            allowed_models=json.dumps(["gpt-3.5-turbo"]),
+        )
         db.session.add(t)
         db.session.commit()
 
