@@ -23,6 +23,7 @@ class Config:
     SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{username}:{password}@{hostname}:{port}/{database_name}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    AWS_REGION = 'us-west-2'
     COGNITO_POOL_ID = os.environ.get('COGNITO_POOL_ID')
     COGNITO_CLIENT_ID = os.environ.get('COGNITO_CLIENT_ID')
     COGNITO_CLIENT_SECRET = os.environ.get('COGNITO_CLIENT_SECRET')
