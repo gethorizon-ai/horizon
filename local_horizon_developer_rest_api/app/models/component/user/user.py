@@ -34,7 +34,7 @@ class User(db.Model):
 
     def create_cognito_user(self, password):
         response = self.cognito.sign_up(
-            ClientId=Config.AWS_COGNITO_APP_CLIENT_ID,
+            ClientId=Config.COGNITO_CLIENT_ID,
             Username=self.email,
             Password=password,
             UserAttributes=[
@@ -49,7 +49,7 @@ class User(db.Model):
     def authenticate(cls, email, password):
         try:
             response = cls.cognito.initiate_auth(
-                ClientId=Config.AWS_COGNITO_APP_CLIENT_ID,
+                ClientId=Config.COGNITO_CLIENT_ID,
                 AuthFlow='USER_PASSWORD_AUTH',
                 AuthParameters={
                     'USERNAME': email,
