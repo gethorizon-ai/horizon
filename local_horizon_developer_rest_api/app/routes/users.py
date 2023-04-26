@@ -66,25 +66,22 @@ def cognito_auth_required(f):
 class RegisterAPI(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str,
-                            required=True, help='Name is required')
+        parser.add_argument('name', type=str, required=True,
+                            help='Name is required')
         parser.add_argument('email', type=str, required=True,
                             help='Email is required')
         parser.add_argument('password', type=str,
                             required=True, help='Password is required')
         args = parser.parse_args()
-        print("Arguments:", args)
 
         try:
-            # Create a User instance with the name, email, and password
             user = User(args['name'], args['email'], password=args['password'])
             db.session.add(user)
             db.session.commit()
         except Exception as e:
-            print("Exception:", e)
             return {"error": str(e)}, 400
 
-        return {"message": "User registered successfully"}, 201
+        return {"message": "User registered successfully", "api_key": user.api_key}, 201
 
 
 class AuthenticateAPI(Resource):
@@ -96,19 +93,14 @@ class AuthenticateAPI(Resource):
                             required=True, help='Password is required')
         args = parser.parse_args()
 
-        try:
-            user = User.authenticate(args['email'], args['password'])
-            if not user:
-                raise Exception("Authentication failed")
-            cognito_tokens = {
-                "access_token": user.cognito.access_token,
-                "refresh_token": user.cognito.refresh_token,
-                "id_token": user.cognito.id_token,
-            }
-        except Exception as e:
-            return {"error": str(e)}, 400
+        user = User.authenticate(args['email'], args['password'])
+        if not user:
+            return {"error": "Authentication failed"}, 401
 
-        return {**cognito_tokens, "message": "User authenticated successfully"}, 200
+        return {
+            "api_key": user.api_key,
+            "message": "User authenticated successfully"
+        }, 200
 
 
 class GetUserAPI(Resource):
