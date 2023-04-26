@@ -3,6 +3,17 @@ import uuid
 from werkzeug.security import generate_password_hash, check_password_hash
 import boto3
 from config import Config
+import hmac
+import hashlib
+import base64
+
+
+def create_secret_hash(client_id, client_secret, username):
+    message = username + client_id
+    dig = hmac.new(client_secret.encode('utf-8'),
+                   msg=message.encode('utf-8'),
+                   digestmod=hashlib.sha256).digest()
+    return base64.b64encode(dig).decode()
 
 
 def generate_api_key():
@@ -33,14 +44,17 @@ class User(db.Model):
             self.create_cognito_user(password)
 
     def create_cognito_user(self, password):
+        secret_hash = create_secret_hash(Config.COGNITO_CLIENT_ID,
+                                         Config.COGNITO_CLIENT_SECRET,
+                                         self.email)
         response = self.cognito.sign_up(
-            ClientId=Config.COGNITO_CLIENT_ID,
+            ClientId=Config.AWS_COGNITO_APP_CLIENT_ID,
+            SecretHash=secret_hash,
             Username=self.email,
             Password=password,
             UserAttributes=[
                 {'Name': 'email', 'Value': self.email},
-                # Changed from preferred_username to name
-                {'Name': 'name', 'Value': self.name}
+                {'Name': 'preferred_username', 'Value': self.username}
             ]
         )
         self.id = response['UserSub']
