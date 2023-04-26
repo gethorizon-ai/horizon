@@ -21,7 +21,7 @@ def generate_api_key():
 
 
 class User(db.Model):
-    id = db.Column(db.String(36), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(120), primary_key=True, default=str(uuid.uuid4()))
     name = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     api_key = db.Column(db.String(36), unique=True,
