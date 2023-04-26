@@ -8,8 +8,8 @@ import hashlib
 import base64
 
 
-def create_secret_hash(client_id, client_secret, username):
-    message = username + client_id
+def create_secret_hash(client_id, client_secret, name):
+    message = name + client_id
     dig = hmac.new(client_secret.encode('utf-8'),
                    msg=message.encode('utf-8'),
                    digestmod=hashlib.sha256).digest()
@@ -22,7 +22,6 @@ def generate_api_key():
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    # Changed from username to name
     name = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     api_key = db.Column(db.String(36), unique=True,
@@ -33,13 +32,12 @@ class User(db.Model):
     cognito = boto3.client('cognito-idp',
                            region_name=Config.AWS_REGION)
 
-    # Changed from username to name
     def __init__(self, name, email, password=None, cognito_user=None):
-        self.name = name  # Changed from username to name
+        self.name = name
         self.email = email
         self.api_key = generate_api_key()
         if cognito_user:
-            self.id = cognito_user['Username']
+            self.id = cognito_user['UserSub']
         elif password:
             self.create_cognito_user(password)
 
@@ -54,7 +52,7 @@ class User(db.Model):
             Password=password,
             UserAttributes=[
                 {'Name': 'email', 'Value': self.email},
-                {'Name': 'preferred_username', 'Value': self.username}
+                {'Name': 'name', 'Value': self.name}
             ]
         )
         self.id = response['UserSub']
@@ -77,7 +75,7 @@ class User(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'name': self.name,  # Changed from username to name
+            'name': self.name,
             'email': self.email,
             'api_key': self.api_key
         }
