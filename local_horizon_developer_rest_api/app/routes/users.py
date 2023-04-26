@@ -69,6 +69,7 @@ class RegisterAPI(Resource):
         parser.add_argument('password', type=str,
                             required=True, help='Password is required')
         args = parser.parse_args()
+        print("Arguments:", args)  # Print the arguments
 
         try:
             cognito.add_base_attributes(
@@ -132,6 +133,19 @@ def register_routes(api):
     api.add_resource(GetUserAPI, '/api/users/')
     api.add_resource(DeleteUserAPI, '/api/users/')
 
+
+# Register a new user:
+# curl - X POST - H "Content-Type: application/json" - d '{"username": "test", "email": "team@gethorizon.ai", "password": "test!12Pasword!L89"}' "http://54.188.108.247:5000/api/users/register"
+
+# Authenticate a user:
+# curl - X POST - H "Content-Type: application/json" - d '{"username": "your_username", "password": "MhoG98s#fr55"}' "http://54.188.108.247:5000/api/users/authenticate"
+# curl - X POST - H "Content-Type: application/json" - d '{"username": "ltawfik", "password": "your_password"}' "http://54.188.108.247:5000/api/users/authenticate"
+
+# Get the authenticated user's information:
+# curl - X GET - H "Content-Type: application/json" - H "Authorization: Bearer your_access_token" "http://54.188.108.247:5000/api/users/"
+
+# Delete the authenticated user:
+# curl - X DELETE - H "Content-Type: application/json" - H "Authorization: Bearer your_access_token" "http://54.188.108.247:5000/api/users/"
 
 # def api_key_required(f):
 #     @wraps(f)
