@@ -65,6 +65,8 @@ def cognito_auth_required(f):
 class RegisterAPI(Resource):
     def post(self):
         parser = reqparse.RequestParser()
+        parser.add_argument('name', type=str,
+                            required=True, help='Name is required')
         parser.add_argument('username', type=str,
                             required=True, help='Username is required')
         parser.add_argument('email', type=str, required=True,
@@ -72,14 +74,14 @@ class RegisterAPI(Resource):
         parser.add_argument('password', type=str,
                             required=True, help='Password is required')
         args = parser.parse_args()
-        print("Arguments:", args)  # Print the arguments
+        print("Arguments:", args)
 
         try:
             cognito.add_base_attributes(
-                email=args['email'], preferred_username=args['username'])
+                name=args['name'], email=args['email'], preferred_username=args['username'])
             cognito.register(args['username'], args['password'])
         except Exception as e:
-            print("Exception:", e)  # Add this print statement
+            print("Exception:", e)
             return {"error": str(e)}, 400
 
         return {"message": "User registered successfully"}, 201
