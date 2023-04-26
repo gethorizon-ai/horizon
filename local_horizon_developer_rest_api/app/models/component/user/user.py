@@ -11,7 +11,8 @@ def generate_api_key():
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
+    # Changed from username to name
+    name = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     api_key = db.Column(db.String(36), unique=True,
                         nullable=False, default=generate_api_key)
@@ -21,8 +22,9 @@ class User(db.Model):
     cognito = boto3.client('cognito-idp',
                            region_name=Config.AWS_REGION)
 
-    def __init__(self, username, email, password=None, cognito_user=None):
-        self.username = username
+    # Changed from username to name
+    def __init__(self, name, email, password=None, cognito_user=None):
+        self.name = name  # Changed from username to name
         self.email = email
         self.api_key = generate_api_key()
         if cognito_user:
@@ -37,7 +39,8 @@ class User(db.Model):
             Password=password,
             UserAttributes=[
                 {'Name': 'email', 'Value': self.email},
-                {'Name': 'preferred_username', 'Value': self.username}
+                # Changed from preferred_username to name
+                {'Name': 'name', 'Value': self.name}
             ]
         )
         self.id = response['UserSub']
@@ -60,7 +63,7 @@ class User(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'username': self.username,
+            'name': self.name,  # Changed from username to name
             'email': self.email,
             'api_key': self.api_key
         }
