@@ -79,6 +79,7 @@ class RegisterAPI(Resource):
                 email=args['email'], preferred_username=args['username'])
             cognito.register(args['username'], args['password'])
         except Exception as e:
+            print("Exception:", e)  # Add this print statement
             return {"error": str(e)}, 400
 
         return {"message": "User registered successfully"}, 201
