@@ -14,10 +14,6 @@ class Config:
     # SQLALCHEMY_TRACK_MODIFICATIONS = False
     # CORS_HEADERS = 'Content-Type'
 
-    print("COGNITO_POOL_ID:", os.environ.get('COGNITO_POOL_ID'))
-    print("COGNITO_CLIENT_ID:", os.environ.get('COGNITO_CLIENT_ID'))
-    print("COGNITO_CLIENT_SECRET:", os.environ.get('COGNITO_CLIENT_SECRET'))
-
     username = os.environ.get('DB_USERNAME')
     password = os.environ.get('DB_PASSWORD')
     hostname = os.environ.get('DB_HOSTNAME')
