@@ -48,7 +48,7 @@ class User(db.Model):
                                          Config.COGNITO_CLIENT_SECRET,
                                          self.email)
         response = self.cognito.sign_up(
-            ClientId=Config.AWS_COGNITO_APP_CLIENT_ID,
+            ClientId=Config.COGNITO_CLIENT_ID,
             SecretHash=secret_hash,
             Username=self.email,
             Password=password,
