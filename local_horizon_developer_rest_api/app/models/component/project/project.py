@@ -15,7 +15,8 @@ class Project(db.Model):
     status = db.Column(db.String(64), nullable=False, default='created')
     create_timestamp = db.Column(
         db.DateTime, nullable=False, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.String(64), db.ForeignKey(
+        'user.id'), nullable=False)
     tasks = db.relationship('Task', backref='project',
                             lazy='dynamic', cascade='all,delete')
 
