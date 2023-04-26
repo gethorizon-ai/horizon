@@ -90,23 +90,25 @@ class RegisterAPI(Resource):
 class AuthenticateAPI(Resource):
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('username', type=str,
-                            required=True, help='Username is required')
+        parser.add_argument('email', type=str, required=True,
+                            help='Email is required')
         parser.add_argument('password', type=str,
                             required=True, help='Password is required')
         args = parser.parse_args()
 
         try:
-            cognito.authenticate(args['username'], args['password'])
+            user = User.authenticate(args['email'], args['password'])
+            if not user:
+                raise Exception("Authentication failed")
+            cognito_tokens = {
+                "access_token": user.cognito.access_token,
+                "refresh_token": user.cognito.refresh_token,
+                "id_token": user.cognito.id_token,
+            }
         except Exception as e:
             return {"error": str(e)}, 400
 
-        return {
-            "access_token": cognito.access_token,
-            "refresh_token": cognito.refresh_token,
-            "id_token": cognito.id_token,
-            "message": "User authenticated successfully"
-        }, 200
+        return {**cognito_tokens, "message": "User authenticated successfully"}, 200
 
 
 class GetUserAPI(Resource):
@@ -126,7 +128,7 @@ class DeleteUserAPI(Resource):
             return {"error": "User not found"}, 404
 
         try:
-            cognito.admin_delete_user(user.username)
+            user.cognito.admin_delete_user()
         except Exception as e:
             return {"error": str(e)}, 400
 
