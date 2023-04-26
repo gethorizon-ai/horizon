@@ -75,9 +75,10 @@ class RegisterAPI(Resource):
         print("Arguments:", args)
 
         try:
-            cognito.add_base_attributes(
-                name=args['name'], email=args['email'])
-            cognito.register(args['name'], args['password'])
+            # Create a User instance with the name, email, and password
+            user = User(args['name'], args['email'], password=args['password'])
+            db.session.add(user)
+            db.session.commit()
         except Exception as e:
             print("Exception:", e)
             return {"error": str(e)}, 400
