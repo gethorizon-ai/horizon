@@ -1,6 +1,6 @@
 from flask import request, send_file, make_response, g
 from flask_restful import Resource, reqparse
-from app.models.component import Task, Prompt, TaskStatus
+from app.models.component import Task, Prompt
 from app import db, api
 from app.routes.users import api_key_required
 from app.utilities.run.run1 import generate_prompt
@@ -88,11 +88,11 @@ class TaskAPI(Resource):
             task.description = args['description']
         if args['task_type'] is not None:
             task.task_type = args['task_type']
-        if args['status'] is not None:
-            try:
-                task.status = TaskStatus(args['status'])
-            except ValueError:
-                return {"error": "Invalid task status"}, 400
+        # if args['status'] is not None:
+        #     try:
+        #         task.status = TaskStatus(args['status'])
+        #     except ValueError:
+        #         return {"error": "Invalid task status"}, 400
         if args['evaluation_data'] is not None:
             task.evaluation_data = args['evaluation_dataset']
 

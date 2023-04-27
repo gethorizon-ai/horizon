@@ -5,10 +5,10 @@ from app.models.component.prompt import Prompt
 from sqlalchemy import Enum as SQLEnum
 
 
-class TaskStatus(Enum):
-    CREATED = 'created'
-    IN_PROGRESS = 'in_progress'
-    COMPLETED = 'completed'
+# class TaskStatus(Enum):
+#     CREATED = 'created'
+#     IN_PROGRESS = 'in_progress'
+#     COMPLETED = 'completed'
 
 
 class Task(db.Model):
@@ -19,8 +19,9 @@ class Task(db.Model):
     description = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
     evaluation_dataset = db.Column(db.String(100), nullable=True)
-    status = db.Column(SQLEnum(TaskStatus), nullable=False,
-                       default=TaskStatus.CREATED)
+    # status = db.Column(SQLEnum(TaskStatus), nullable=False,
+    #                    default=TaskStatus.CREATED)
+    status = db.Column(db.String(64), nullable=False, default='created')
     create_timestamp = db.Column(
         db.DateTime, nullable=False, default=datetime.utcnow)
     project_id = db.Column(db.Integer, db.ForeignKey(
@@ -37,7 +38,8 @@ class Task(db.Model):
             'description': self.description,
             'task_type': self.task_type,
             'evaluation_dataset': self.evaluation_dataset,
-            'status': self.status.value,  # Convert the TaskStatus object to a string
+            # 'status': self.status.value,  # Convert the TaskStatus object to a string
+            'status': self.status,
             'create_timestamp': datetime.isoformat(self.create_timestamp),
             'project_id': self.project_id,
             'active_prompt_id': self.active_prompt_id,
