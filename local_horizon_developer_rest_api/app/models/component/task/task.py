@@ -37,7 +37,7 @@ class Task(db.Model):
             'description': self.description,
             'task_type': self.task_type,
             'evaluation_dataset': self.evaluation_dataset,
-            'status': self.status,
+            'status': self.status.value,  # Convert the TaskStatus object to a string
             'create_timestamp': datetime.isoformat(self.create_timestamp),
             'project_id': self.project_id,
             'active_prompt_id': self.active_prompt_id,

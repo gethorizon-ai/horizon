@@ -1,6 +1,6 @@
 from flask import request, send_file, make_response, g
 from flask_restful import Resource, reqparse
-from app.models.component import Task, Prompt
+from app.models.component import Task, Prompt, TaskStatus
 from app import db, api
 from app.routes.users import api_key_required
 from app.utilities.run.run1 import generate_prompt
@@ -9,6 +9,7 @@ import os
 import csv
 from concurrent.futures import ThreadPoolExecutor
 from flask_restful import Resource, reqparse
+import logging
 
 
 ALLOWED_EXTENSIONS = {'csv'}
@@ -57,6 +58,7 @@ class CreateTaskAPI(Resource):
 
         except Exception as e:
             db.session.rollback()
+            logging.exception("Error occurred while creating task: %s", e)
             return {"error": str(e)}, 400
 
         return {"message": "Task created successfully", "task": task.to_dict()}, 201
@@ -87,7 +89,10 @@ class TaskAPI(Resource):
         if args['task_type'] is not None:
             task.task_type = args['task_type']
         if args['status'] is not None:
-            task.status = args['status']
+            try:
+                task.status = TaskStatus(args['status'])
+            except ValueError:
+                return {"error": "Invalid task status"}, 400
         if args['evaluation_data'] is not None:
             task.evaluation_data = args['evaluation_dataset']
 
@@ -333,3 +338,40 @@ def register_routes(api):
                      '/api/tasks/<int:task_id>/evaluation_dataset')
     api.add_resource(DeleteEvaluationDatasetsAPI,
                      '/api/tasks/<int:task_id>/delete_evaluation_dataset')
+
+
+# ListTasksAPI
+curl - X GET "http://54.188.108.247:5000/api/tasks" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
+
+# CreateTaskAPI
+curl - X POST "http://54.188.108.247:5000/api/tasks/create" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "name=task_name&task_type=task_type&project_id=1"
+
+# TaskAPI (GET)
+curl - X GET "http://54.188.108.247:5000/api/tasks/<TASK_ID>" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
+
+# TaskAPI (PUT)
+curl - X PUT "http://54.188.108.247:5000/api/tasks/<TASK_ID>" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "description=new_description&task_type=new_task_type&status=new_status&evaluation_data=new_evaluation_data"
+
+# TaskAPI (DELETE)
+curl - X DELETE "http://54.188.108.247:5000/api/tasks/<TASK_ID>" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
+
+# GetCurrentPromptAPI
+curl - X GET "http://54.188.108.247:5000/api/tasks/get_curr_prompt" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>"
+
+# SetCurrentPromptAPI
+curl - X PUT "http://54.188.108.247:5000/api/tasks/set_curr_prompt" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>&prompt_id=<PROMPT_ID>"
+
+# GenerateTaskAPI
+curl - X POST "http://54.188.108.247:5000/api/tasks/generate" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>&objective=<OBJECTIVE>"
+
+# DeployTaskAPI
+curl - X POST "http://54.188.108.247:5000/api/tasks/deploy" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>&inputs=<INPUTS>"
+
+# UploadEvaluationDatasetsAPI
+curl - X POST "http://54.188.108.247:5000/api/tasks/<TASK_ID>/upload_evaluation_dataset" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - F "evaluation_dataset=@/path/to/your/csv_file.csv"
+
+# ViewEvaluationDatasetsAPI
+curl - X GET "http://54.188.108.247:5000/api/tasks/<TASK_ID>/view_evaluation_dataset" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
+
+# EvaluationDatasetsAPI
+curl - X GET "http://54.188.108.247:5000/api/tasks/<TASK_ID>/evaluation_dataset" - H "Authorization

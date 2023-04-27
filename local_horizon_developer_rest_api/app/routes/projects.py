@@ -100,7 +100,7 @@ def register_routes(api):
     api.add_resource(ProjectAPI, '/api/projects/<int:project_id>')
 
 
-# curl -X GET -H "Content-Type: application/json" -H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" http://54.188.108.247:5000/api/projects
+# curl - X GET - H "Content-Type: application/json" - H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" http: // 54.188.108.247: 5000/api/projects
 # curl - X POST - H "Content-Type: application/json" - H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d '{"name": "Example Project"}' http: // 54.188.108.247: 5000/api/projects/create
 # curl - X GET - H "Content-Type: application/json" - H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" http: // 54.188.108.247: 5000/api/projects/<project_id >
 # curl - X PUT - H "Content-Type: application/json" - H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d '{"description": "Updated description", "status": "Updated status"}' http: // 54.188.108.247: 5000/api/projects/<project_id >
