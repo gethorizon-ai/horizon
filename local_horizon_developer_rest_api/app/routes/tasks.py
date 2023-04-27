@@ -340,38 +340,38 @@ def register_routes(api):
                      '/api/tasks/<int:task_id>/delete_evaluation_dataset')
 
 
-# ListTasksAPI
-curl - X GET "http://54.188.108.247:5000/api/tasks" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
+# # ListTasksAPI
+# curl - X GET "http://54.188.108.247:5000/api/tasks" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
 
-# CreateTaskAPI
-curl - X POST "http://54.188.108.247:5000/api/tasks/create" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "name=task_name&task_type=task_type&project_id=1"
+# # CreateTaskAPI
+# curl - X POST "http://54.188.108.247:5000/api/tasks/create" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "name=task_name&task_type=task_type&project_id=1"
 
-# TaskAPI (GET)
-curl - X GET "http://54.188.108.247:5000/api/tasks/<TASK_ID>" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
+# # TaskAPI (GET)
+# curl - X GET "http://54.188.108.247:5000/api/tasks/<TASK_ID>" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
 
-# TaskAPI (PUT)
-curl - X PUT "http://54.188.108.247:5000/api/tasks/<TASK_ID>" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "description=new_description&task_type=new_task_type&status=new_status&evaluation_data=new_evaluation_data"
+# # TaskAPI (PUT)
+# curl - X PUT "http://54.188.108.247:5000/api/tasks/<TASK_ID>" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "description=new_description&task_type=new_task_type&status=new_status&evaluation_data=new_evaluation_data"
 
-# TaskAPI (DELETE)
-curl - X DELETE "http://54.188.108.247:5000/api/tasks/<TASK_ID>" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
+# # TaskAPI (DELETE)
+# curl - X DELETE "http://54.188.108.247:5000/api/tasks/<TASK_ID>" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
 
-# GetCurrentPromptAPI
-curl - X GET "http://54.188.108.247:5000/api/tasks/get_curr_prompt" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>"
+# # GetCurrentPromptAPI
+# curl - X GET "http://54.188.108.247:5000/api/tasks/get_curr_prompt" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>"
 
-# SetCurrentPromptAPI
-curl - X PUT "http://54.188.108.247:5000/api/tasks/set_curr_prompt" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>&prompt_id=<PROMPT_ID>"
+# # SetCurrentPromptAPI
+# curl - X PUT "http://54.188.108.247:5000/api/tasks/set_curr_prompt" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>&prompt_id=<PROMPT_ID>"
 
-# GenerateTaskAPI
-curl - X POST "http://54.188.108.247:5000/api/tasks/generate" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>&objective=<OBJECTIVE>"
+# # GenerateTaskAPI
+# curl - X POST "http://54.188.108.247:5000/api/tasks/generate" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>&objective=<OBJECTIVE>"
 
-# DeployTaskAPI
-curl - X POST "http://54.188.108.247:5000/api/tasks/deploy" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>&inputs=<INPUTS>"
+# # DeployTaskAPI
+# curl - X POST "http://54.188.108.247:5000/api/tasks/deploy" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d "task_id=<TASK_ID>&inputs=<INPUTS>"
 
-# UploadEvaluationDatasetsAPI
-curl - X POST "http://54.188.108.247:5000/api/tasks/<TASK_ID>/upload_evaluation_dataset" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - F "evaluation_dataset=@/path/to/your/csv_file.csv"
+# # UploadEvaluationDatasetsAPI
+# curl - X POST "http://54.188.108.247:5000/api/tasks/<TASK_ID>/upload_evaluation_dataset" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - F "evaluation_dataset=@/path/to/your/csv_file.csv"
 
-# ViewEvaluationDatasetsAPI
-curl - X GET "http://54.188.108.247:5000/api/tasks/<TASK_ID>/view_evaluation_dataset" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
+# # ViewEvaluationDatasetsAPI
+# curl - X GET "http://54.188.108.247:5000/api/tasks/<TASK_ID>/view_evaluation_dataset" - H "Authorization: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805"
 
-# EvaluationDatasetsAPI
-curl - X GET "http://54.188.108.247:5000/api/tasks/<TASK_ID>/evaluation_dataset" - H "Authorization
+# # EvaluationDatasetsAPI
+# curl - X GET "http://54.188.108.247:5000/api/tasks/<TASK_ID>/evaluation_dataset" - H "Authorization
