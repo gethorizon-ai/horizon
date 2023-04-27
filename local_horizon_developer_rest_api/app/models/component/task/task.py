@@ -19,7 +19,7 @@ class Task(db.Model):
     name = db.Column(db.String(64), nullable=False)
     objective = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
-    evaluation_dataset = db.Column(db.String(100), nullable=True)
+    evaluation_dataset = db.Column(db.String(1000), nullable=True)
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
     create_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
@@ -46,7 +46,7 @@ class Task(db.Model):
             "create_timestamp": datetime.isoformat(self.create_timestamp),
             "project_id": self.project_id,
             "allowed_models": json.loads(self.allowed_models)
-            if self.allowed_models != None
+            if (self.allowed_models != None and self.allowed_models != "")
             else self.allowed_models,
             "active_prompt_id": self.active_prompt_id,
             "prompts": [prompt.to_dict() for prompt in self.prompts.all()],

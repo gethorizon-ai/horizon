@@ -4,6 +4,8 @@ Class organizes information around Task request, including objective, input vari
 """
 
 from app.utilities.dataset_processing import dataset_processing
+from app.models.llm.factory import LLMFactory
+from app.models.schema import HumanMessage
 from typing import List
 
 
@@ -132,3 +134,96 @@ class TaskRequest:
         return dataset_processing.get_normalized_input_variables(
             evaluation_dataset=self.evaluation_dataset
         )
+
+    def check_relevant_api_keys(
+        self, openai_api_key: str = None, anthropic_api_key: str = None
+    ) -> None:
+        """Checks that relevant API keys are provided for each allowed model and that they are valid.
+
+        Runs a small call to the cheapest model of the selected model vendor to validate key.
+
+        Args:
+            openai_api_key (str, optional): OpenAI API key to use. Defaults to None.
+            anthropic_api_key (str, optional): Anthropic API key to use. Defaults to None.
+
+        Raises:
+            AssertionError: checks that applicable_llms has been initialized.
+            ValueError: checks that OpenAI key provided for OpenAI model.
+            Exception: checks that OpenAI test inference worked.
+            ValueError: checks that Anthropic key provided for Anthropic model.
+            Exception: checks that Anthropic test inference worked.
+        """
+        # Check that applicable_llms is initialized
+        if self.applicable_llms == None:
+            raise AssertionError("Need to initialize applicable llms first")
+
+        validated_openai_api_key = False
+        validated_anthropic_api_key = False
+
+        for llm, llm_info in self.applicable_llms.items():
+            # Skip if not one of the allowed models
+            if self.allowed_models != None and llm not in self.allowed_models:
+                continue
+
+            if LLMFactory.llm_classes[llm]["provider"] == "OpenAI":
+                if not validated_openai_api_key:
+                    # Evaluate OpenAI models only if OpenAI API key is provided
+                    if openai_api_key == None:
+                        raise ValueError(
+                            "OpenAI API key required to evaluate OpenAI models"
+                        )
+
+                    # Run test generation to check that OpenAI API key is valid
+                    try:
+                        test_model_name = "gpt-3.5-turbo"
+                        test_model_params = LLMFactory.create_model_params(
+                            llm=test_model_name,
+                            max_output_length=1,
+                            llm_api_key=openai_api_key,
+                        )
+                        test_model_instance = LLMFactory.create_llm(
+                            test_model_name, **test_model_params
+                        )
+                        test_model_instance.generate(
+                            [[HumanMessage(content="test")]]
+                        ).generations[0][0].text.strip()
+                    except Exception as e:
+                        raise Exception(
+                            f"Error when validating OpenAI API key: {str(e)}"
+                        )
+
+                    validated_openai_api_key = True
+            elif LLMFactory.llm_classes[llm]["provider"] == "Anthropic":
+                if not validated_anthropic_api_key:
+                    # Evaluate Anthropic models only if Anthropic API key is provided
+                    if anthropic_api_key == None:
+                        raise ValueError(
+                            "Anthropic API key required to evaluate Anthropic models"
+                        )
+
+                    # Run test generation to check that Anthropic API key is valid
+                    try:
+                        test_model_name = "claude-instant-v1"
+                        test_model_params = LLMFactory.create_model_params(
+                            llm=test_model_name,
+                            max_output_length=1,
+                            llm_api_key=anthropic_api_key,
+                        )
+                        test_model_instance = LLMFactory.create_llm(
+                            test_model_name, **test_model_params
+                        )
+                        output = (
+                            test_model_instance.generate(
+                                [
+                                    f"{test_model_instance.HUMAN_PROMPT} 'test'{test_model_instance.AI_PROMPT}"
+                                ]
+                            )
+                            .generations[0][0]
+                            .text.strip()
+                        )
+                    except Exception as e:
+                        raise Exception(
+                            f"Error when validating Anthropic API key: {str(e)}"
+                        )
+
+                    validated_anthropic_api_key = True

@@ -1,6 +1,9 @@
 from .base import BaseLLM
 from langchain.llms import Anthropic as AnthropicOriginal
 import anthropic
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_result
+from typing import Any
+import re
 
 
 class Anthropic(BaseLLM, AnthropicOriginal):
@@ -17,3 +20,18 @@ class Anthropic(BaseLLM, AnthropicOriginal):
     @staticmethod
     def get_data_length(sample_str: str) -> int:
         return anthropic.count_tokens(sample_str)
+
+    # Add retry functionality for Anthropic inference calls
+    @retry(
+        reraise=True,
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        stop=stop_after_attempt(6),
+        # Retry only if error is not invalid API key (status code 401) or unprocessable entity (status code 422)
+        retry=retry_if_result(
+            lambda e: type(e) == anthropic.ApiException
+            and int(re.search(r"status code: (\d+)", e.args[0]).group(1))
+            not in [401, 422]
+        ),
+    )
+    def generate(self, *args: Any, **kwargs: Any) -> Any:
+        return super(AnthropicOriginal, self).generate(*args, **kwargs)

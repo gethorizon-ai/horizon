@@ -23,8 +23,8 @@ class Project(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "description": self.description,
-            "status": self.status,
-            "create_timestamp": datetime.isoformat(self.create_timestamp),
-            "user_id": self.user_id,
+            # "description": self.description,
+            # "status": self.status,
+            # "create_timestamp": datetime.isoformat(self.create_timestamp),
+            # "user_id": self.user_id,
         }

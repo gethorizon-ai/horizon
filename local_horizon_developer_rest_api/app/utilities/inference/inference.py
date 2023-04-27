@@ -49,6 +49,7 @@ def run_inference(
         evaluation_data_id_list=input_data["evaluation_data_id"].to_list(),
         stage_id=stage_id,
     )
+    print(f"Number of inferences to conduct: {len(inference_evaluation_results)}")
 
     # Create reference DataFrame which includes prompt-model candidates and input data for faster iteration
     reference_table = inference_evaluation_results.join(
@@ -64,11 +65,11 @@ def run_inference(
         input_values = row[task_request.input_variables].to_dict()
 
         # Format prompt and generate inference
-        # print(
-        #     f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']}"
-        # )
-        # print(row["generation_id"])
-        # print(row["prompt_object"])
+        print(
+            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']}"
+        )
+        print(row["generation_id"])
+        print(row["prompt_object"])
 
         formatted_prompt = row["prompt_object"].format(**input_values)
         model_object = row["model_object"]
@@ -78,8 +79,8 @@ def run_inference(
         # If model is Anthropic, then wrap message with Human and AI prompts
         elif type(model_object) == Anthropic:
             formatted_prompt = f"{model_object.HUMAN_PROMPT} {formatted_prompt}{model_object.AI_PROMPT}"
-        start_time = time.time()
 
+        start_time = time.time()
         output = (
             model_object.generate([formatted_prompt]).generations[0][0].text.strip()
         )

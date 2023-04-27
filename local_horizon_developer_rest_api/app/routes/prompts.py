@@ -3,7 +3,7 @@ from flask_restful import Resource, reqparse
 from app.models.component import Prompt, Task, Project, User
 from app import db, api
 from app.routes.users import api_key_required
-from app.utilities.run.run1 import generate_prompt
+from app.utilities.run.generate_prompt import generate_prompt_model_configuration
 from app.deploy.prompt import deploy_prompt
 
 
@@ -163,7 +163,18 @@ class GeneratePromptAPI(Resource):
             "prompt_id", type=int, required=True, help="Prompt ID is required"
         )
         parser.add_argument(
-            "openai_api_key", type=str, required=True, help="OpenAI API key is required"
+            "openai_api_key",
+            type=str,
+            required=False,
+            default=None,
+            help="OpenAI API needed to evaluate OpenAI models",
+        )
+        parser.add_argument(
+            "anthropic_api_key",
+            type=str,
+            required=False,
+            default=None,
+            help="Anthropic API key needed to evaluate Anthropic models",
         )
         args = parser.parse_args()
 
@@ -177,12 +188,21 @@ class GeneratePromptAPI(Resource):
         if not prompt:
             return {"error": "Prompt not found or not associated with user"}, 404
 
+        # Fetch associated task
+        task = Task.query.get(prompt.task_id)
+        if not task:
+            return {
+                "error": "Task associated with prompt not found or not associated with user"
+            }, 404
+
         # Call generate_prompt function with provided objective and prompt_id
         try:
-            generated_prompt = generate_prompt(
+            generated_prompt = generate_prompt_model_configuration(
                 user_objective=args["objective"],
-                prompt_id=args["prompt_id"],
+                task=task,
+                prompt=prompt,
                 openai_api_key=args["openai_api_key"],
+                anthropic_api_key=args["anthropic_api_key"],
             )
             generated_prompt_dict = generated_prompt.to_dict()
         except Exception as e:
@@ -207,12 +227,26 @@ class DeployPromptAPI(Resource):
             required=True,
             help="Input variables are required as a dictionary",
         )
+        parser.add_argument(
+            "openai_api_key",
+            type=str,
+            required=True,
+            default=None,
+            help="Provide OpenAI API key to deploy OpenAI models",
+        )
+        parser.add_argument(
+            "anthropic_api_key",
+            type=str,
+            required=True,
+            default=None,
+            help="Provide Anthropic API key to deploy Anthropic models",
+        )
         args = parser.parse_args()
 
         # Fetch prompt and check it is associated with user
         prompt = (
             Prompt.query.join(Task, Task.id == Prompt.task_id)
-            .join(Project)
+            .join(Project, Project.id == Task.project_id)
             .filter(Prompt.id == args["prompt_id"], Project.user_id == g.user.id)
             .first()
         )
@@ -221,7 +255,12 @@ class DeployPromptAPI(Resource):
 
         # Call deploy function with provided prompt_id and inputs
         try:
-            return_value = deploy_prompt(args["prompt_id"], args["inputs"])
+            return_value = deploy_prompt(
+                prompt=prompt,
+                input_values=args["inputs"],
+                openai_api_key=args["openai_api_key"],
+                anthropic_api_key=args["anthropic_api_key"],
+            )
         except Exception as e:
             return {"error": str(e)}, 400
 

@@ -95,12 +95,12 @@ def prompt_generation_variants(
             except:
                 continue
 
-            # add the generated prompt to the prompt_candidates list
+            # add the generated prompt and new prompt prefix to the prompt_candidates list
             prompt_model_id_list.append(starting_prompt_model_id)
             starting_prompt_model_id += 1
             generation_id_list.append(row["generation_id"] + "_[variant]")
             prompt_object_list.append(generated_prompt)
-            prompt_prefix_list.append(row["prompt_prefix"])
+            prompt_prefix_list.append(new_prompt_prefix)
             model_object_list.append(copy.deepcopy(row["model_object"]))
 
     # Return new prompt variants

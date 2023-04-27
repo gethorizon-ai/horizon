@@ -16,7 +16,7 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
         Args:
             dataset_file_path (str): path to evaluation dataset.
             template_data (dict): data to reconstruct few shot prompt template.
-            openai_api_key (str): user's OpenAI API key.
+            openai_api_key (str): OpenAI API key to use for embeddings.
 
         Returns:
             FewshotPromptTemplate: few shot prompt object to be deployed.

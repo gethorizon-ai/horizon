@@ -1,10 +1,4 @@
-"""Generates prompt candidates based on user-provided objective, input variables, and training data.
-
-Typical usage example:
-    prompt_model_candidates = prompt_generation_user_objective_training_data(experiment=x, model_object=x, num_prompts=x, 
-        starting_prompt_model_id=x)
-
-"""
+"""Generates prompt candidates based on user-provided objective, input variables, and training data."""
 
 from app.models.prompt.prompt import PromptTemplate
 from app.models.llm.base import BaseLLM

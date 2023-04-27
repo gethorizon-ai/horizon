@@ -1,3 +1,5 @@
+"""Provides function to deploy a Prompt object and return the generated output or completion."""
+
 from app.models.component.prompt import Prompt
 from app.models.component.task import Task
 from app import db
@@ -7,12 +9,14 @@ from app.models.llm.anthropic import Anthropic
 from app.models.prompt.factory import PromptTemplateFactory
 from app.models.prompt.chat import HumanMessage
 import json
+import dotenv
+import os
 
 
 def deploy_prompt(
     prompt: Prompt,
     input_values: dict,
-    openai_api_key: str,
+    openai_api_key: str = None,
     anthropic_api_key: str = None,
 ) -> str:
     """Deploy a prompt with the given prompt_id and input_values.
@@ -20,26 +24,15 @@ def deploy_prompt(
     Args:
         prompt (Prompt): prompt object from db.
         input_values (dict): dict of key-value pairs representing the input variables for prompt.
-        openai_api_key (str): OpenAI API key to use.
+        openai_api_key (str): OpenAI API key to use if selected model is from OpenAI. Defaults to None.
         anthropic_api_key (str, optional): Anthropic API key to use if selected model is from Anthropic. Defaults to None.
 
     Raises:
-        ValueError: if selected model is from Anthropic, then need to provide Anthropic API key
+        ValueError: if selected model is from OpenAI, then need to provide OpenAI API key.
+        ValueError: if selected model is from Anthropic, then need to provide Anthropic API key.
 
     Returns:
-        str: The return value of the deployed prompt.
-
-    Args:
-        prompt (Prompt): _description_
-        input_values (dict): _description_
-        openai_api_key (str): _description_
-        anthropic_api_key (str, optional): _description_. Defaults to None.
-
-    Raises:
-        ValueError: _description_
-
-    Returns:
-        str: _description_
+        str: The output or completion of the deployed prompt.
     """
     # get the model_name from the prompt
     model_name = prompt.model_name
@@ -49,6 +42,8 @@ def deploy_prompt(
 
     # Add llm api key
     if LLMFactory.llm_classes[model_name]["provider"] == "OpenAI":
+        if openai_api_key == None:
+            raise ValueError("Need OpenAI API key since selected LLM is from OpenAI.")
         model_params["openai_api_key"] = openai_api_key
     elif LLMFactory.llm_classes[model_name]["provider"] == "Anthropic":
         if anthropic_api_key == None:
@@ -78,7 +73,10 @@ def deploy_prompt(
             template_type, **template_data
         )
     elif template_type == "fewshot":
-        # If few shot, get evaluation dataset from task and few shot example selector data
+        # If few shot, get evaluation dataset from task
+        # Reconstruct few shot example selector with embeddings using Horizon's OpenAI API key
+        dotenv.load_dotenv()
+        horizon_openai_api_key = os.getenv("OPENAI_API_KEY")
         task_id = prompt.task_id
         task = Task.query.get(task_id)
         dataset_file_path = task.evaluation_dataset
@@ -86,7 +84,7 @@ def deploy_prompt(
             template_type=template_type,
             dataset_file_path=dataset_file_path,
             template_data=template_data,
-            openai_api_key=openai_api_key,
+            openai_api_key=horizon_openai_api_key,
         )
 
     # Modify input variables by prepending "var_" as done in Task creation process (to prevent names from matching internal horizonai

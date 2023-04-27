@@ -346,7 +346,23 @@ def get_applicable_llms(
             "Must compute evalution dataset length statistics first before determining applicable llms."
         )
 
-    # Determine data length of zero-shot prompt
+    # Determine max data length of llm output
+    max_output_tokens = int(
+        max(
+            LLMFactory.llm_data_assumptions["min_max_output_tokens"],
+            max_ground_truth_tokens
+            * LLMFactory.llm_data_assumptions["input_output_multiplier"],
+        )
+    )
+    max_output_characters = int(
+        max(
+            LLMFactory.llm_data_assumptions["min_max_output_tokens"],
+            max_ground_truth_characters
+            * LLMFactory.llm_data_assumptions["input_output_multiplier"],
+        )
+    )
+
+    # Determine data length of zero-shot prompt, including llm output
     zero_shot_tokens = int(
         LLMFactory.llm_data_assumptions["buffer_tokens"]
         + LLMFactory.llm_data_assumptions["instruction_tokens"]
@@ -354,6 +370,7 @@ def get_applicable_llms(
             max_input_tokens
             * LLMFactory.llm_data_assumptions["input_output_multiplier"]
         )
+        + max_output_tokens
     )
     zero_shot_characters = int(
         LLMFactory.llm_data_assumptions["buffer_characters"]
@@ -362,26 +379,20 @@ def get_applicable_llms(
             max_input_characters
             * LLMFactory.llm_data_assumptions["input_output_multiplier"]
         )
+        + max_output_characters
     )
 
     # Determine data length of single few shot example
     max_few_shot_example_tokens = int(
-        (max_input_tokens + max_ground_truth_tokens)
-        * LLMFactory.llm_data_assumptions["input_output_multiplier"]
+        (max_input_tokens * LLMFactory.llm_data_assumptions["input_output_multiplier"])
+        + max_output_tokens
     )
     max_few_shot_example_characters = int(
-        (max_input_characters + max_ground_truth_characters)
-        * LLMFactory.llm_data_assumptions["input_output_multiplier"]
-    )
-
-    # Determine max output data length
-    max_output_tokens = int(
-        max_ground_truth_tokens
-        * LLMFactory.llm_data_assumptions["input_output_multiplier"]
-    )
-    max_output_characters = int(
-        max_ground_truth_characters
-        * LLMFactory.llm_data_assumptions["input_output_multiplier"]
+        (
+            max_input_characters
+            * LLMFactory.llm_data_assumptions["input_output_multiplier"]
+        )
+        + max_output_characters
     )
 
     applicable_llms = {}
@@ -392,7 +403,8 @@ def get_applicable_llms(
             tokens_left_for_few_shots = llm_info["data_limit"] - zero_shot_tokens
             # Assume up to 10 few shot examples
             max_few_shots = min(
-                10, tokens_left_for_few_shots // max_few_shot_example_tokens
+                LLMFactory.llm_data_assumptions["max_few_shots"],
+                tokens_left_for_few_shots // max_few_shot_example_tokens,
             )
             applicable_llms[llm] = {
                 "max_few_shots": max_few_shots,

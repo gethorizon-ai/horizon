@@ -1,19 +1,15 @@
 # horizon_ai/__init__.py
 
 import requests
-import json
+import os
 from urllib.parse import urljoin
 
 # Base url for API calls
 base_url = "http://127.0.0.1:5000"
 
-# Horizon API key (to be set by user)
+# API keys for user to set
 api_key = None
-
-# OpenAI API key (to be set by user)
 openai_api_key = None
-
-# Anthropic API key (to be set by user)
 anthropic_api_key = None
 
 
@@ -284,8 +280,6 @@ def generate_task(task_id, objective):
     global api_key, openai_api_key, anthropic_api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
-    if openai_api_key == None:
-        raise Exception("Must set OpenAI API key.")
     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
     payload = {
         "task_id": task_id,
@@ -302,8 +296,6 @@ def deploy_task(task_id, inputs):
     global api_key, openai_api_key, anthropic_api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
-    if openai_api_key == None:
-        raise Exception("Must set OpenAI API key.")
     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
     payload = {
         "task_id": task_id,

@@ -1,10 +1,4 @@
-"""Generates prompt candidates in a role play pattern based on user-provided objective and input variables.
-
-Typical usage example:
-    prompt_model_candidates = prompt_generation_pattern_role_play(experiment=x, model_object=x, num_prompts=x, 
-        starting_prompt_model_id=x)
-
-"""
+"""Generates prompt candidates in a role play pattern based on user-provided objective and input variables."""
 
 from app.models.prompt.factory import PromptTemplateFactory
 from app.models.llm.base import BaseLLM

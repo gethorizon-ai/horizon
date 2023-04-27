@@ -3,7 +3,8 @@ from flask_restful import Resource, reqparse
 from app.models.component import Task, Prompt, Project
 from app import db, api
 from app.routes.users import api_key_required
-from app.utilities.run import run1
+from app.utilities.run import generate_prompt
+from app.utilities.run import task_confirmation_details
 from app.utilities.dataset_processing import dataset_processing
 from app.deploy.prompt import deploy_prompt
 from app.models.llm.factory import LLMFactory
@@ -263,27 +264,29 @@ class GetTaskConfirmationDetailsAPI(Resource):
 
         # Call the get_task_confirmation_details function with the task_id
         try:
-            task_confirmation_details = run1.get_task_confirmation_details(task=task)
+            task_confirmation_details_response = (
+                task_confirmation_details.get_task_confirmation_details(task=task)
+            )
         except Exception as e:
             return {"error": str(e)}, 400
 
         return {
             "message": "Task confirmation details produced",
-            "task_confirmation_details": task_confirmation_details,
+            "task_confirmation_details": task_confirmation_details_response,
         }, 200
 
 
 user_executors = {}
 
 
-def process_generate_prompt(
+def process_generate_prompt_model_configuration(
     user_objective: str,
     task: Task,
     prompt: Prompt,
     openai_api_key: str,
     anthropic_api_key: str,
 ):
-    return run1.generate_prompt(
+    return generate_prompt.generate_prompt_model_configuration(
         user_objective=user_objective,
         task=task,
         prompt=prompt,
@@ -303,7 +306,11 @@ class GenerateTaskAPI(Resource):
             "objective", type=str, required=True, help="Objective is required"
         )
         parser.add_argument(
-            "openai_api_key", type=str, required=True, help="OpenAI API key is required"
+            "openai_api_key",
+            type=str,
+            required=False,
+            default=None,
+            help="OpenAI API needed to evaluate OpenAI models",
         )
         parser.add_argument(
             "anthropic_api_key",
@@ -338,7 +345,7 @@ class GenerateTaskAPI(Resource):
 
         # Call the process_generate_prompt function with the provided objective and prompt_id
         future = user_executors[api_key].submit(
-            process_generate_prompt,
+            process_generate_prompt_model_configuration,
             args["objective"],
             task,
             prompt,
@@ -372,14 +379,18 @@ class DeployTaskAPI(Resource):
             help="Input variables are required as a dictionary",
         )
         parser.add_argument(
-            "openai_api_key", type=str, required=True, help="OpenAI API key is required"
+            "openai_api_key",
+            type=str,
+            required=True,
+            default=None,
+            help="Provide OpenAI API key to deploy OpenAI models",
         )
         parser.add_argument(
             "anthropic_api_key",
             type=str,
             required=True,
             default=None,
-            help="Provide Anthropic API key to evaluate Anthropic models",
+            help="Provide Anthropic API key to deploy Anthropic models",
         )
         args = parser.parse_args()
 
