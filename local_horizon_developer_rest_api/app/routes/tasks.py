@@ -7,6 +7,9 @@ from app.utilities.run.run1 import generate_prompt
 from app.deploy.prompt import deploy_prompt
 import os
 import csv
+from concurrent.futures import ThreadPoolExecutor
+from flask_restful import Resource, reqparse
+
 
 ALLOWED_EXTENSIONS = {'csv'}
 
@@ -160,6 +163,13 @@ class SetCurrentPromptAPI(Resource):
         return {"message": "Current prompt updated successfully", "task": task.to_dict()}, 200
 
 
+user_executors = {}
+
+
+def process_generate_prompt(task, objective):
+    return generate_prompt(task.active_prompt_id, objective)
+
+
 class GenerateTaskAPI(Resource):
     @api_key_required
     def post(self):
@@ -177,10 +187,22 @@ class GenerateTaskAPI(Resource):
         if not task.active_prompt_id:
             return {"error": "Active prompt not found for the task"}, 404
 
-        # Call the generate_prompt function with the provided objective and prompt_id
-        generated_prompt = generate_prompt(
-            task.active_prompt_id, args['objective'])
-        generated_prompt_dict = generated_prompt
+        # Extract the API key from the g variable
+        api_key = g.user.api_key
+
+        if api_key not in user_executors:
+            user_executors[api_key] = ThreadPoolExecutor(max_workers=5)
+
+        # Call the process_generate_prompt function with the provided objective and prompt_id
+        future = user_executors[api_key].submit(
+            process_generate_prompt, task, args['objective'])
+
+        try:
+            generated_prompt = future.result()
+            generated_prompt_dict = generated_prompt
+        except Exception as e:
+            return {"error": str(e)}, 400
+
         return {"message": "Task generation completed", "generated_prompt": generated_prompt_dict}, 200
 
 

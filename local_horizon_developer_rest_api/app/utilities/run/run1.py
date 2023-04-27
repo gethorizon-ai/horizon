@@ -134,7 +134,6 @@ def generate_prompt(prompt_id, objective) -> BasePromptTemplate:
     winning_prompt = prompt_shortlist(inference_results, 1, 0)
 
     # store the winning prompt template type in the database
-
     prompt.template_type = prompt_template_type
 
     # store the winning prompt in the database using the prompt_id as the template parameter
