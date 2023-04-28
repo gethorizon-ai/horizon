@@ -803,9 +803,9 @@ cli.add_command(evaluation_dataset)
 # cli.add_command(prompt)
 
 # User-related commands
-user.add_command(register_user)
+# user.add_command(register_user)
 user.add_command(authenticate_user)
-user.add_command(get_user)
+# user.add_command(get_user)
 # user.add_command(delete_user)
 
 # Project-related commands
