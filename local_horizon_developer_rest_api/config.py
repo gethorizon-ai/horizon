@@ -30,4 +30,4 @@ class Config:
     COGNITO_CLIENT_SECRET = os.environ.get("COGNITO_CLIENT_SECRET")
 
     # Horizon's OpenAI API key
-    HORIZON_OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+    HORIZON_OPENAI_API_KEY = os.environ.get("HORIZON_OPENAI_API_KEY")
