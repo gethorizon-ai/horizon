@@ -12,6 +12,8 @@ from botocore.exceptions import ClientError
 from config import Config
 import logging
 import hashlib
+import hmac
+import base64
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -23,6 +25,16 @@ cognito_client_id = config.COGNITO_CLIENT_ID
 cognito_client_secret = config.COGNITO_CLIENT_SECRET
 region_name = config.AWS_REGION
 cognito = boto3.client("cognito-idp", region_name=region_name)
+
+
+def calculate_secret_hash(client_secret, email, client_id):
+    message = email + client_id
+    dig = hmac.new(
+        bytes(client_secret, "utf-8"),
+        msg=bytes(message, "utf-8"),
+        digestmod=hashlib.sha256,
+    ).digest()
+    return base64.b64encode(dig).decode()
 
 
 def api_key_required(f):
@@ -49,15 +61,15 @@ def api_key_required(f):
 def cognito_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        parser = reqparse.RequestParser()
-        parser.add_argument("email", type=str, required=True, help="Email is required")
-        parser.add_argument(
-            "password", type=str, required=True, help="Password is required"
-        )
-        args = parser.parse_args()
+        email = request.form.get("email")
+        password = request.form.get("password")
 
-        if not args["email"] or not args["password"]:
+        if not email or not password:
             return {"error": "Email and password required"}, 401
+
+        secret_hash = calculate_secret_hash(
+            cognito_client_secret, email, cognito_client_id
+        )
 
         try:
             response = cognito.admin_initiate_auth(
@@ -65,16 +77,16 @@ def cognito_auth_required(f):
                 ClientId=cognito_client_id,
                 AuthFlow="ADMIN_USER_PASSWORD_AUTH",
                 AuthParameters={
-                    "USERNAME": args["email"],
-                    "PASSWORD": args["password"],
+                    "USERNAME": email,
+                    "PASSWORD": password,
+                    "SECRET_HASH": secret_hash,
                 },
             )
         except ClientError as e:
             return {"error": str(e)}, 401
 
         access_token = response["AuthenticationResult"]["AccessToken"]
-        cognito_user = cognito.get_user(AccessToken=access_token)
-        g.user = User.query.get(cognito_user["UserSub"])
+        g.user = cognito.get_user(AccessToken=access_token)
 
         return f(*args, **kwargs)
 
