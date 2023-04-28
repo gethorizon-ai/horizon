@@ -87,6 +87,7 @@ def generate_prompt_model_configuration(
 
     # STAGE 1 - Initial prompt generation - used as starting point for all applicable llms
     print("Beginning stage 1")
+    print(f"Horizon OpenAI API key: {Config.HORIZON_OPENAI_API_KEY[0:7]}...")
 
     # Generate prompt-model candidates using user objective method
     prompt_model_candidates_user_objective = (
