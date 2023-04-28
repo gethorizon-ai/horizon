@@ -92,7 +92,8 @@ def cognito_auth_required(f):
             return {"error": str(e)}, 401
 
         access_token = response["AuthenticationResult"]["AccessToken"]
-        g.user = cognito.get_user(AccessToken=access_token)
+        cognito_response = cognito.get_user(AccessToken=access_token)
+        g.user = User.query.get(cognito_response["UserSub"])
 
         return f(*args, **kwargs)
 
