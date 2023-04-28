@@ -51,10 +51,14 @@ def api_key_required(f):
 def cognito_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        email = request.form.get("email")
-        password = request.form.get("password")
+        parser.add_argument("email", type=str, required=True, help="Email is required")
+        parser.add_argument(
+            "password", type=str, required=True, help="Password is required"
+        )
+        args = parser.parse_args()
+        parser = reqparse.RequestParser()
 
-        if not email or not password:
+        if not args["email"] or not args["password"]:
             return {"error": "Email and password required"}, 401
 
         try:
@@ -63,8 +67,8 @@ def cognito_auth_required(f):
                 ClientId=cognito_client_id,
                 AuthFlow="ADMIN_USER_PASSWORD_AUTH",
                 AuthParameters={
-                    "USERNAME": email,
-                    "PASSWORD": password,
+                    "USERNAME": args["email"],
+                    "PASSWORD": args["password"],
                 },
             )
         except ClientError as e:
