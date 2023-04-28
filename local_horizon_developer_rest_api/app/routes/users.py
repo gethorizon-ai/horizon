@@ -25,11 +25,6 @@ region_name = config.AWS_REGION
 cognito = boto3.client("cognito-idp", region_name=region_name)
 
 
-cognito = Cognito(
-    cognito_pool_id, cognito_client_id, client_secret=cognito_client_secret
-)
-
-
 def api_key_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
