@@ -337,14 +337,14 @@ class GenerateTaskAPI(Resource):
         if not prompt:
             return {"error": "Active prompt does not exist for the task"}, 404
 
-        # Extract the API key from the g variable
-        api_key = g.user.api_key
+        # Extract the user's hashed API key from the g variable
+        api_key_hash = g.user.api_key_hash
 
-        if api_key not in user_executors:
-            user_executors[api_key] = ThreadPoolExecutor(max_workers=5)
+        if api_key_hash not in user_executors:
+            user_executors[api_key_hash] = ThreadPoolExecutor(max_workers=5)
 
-        # Call the process_generate_prompt function with the provided objective and prompt_id
-        future = user_executors[api_key].submit(
+        # Call the process_generate_prompt_model_configuration function with the provided objective and prompt_id
+        future = user_executors[api_key_hash].submit(
             process_generate_prompt_model_configuration,
             args["objective"],
             task,

@@ -138,8 +138,8 @@ def register_routes(api):
     api.add_resource(RegisterAPI, "/api/users/register")
     # api.add_resource(AuthenticateAPI, '/api/users/authenticate')
     api.add_resource(GenerateAPIKeyAPI, "/api/users/generate_new_api_key")
-    api.add_resource(GetUserAPI, "/api/users/")
-    api.add_resource(DeleteUserAPI, "/api/users/")
+    # api.add_resource(GetUserAPI, "/api/users/")
+    # api.add_resource(DeleteUserAPI, "/api/users/")
 
 
 # Register a new user:

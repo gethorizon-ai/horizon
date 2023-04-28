@@ -46,6 +46,7 @@ def prompt():
 # Register user
 # TODO: remove after account creation triggered automatically from cognito sign-up
 @click.command(name="register")
+@click.option("--name", prompt="Name", help="The name for the new user.")
 @click.option("--email", prompt="Email", help="The email for the new user.")
 @click.password_option(
     "--password", prompt="Password", help="The password for the new user."
