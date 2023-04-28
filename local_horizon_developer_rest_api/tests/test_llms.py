@@ -1,16 +1,12 @@
 """Test creation of LLM model object and ability to generate completions."""
 import pytest
 from app.models.llm.open_ai import OpenAI, ChatOpenAI
-import os
-import dotenv
 from app.models.schema import HumanMessage, SystemMessage
+from config import Config
 
 
 def test_factory_creation():
     """Test creation of LLM model object and ability to generate completions."""
-    dotenv.load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-
     prompt = """Answer the question based on the context below. If the
     question cannot be answered using the information provided answer
     with "I don't know".
@@ -26,10 +22,12 @@ def test_factory_creation():
     Answer:"""
     # initialize the models
 
-    testllm = OpenAI(model_name="text-davinci-003", openai_api_key=openai_api_key)
+    testllm = OpenAI(
+        model_name="text-davinci-003", openai_api_key=Config.HORIZON_OPENAI_API_KEY
+    )
     testllm(prompt)
 
-    chat = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
+    chat = ChatOpenAI(temperature=0, openai_api_key=Config.HORIZON_OPENAI_API_KEY)
     chat(
         [
             HumanMessage(

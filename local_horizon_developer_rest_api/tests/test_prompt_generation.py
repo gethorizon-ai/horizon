@@ -8,16 +8,12 @@ from app.utilities.generation import user_objective_training_data
 from app.utilities.generation import variants
 from app.utilities.generation import few_shot
 from app.utilities.generation import temperature_variation
+from config import Config
 import pytest
-import os
-import dotenv
 
 
 def test_prompt_generation_user_objective():
     """Test prompt generation with user objective."""
-    dotenv.load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
@@ -35,7 +31,7 @@ def test_prompt_generation_user_objective():
         "model_name": "text-davinci-003",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
-        "openai_api_key": openai_api_key,
+        "openai_api_key": Config.HORIZON_OPENAI_API_KEY,
     }
 
     # Create the OpenAI instance
@@ -52,7 +48,7 @@ def test_prompt_generation_user_objective():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
-        openai_api_key=openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
     assert len(result) > 0, "No prompts generated"
     assert len(result) <= num_prompts, "Generated more prompts than expected"
@@ -67,9 +63,6 @@ def test_prompt_generation_user_objective():
 
 def test_prompt_generation_pattern_role_play():
     """Test prompt generation with role play pattern."""
-    dotenv.load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
@@ -87,7 +80,7 @@ def test_prompt_generation_pattern_role_play():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
-        "openai_api_key": openai_api_key,
+        "openai_api_key": Config.HORIZON_OPENAI_API_KEY,
     }
 
     # Create the OpenAI instance
@@ -104,7 +97,7 @@ def test_prompt_generation_pattern_role_play():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
-        openai_api_key=openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
     assert len(result) > 0, "No prompts generated"
     assert len(result) <= num_prompts, "Generated more prompts than expected"
@@ -119,9 +112,6 @@ def test_prompt_generation_pattern_role_play():
 
 def test_prompt_generation_user_objective_training_data():
     """Test prompt generation with user objective and training data."""
-    dotenv.load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
@@ -139,7 +129,7 @@ def test_prompt_generation_user_objective_training_data():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
-        "openai_api_key": openai_api_key,
+        "openai_api_key": Config.HORIZON_OPENAI_API_KEY,
     }
 
     # Create the OpenAI instance
@@ -157,7 +147,7 @@ def test_prompt_generation_user_objective_training_data():
             model_object=openai_instance,
             num_prompts=num_prompts,
             starting_prompt_model_id=starting_prompt_model_id,
-            openai_api_key=openai_api_key,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
     )
     assert len(result) > 0, "No prompts generated"
@@ -175,9 +165,6 @@ def test_prompt_generation_user_objective_training_data():
 
 def test_prompt_generation_variants():
     """Test prompt generation of syntactic variants."""
-    dotenv.load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
@@ -195,7 +182,7 @@ def test_prompt_generation_variants():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
-        "openai_api_key": openai_api_key,
+        "openai_api_key": Config.HORIZON_OPENAI_API_KEY,
     }
 
     # Create the OpenAI instance
@@ -213,7 +200,7 @@ def test_prompt_generation_variants():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
-        openai_api_key=openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
 
     # Generate variants of each prompt
@@ -223,7 +210,7 @@ def test_prompt_generation_variants():
         prompt_model_candidates=intermediate_result,
         num_variants=num_variants,
         starting_prompt_model_id=starting_prompt_model_id + num_prompts,
-        openai_api_key=openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
 
     assert len(result) > 0, "No prompts generated"
@@ -241,9 +228,6 @@ def test_prompt_generation_variants():
 
 def test_prompt_generation_few_shots():
     """Test prompt generation of few-shot based prompts."""
-    dotenv.load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
@@ -261,7 +245,7 @@ def test_prompt_generation_few_shots():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
-        "openai_api_key": openai_api_key,
+        "openai_api_key": Config.HORIZON_OPENAI_API_KEY,
     }
 
     # Create the OpenAI instance
@@ -279,7 +263,7 @@ def test_prompt_generation_few_shots():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
-        openai_api_key=openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
 
     # Generate few shot version of each prompt
@@ -287,7 +271,7 @@ def test_prompt_generation_few_shots():
         task_request=task_request,
         prompt_model_candidates=intermediate_result,
         starting_prompt_model_id=starting_prompt_model_id + num_prompts,
-        openai_api_key=openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
 
     assert len(result) > 0, "No prompts generated"
@@ -305,9 +289,6 @@ def test_prompt_generation_few_shots():
 
 def test_prompt_generation_temperature_variation():
     """Test prompt generation of temperature variants."""
-    dotenv.load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-
     # Create the TaskRequest instance
     task_request = TaskRequest(
         user_objective="generate a marketing email",
@@ -325,7 +306,7 @@ def test_prompt_generation_temperature_variation():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
-        "openai_api_key": openai_api_key,
+        "openai_api_key": Config.HORIZON_OPENAI_API_KEY,
     }
 
     # Create the OpenAI instance
@@ -343,7 +324,7 @@ def test_prompt_generation_temperature_variation():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
-        openai_api_key=openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
 
     # Generate few shot version of each prompt
@@ -351,7 +332,7 @@ def test_prompt_generation_temperature_variation():
         task_request=task_request,
         prompt_model_candidates=intermediate_result,
         starting_prompt_model_id=starting_prompt_model_id + num_prompts,
-        openai_api_key=openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
 
     # Generate temperature variant of each few shot prompt

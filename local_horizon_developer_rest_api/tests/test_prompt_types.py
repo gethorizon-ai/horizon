@@ -16,17 +16,14 @@ from app.models.prompt.prompt import PromptTemplate
 from app.models.prompt.fewshot import FewshotPromptTemplate
 from app.models.prompt.fewshot_with_templates import FewshotWithTemplatesPromptTemplate
 from app.models.schema import HumanMessage, AIMessage, SystemMessage
+from config import Config
 from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelector
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
-import os
-import dotenv
 
 
 def test_factory_creation():
     """Test creation of different prompt template types using factory method."""
-    dotenv.load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
     # chat_prompt_template = factory.create_prompt_template("chat")
     # assert isinstance(chat_prompt_template, ChatPromptTemplate)
 
@@ -144,7 +141,10 @@ def test_factory_creation():
     ]
 
     example_selector = MaxMarginalRelevanceExampleSelector.from_examples(
-        examples, OpenAIEmbeddings(openai_api_key=openai_api_key), FAISS, k=2
+        examples,
+        OpenAIEmbeddings(openai_api_key=Config.HORIZON_OPENAI_API_KEY),
+        FAISS,
+        k=2,
     )
 
     dynamic_prompt_template = factory.create_prompt_template(

@@ -4,17 +4,13 @@ from app.models.llm.factory import LLMFactory
 from app.models.component import TaskRequest
 from app.utilities.generation import user_objective
 from app.utilities.inference import inference
+from config import Config
 import pytest
-import dotenv
-import os
 import numpy as np
 
 
 def test_inference():
     """Test inference method."""
-    dotenv.load_dotenv()
-    openai_api_key = os.getenv("OPENAI_API_KEY")
-
     # Create the TaskRequest instance
     num_test_data = 2
     task_request = TaskRequest(
@@ -33,7 +29,7 @@ def test_inference():
         "model_name": "gpt-3.5-turbo",
         "temperature": 0.4,
         "max_tokens": task_request.max_ground_truth_tokens,
-        "openai_api_key": openai_api_key,
+        "openai_api_key": Config.HORIZON_OPENAI_API_KEY,
     }
 
     # Create the OpenAI instance
@@ -49,7 +45,7 @@ def test_inference():
         model_object=openai_instance,
         num_prompts=num_prompts,
         starting_prompt_model_id=starting_prompt_model_id,
-        openai_api_key=openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
 
     # Run inference

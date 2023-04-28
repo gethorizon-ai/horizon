@@ -22,10 +22,9 @@ from app.utilities.run.prompt_generation_algorithm_parameters import (
     PROMPT_GENERATION_ALGORITHM_PARAMETERS,
 )
 from app import db
+from config import Config
 import pandas as pd
 import json
-import dotenv
-import os
 import copy
 
 
@@ -37,6 +36,8 @@ def generate_prompt_model_configuration(
     anthropic_api_key: str = None,
 ) -> dict:
     """Generate the optimal prompt-model candidate for a given objective and evaluation dataset.
+
+    Horizon's OpenAI API key is used for prompt generation and embeddings (user's API LLM API keys still used for inference)
 
     Args:
         user_objective (str): objectuse of the use case.
@@ -56,10 +57,6 @@ def generate_prompt_model_configuration(
     """
     if user_objective == None or len(user_objective) == 0:
         raise ValueError("Must provide user objective")
-
-    # Get Horizon's OpenAI API key to use for prompt generation and embeddings (user's API LLM API keys still used for inference)
-    dotenv.load_dotenv()
-    horizon_openai_api_key = os.getenv("OPENAI_API_KEY")
 
     # Log user objective with task
     task.objective = user_objective
@@ -100,7 +97,7 @@ def generate_prompt_model_configuration(
                 "num_prompts_user_objective"
             ],
             starting_prompt_model_id=starting_prompt_model_id,
-            openai_api_key=horizon_openai_api_key,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
     )
     starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
@@ -117,7 +114,7 @@ def generate_prompt_model_configuration(
                 "num_prompts_pattern_role_play"
             ],
             starting_prompt_model_id=starting_prompt_model_id,
-            openai_api_key=horizon_openai_api_key,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
     )
     starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
@@ -134,7 +131,7 @@ def generate_prompt_model_configuration(
                 "num_prompts_user_objective_training_data"
             ],
             starting_prompt_model_id=starting_prompt_model_id,
-            openai_api_key=horizon_openai_api_key,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
     )
     starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
@@ -158,7 +155,7 @@ def generate_prompt_model_configuration(
         prompt_model_candidates=prompt_model_candidates_stage_1_initial,
         num_variants=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"]["num_variants"],
         starting_prompt_model_id=starting_prompt_model_id,
-        openai_api_key=horizon_openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
     prompt_model_candidates_stage_1 = pd.concat(
         [
@@ -191,7 +188,7 @@ def generate_prompt_model_configuration(
             PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"]["num_clusters"],
             len(prompt_model_candidates_stage_1),
         ),
-        openai_api_key=horizon_openai_api_key,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
     )
     print("finished cluster_shortlist_prompts")
 
@@ -248,7 +245,7 @@ def generate_prompt_model_configuration(
             num_iterations=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
                 "num_iterations"
             ],
-            openai_api_key=horizon_openai_api_key,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
         aggregated_inference_evaluation_results = pd.concat(
             [aggregated_inference_evaluation_results, inference_evaluation_results],
@@ -262,7 +259,7 @@ def generate_prompt_model_configuration(
             task_request=task_request,
             prompt_model_candidates=prompt_model_candidates_stage_1_shortlisted,
             starting_prompt_model_id=starting_prompt_model_id,
-            openai_api_key=horizon_openai_api_key,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
         starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
             "num_shortlist"
@@ -279,7 +276,7 @@ def generate_prompt_model_configuration(
         evaluation.run_evaluation(
             task_request=task_request,
             inference_evaluation_results=inference_evaluation_results_stage_2,
-            openai_api_key=horizon_openai_api_key,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
         aggregated_inference_evaluation_results = pd.concat(
             [
@@ -339,7 +336,7 @@ def generate_prompt_model_configuration(
             num_iterations=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_3"][
                 "num_iterations"
             ],
-            openai_api_key=horizon_openai_api_key,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
         aggregated_inference_evaluation_results = pd.concat(
             [aggregated_inference_evaluation_results, inference_evaluation_results],

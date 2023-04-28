@@ -8,9 +8,8 @@ from app.models.llm.open_ai import ChatOpenAI
 from app.models.llm.anthropic import Anthropic
 from app.models.prompt.factory import PromptTemplateFactory
 from app.models.prompt.chat import HumanMessage
+from config import Config
 import json
-import dotenv
-import os
 
 
 def deploy_prompt(
@@ -75,8 +74,6 @@ def deploy_prompt(
     elif template_type == "fewshot":
         # If few shot, get evaluation dataset from task
         # Reconstruct few shot example selector with embeddings using Horizon's OpenAI API key
-        dotenv.load_dotenv()
-        horizon_openai_api_key = os.getenv("OPENAI_API_KEY")
         task_id = prompt.task_id
         task = Task.query.get(task_id)
         dataset_file_path = task.evaluation_dataset
@@ -84,7 +81,7 @@ def deploy_prompt(
             template_type=template_type,
             dataset_file_path=dataset_file_path,
             template_data=template_data,
-            openai_api_key=horizon_openai_api_key,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
 
     # Modify input variables by prepending "var_" as done in Task creation process (to prevent names from matching internal horizonai
