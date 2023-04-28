@@ -57,7 +57,6 @@ def cognito_auth_required(f):
             "password", type=str, required=True, help="Password is required"
         )
         args = parser.parse_args()
-        parser = reqparse.RequestParser()
 
         if not args["email"] or not args["password"]:
             return {"error": "Email and password required"}, 401
