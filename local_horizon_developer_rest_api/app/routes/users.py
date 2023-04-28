@@ -20,9 +20,8 @@ config = Config()
 cognito_pool_id = config.COGNITO_POOL_ID
 cognito_client_id = config.COGNITO_CLIENT_ID
 cognito_client_secret = config.COGNITO_CLIENT_SECRET
-
-cognito = Cognito(cognito_pool_id, cognito_client_id,
-                  client_secret=cognito_client_secret)
+region_name = config.AWS_REGION
+cognito = boto3.client('cognito-idp', region_name=region_name)
 
 
 def api_key_required(f):
