@@ -82,7 +82,7 @@ scipy
 shellingham
 six
 scikit-learn
-SQLAlchemy
+SQLAlchemy==1.4.47
 stack-data
 tenacity
 tomli
