@@ -87,7 +87,7 @@ class RegisterAPI(Resource):
         except Exception as e:
             return {"error": str(e)}, 400
 
-        return {"message": "User registered successfully", "api_key": user.api_key}, 201
+        return {"message": "User registered successfully"}, 201
 
 
 class GenerateAPIKeyAPI(Resource):
