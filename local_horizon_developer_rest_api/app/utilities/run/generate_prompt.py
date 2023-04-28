@@ -415,8 +415,12 @@ def generate_prompt_model_configuration(
     # Set newly created prompt as the active prompt for the task if it is not already so
     task.active_prompt_id = prompt.id
 
+    print("Finished prompt-model configuration.")
+
     # Commit the changes to the database
     db.session.commit()
+
+    print("Returning from generate_prompt_model_configuration function.")
 
     # Return task overview with selected prompt-model candidate
     return task.to_dict_filtered()
