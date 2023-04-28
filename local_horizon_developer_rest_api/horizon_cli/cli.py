@@ -51,9 +51,9 @@ def prompt():
 @click.password_option(
     "--password", prompt="Password", help="The password for the new user."
 )
-def register_user(email, password):
+def register_user(name, email, password):
     try:
-        result = horizon_ai.register_user(email, password)
+        result = horizon_ai.register_user(name, email, password)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:
