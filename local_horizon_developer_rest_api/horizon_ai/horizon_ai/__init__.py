@@ -60,12 +60,11 @@ def _handle_response(response):
 
 
 # User-related methods
-# TODO: remove this function once user registration is triggered automatically through cognito sign-up
-def register_user(name, email, password):
-    data = {"name": name, "email": email, "password": password}
-    headers = {"Content-Type": "application/json"}
-    response = _post(endpoint="/api/users/register", json=data, headers=headers)
-    return response
+# def register_user(name, email, password):
+#     data = {"name": name, "email": email, "password": password}
+#     headers = {"Content-Type": "application/json"}
+#     response = _post(endpoint="/api/users/register", json=data, headers=headers)
+#     return response
 
 
 def generate_new_api_key(email, password):
@@ -79,13 +78,13 @@ def generate_new_api_key(email, password):
     return response
 
 
-def get_user():
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key, "Content-Type": "application/json"}
-    response = _get(endpoint="/api/users/", headers=headers)
-    return response
+# def get_user():
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"X-Api-Key": api_key, "Content-Type": "application/json"}
+#     response = _get(endpoint="/api/users/", headers=headers)
+#     return response
 
 
 # def delete_user():

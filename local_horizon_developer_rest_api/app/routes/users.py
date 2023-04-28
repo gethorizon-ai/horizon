@@ -6,24 +6,24 @@ from app import db
 from sqlalchemy.exc import IntegrityError
 
 
-class RegisterAPI(Resource):
-    def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument("name", type=str, required=True, help="Name is required")
-        parser.add_argument("email", type=str, required=True, help="Email is required")
-        parser.add_argument(
-            "password", type=str, required=True, help="Password is required"
-        )
-        args = parser.parse_args()
+# class RegisterAPI(Resource):
+#     def post(self):
+#         parser = reqparse.RequestParser()
+#         parser.add_argument("name", type=str, required=True, help="Name is required")
+#         parser.add_argument("email", type=str, required=True, help="Email is required")
+#         parser.add_argument(
+#             "password", type=str, required=True, help="Password is required"
+#         )
+#         args = parser.parse_args()
 
-        try:
-            user = User(args["name"], args["email"], password=args["password"])
-            db.session.add(user)
-            db.session.commit()
-        except Exception as e:
-            return {"error": str(e)}, 400
+#         try:
+#             user = User(args["name"], args["email"], password=args["password"])
+#             db.session.add(user)
+#             db.session.commit()
+#         except Exception as e:
+#             return {"error": str(e)}, 400
 
-        return {"message": "User registered successfully"}, 201
+#         return {"message": "User registered successfully"}, 201
 
 
 class GenerateAPIKeyAPI(Resource):
@@ -46,32 +46,32 @@ class GenerateAPIKeyAPI(Resource):
         }, 200
 
 
-class GetUserAPI(Resource):
-    @cognito_auth_required
-    def get(self):
-        user = g.user
-        if not user:
-            return {"error": "User not found"}, 404
-        return user.to_dict(), 200
+# class GetUserAPI(Resource):
+#     @cognito_auth_required
+#     def get(self):
+#         user = g.user
+#         if not user:
+#             return {"error": "User not found"}, 404
+#         return user.to_dict(), 200
 
 
-class DeleteUserAPI(Resource):
-    @cognito_auth_required
-    def delete(self):
-        user = g.user
-        if not user:
-            return {"error": "User not found"}, 404
+# class DeleteUserAPI(Resource):
+#     @cognito_auth_required
+#     def delete(self):
+#         user = g.user
+#         if not user:
+#             return {"error": "User not found"}, 404
 
-        try:
-            user.cognito.admin_delete_user()
-        except Exception as e:
-            return {"error": str(e)}, 400
+#         try:
+#             user.cognito.admin_delete_user()
+#         except Exception as e:
+#             return {"error": str(e)}, 400
 
-        return {"message": "User deleted successfully"}, 200
+#         return {"message": "User deleted successfully"}, 200
 
 
 def register_routes(api):
-    api.add_resource(RegisterAPI, "/api/users/register")
+    # api.add_resource(RegisterAPI, "/api/users/register")
     # api.add_resource(AuthenticateAPI, '/api/users/authenticate')
     api.add_resource(GenerateAPIKeyAPI, "/api/users/generate_new_api_key")
     # api.add_resource(GetUserAPI, "/api/users/")

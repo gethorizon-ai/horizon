@@ -44,20 +44,19 @@ def prompt():
 
 
 # Register user
-# TODO: remove after account creation triggered automatically from cognito sign-up
-@click.command(name="register")
-@click.option("--name", prompt="Name", help="The name for the new user.")
-@click.option("--email", prompt="Email", help="The email for the new user.")
-@click.password_option(
-    "--password", prompt="Password", help="The password for the new user."
-)
-def register_user(name, email, password):
-    try:
-        result = horizon_ai.register_user(name, email, password)
-        formatted_output = json.dumps(result, indent=4)
-        click.echo(formatted_output)
-    except Exception as e:
-        click.echo(str(e))
+# @click.command(name="register")
+# @click.option("--name", prompt="Name", help="The name for the new user.")
+# @click.option("--email", prompt="Email", help="The email for the new user.")
+# @click.password_option(
+#     "--password", prompt="Password", help="The password for the new user."
+# )
+# def register_user(name, email, password):
+#     try:
+#         result = horizon_ai.register_user(name, email, password)
+#         formatted_output = json.dumps(result, indent=4)
+#         click.echo(formatted_output)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
 # Generate new Horizon API key for user
@@ -76,21 +75,21 @@ def authenticate_user(email, password):
 
 
 # Get user details
-@click.command(name="get")
-@click.option(
-    "--horizon_api_key",
-    default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
-    help="The Horizon API key for the user.",
-)
-def get_user(horizon_api_key):
-    horizon_ai.api_key = horizon_api_key
-    try:
-        result = horizon_ai.get_user()
-        formatted_output = json.dumps(result, indent=4)
-        click.echo(formatted_output)
-    except Exception as e:
-        click.echo(str(e))
+# @click.command(name="get")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# def get_user(horizon_api_key):
+#     horizon_ai.api_key = horizon_api_key
+#     try:
+#         result = horizon_ai.get_user()
+#         formatted_output = json.dumps(result, indent=4)
+#         click.echo(formatted_output)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
 # Delete user
