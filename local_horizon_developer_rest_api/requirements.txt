@@ -97,4 +97,4 @@ wcwidth
 Werkzeug
 wrapt
 yarl
-enum
+enum==0.4.6
