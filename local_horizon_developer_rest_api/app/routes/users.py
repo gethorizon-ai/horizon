@@ -61,8 +61,14 @@ def api_key_required(f):
 def cognito_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        email = request.form.get("email")
-        password = request.form.get("password")
+        parser = reqparse.RequestParser()
+        parser.add_argument("email", type=str, required=True, help="Email is required")
+        parser.add_argument(
+            "password", type=str, required=True, help="Password is required"
+        )
+        args = parser.parse_args()
+        email = args["email"]
+        password = args["password"]
 
         if not email or not password:
             return {"error": "Email and password required"}, 401
