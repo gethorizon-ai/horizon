@@ -1,8 +1,8 @@
-from flask import request, g
+from flask import g
 from flask_restful import Resource, reqparse
-from app.models.component import Prompt, Task, Project, User
-from app import db, api
-from app.routes.users import api_key_required
+from app.models.component import Prompt, Task, Project
+from app import db
+from app.utilities.authentication.api_key_auth import api_key_required
 from app.utilities.run.generate_prompt import generate_prompt_model_configuration
 from app.deploy.prompt import deploy_prompt
 

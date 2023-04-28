@@ -1,7 +1,6 @@
 from app.utilities.authentication.cognito_auth import cognito_auth_required
 from flask import g
-from flask_restful import Resource, reqparse
-from app.models.component import User
+from flask_restful import Resource
 from app import db
 from sqlalchemy.exc import IntegrityError
 
