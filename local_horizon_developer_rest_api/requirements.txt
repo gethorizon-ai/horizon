@@ -97,4 +97,5 @@ wcwidth
 Werkzeug
 wrapt
 yarl
+tiktoken
 # enum==0.4.6
