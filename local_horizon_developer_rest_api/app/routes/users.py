@@ -10,6 +10,7 @@ import os
 import boto3
 from config import Config
 import logging
+from botocore.exceptions import ClientError
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -44,22 +45,30 @@ def api_key_required(f):
 def cognito_auth_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            return {"error": "Authorization header required"}, 401
+        email = request.form.get('email')
+        password = request.form.get('password')
 
-        access_token = auth_header.split(" ")[-1]
-        if not access_token:
-            return {"error": "Access token required"}, 401
+        if not email or not password:
+            return {"error": "Email and password required"}, 401
 
         try:
-            cognito.verify_token(access_token, 'access_token')
-        except Exception as e:
+            response = cognito.admin_initiate_auth(
+                UserPoolId=cognito_pool_id,
+                ClientId=cognito_client_id,
+                AuthFlow='ADMIN_USER_PASSWORD_AUTH',
+                AuthParameters={
+                    'USERNAME': email,
+                    'PASSWORD': password,
+                },
+            )
+        except ClientError as e:
             return {"error": str(e)}, 401
 
-        g.user = cognito.get_user()
+        access_token = response['AuthenticationResult']['AccessToken']
+        g.user = cognito.get_user(AccessToken=access_token)
 
         return f(*args, **kwargs)
+
     return decorated_function
 
 
