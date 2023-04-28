@@ -1,19 +1,9 @@
 from flask_restful import Resource, reqparse
-from app.models.component import TaskRequest, Project, Prompt, Task, User
-from app import db, api
-from app.routes.users import api_key_required
+from app.models.component import Project
+from app.utilities.authentication.api_key_auth import api_key_required
+from app import db
 from sqlalchemy.exc import IntegrityError
-from flask_restful import Api
-from flask import request, send_file, make_response, g
-from io import BytesIO
-import os
-import csv
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import FileStorage
-from flask import Response
-import base64
-import requests
-import pandas as pd
+from flask import g
 
 ALLOWED_EXTENSIONS = {"csv"}
 

@@ -2,7 +2,7 @@ from flask import request, send_file, make_response, g
 from flask_restful import Resource, reqparse
 from app.models.component import Task, Prompt, Project
 from app import db, api
-from app.routes.users import api_key_required
+from app.utilities.authentication.api_key_auth import api_key_required
 from app.utilities.run import generate_prompt
 from app.utilities.run import task_confirmation_details
 from app.utilities.dataset_processing import dataset_processing
