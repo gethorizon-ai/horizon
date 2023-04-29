@@ -13,9 +13,6 @@ import csv
 from concurrent.futures import ThreadPoolExecutor
 from flask_restful import Resource, reqparse
 import json
-from app import create_app
-
-app_instance = create_app()
 
 ALLOWED_EXTENSIONS = {"csv"}
 
@@ -302,6 +299,8 @@ def process_generate_prompt_model_configuration(
 class GenerateTaskAPI(Resource):
     @api_key_required
     def post(self):
+        from app import create_app
+        app_instance = create_app()
         with app_instance.app_context():
             parser = reqparse.RequestParser()
             parser.add_argument(
