@@ -3,7 +3,7 @@ from flask import g
 from flask_restful import Resource
 from app import db
 from sqlalchemy.exc import IntegrityError
-
+from app.utilities.context import RequestContext
 
 # class RegisterAPI(Resource):
 #     def post(self):
