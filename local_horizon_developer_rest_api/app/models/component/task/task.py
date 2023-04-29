@@ -20,19 +20,17 @@ class Task(db.Model):
     objective = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
     evaluation_dataset = db.Column(db.String(1000), nullable=True)
-    status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
-    create_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    status = db.Column(SQLEnum(TaskStatus), nullable=False,
+                       default=TaskStatus.CREATED)
+    create_timestamp = db.Column(
+        db.DateTime, nullable=False, default=datetime.utcnow)
+    project_id = db.Column(db.Integer, db.ForeignKey(
+        "project.id"), nullable=False)
     allowed_models = db.Column(db.String(200), nullable=False)
     prompts = db.relationship(
-        "Prompt",
-        backref="task",
-        lazy="dynamic",
-        cascade="all,delete",
-        foreign_keys=[Prompt.task_id],
-        passive_deletes=True,
-    )
-    active_prompt_id = db.Column(db.Integer, db.ForeignKey("prompt.id", use_alter=True))
+        'Prompt', backref='task', lazy='dynamic', cascade='all, delete, delete-orphan', foreign_keys=[Prompt.task_id], passive_deletes=True)
+    active_prompt_id = db.Column(
+        db.Integer, db.ForeignKey('prompt.id', use_alter=True, ondelete='CASCADE'), nullable=True)
     evaluation_statistics = db.Column(db.String(1000), nullable=True)
 
     def to_dict(self):
