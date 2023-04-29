@@ -11,7 +11,9 @@ import boto3
 from config import Config
 import logging
 from botocore.exceptions import ClientError
-
+import hashlib
+import hmac
+import base64
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -22,6 +24,13 @@ cognito_client_id = config.COGNITO_CLIENT_ID
 cognito_client_secret = config.COGNITO_CLIENT_SECRET
 region_name = config.AWS_REGION
 cognito = boto3.client('cognito-idp', region_name=region_name)
+
+
+def calculate_secret_hash(client_secret, email, client_id):
+    message = email + client_id
+    dig = hmac.new(bytes(client_secret, 'utf-8'), msg=bytes(message,
+                   'utf-8'), digestmod=hashlib.sha256).digest()
+    return base64.b64encode(dig).decode()
 
 
 def api_key_required(f):
@@ -50,6 +59,9 @@ def cognito_auth_required(f):
         if not email or not password:
             return {"error": "Email and password required"}, 401
 
+        secret_hash = calculate_secret_hash(
+            cognito_client_secret, email, cognito_client_id)
+
         try:
             response = cognito.admin_initiate_auth(
                 UserPoolId=cognito_pool_id,
@@ -58,6 +70,7 @@ def cognito_auth_required(f):
                 AuthParameters={
                     'USERNAME': email,
                     'PASSWORD': password,
+                    'SECRET_HASH': secret_hash,
                 },
             )
         except ClientError as e:

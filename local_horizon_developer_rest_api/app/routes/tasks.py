@@ -362,11 +362,11 @@ def register_routes(api):
 
 
 # Upload evaluation dataset
-curl - X POST - H "Content-Type: multipart/form-data" - H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - F "file=@/path/to/your/file.csv" http: // 54.188.108.247: 5000/api/tasks/1/upload_evaluation_dataset
+# curl - X POST - H "Content-Type: multipart/form-data" - H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - F "file=@/path/to/your/file.csv" http: // 54.188.108.247: 5000/api/tasks/1/upload_evaluation_dataset
 
 
-# # GenerateTaskAPI
-curl - X POST - H "Content-Type: application/json" - H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d '{"task_id": 2, "objective": "Generate the title for a slide that addresses the request and is targeted for elementary school students"}' http: // 54.188.108.247: 5000/api/tasks/generate
+# # # GenerateTaskAPI
+# curl - X POST - H "Content-Type: application/json" - H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" - d '{"task_id": 2, "objective": "Generate the title for a slide that addresses the request and is targeted for elementary school students"}' http: // 54.188.108.247: 5000/api/tasks/generate
 
 # # DeployTaskAPI
 # curl -X POST -H "Content-Type: application/json" -H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3

@@ -27,9 +27,9 @@ class Task(db.Model):
     project_id = db.Column(db.Integer, db.ForeignKey(
         'project.id'), nullable=False)
     prompts = db.relationship(
-        'Prompt', backref='task', lazy='dynamic', cascade='all,delete', foreign_keys=[Prompt.task_id], passive_deletes=True)
+        'Prompt', backref='task', lazy='dynamic', cascade='all, delete, delete-orphan', foreign_keys=[Prompt.task_id], passive_deletes=True)
     active_prompt_id = db.Column(
-        db.Integer, db.ForeignKey('prompt.id', use_alter=True))
+        db.Integer, db.ForeignKey('prompt.id', use_alter=True), nullable=True)
 
     def to_dict(self):
         return {
