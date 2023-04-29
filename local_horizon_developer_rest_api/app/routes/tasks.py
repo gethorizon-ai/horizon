@@ -300,7 +300,7 @@ def process_generate_prompt_model_configuration(
 
 class GenerateTaskAPI(Resource):
     @api_key_required
-    def post(self, ctx):
+    def post(self, g):
         from app import create_app
         app_instance = create_app()
         with app_instance.app_context():
@@ -330,7 +330,7 @@ class GenerateTaskAPI(Resource):
             # Fetch task and check it is associated with user
             task = (
                 Task.query.join(Project, Project.id == Task.project_id)
-                .filter(Task.id == args["task_id"], Project.user_id == ctx.user.id)
+                .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
                 .first()
             )
             if not task:
@@ -344,7 +344,7 @@ class GenerateTaskAPI(Resource):
                 return {"error": "Active prompt does not exist for the task"}, 404
 
             # Extract the user's hashed API key from the g variable
-            api_key_hash = ctx.user.api_key_hash
+            api_key_hash = g.user.api_key_hash
 
             if api_key_hash not in user_executors:
                 user_executors[api_key_hash] = ThreadPoolExecutor(

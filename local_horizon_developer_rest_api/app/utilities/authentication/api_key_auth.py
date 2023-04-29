@@ -33,9 +33,11 @@ def api_key_required(f: Callable) -> Callable:
         # Attach user object to app context for function to reference
         g.user = user
 
-        # Create RequestContext object and store user
-        ctx = RequestContext(user=user)
-        kwargs["ctx"] = ctx  # pass the 'ctx' object
+        # # Create RequestContext object and store user
+        # ctx = RequestContext(user=user)
+        # kwargs["ctx"] = ctx  # pass the 'ctx' object
+
+        kwargs["g"] = g
 
         return f(*args, **kwargs)
 
