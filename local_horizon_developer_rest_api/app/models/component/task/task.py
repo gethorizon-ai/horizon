@@ -4,6 +4,7 @@ from enum import Enum
 import json
 from app.models.component.prompt import Prompt
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import event
 
 
 class TaskStatus(Enum):
@@ -30,7 +31,7 @@ class Task(db.Model):
     prompts = db.relationship(
         'Prompt', backref='task', lazy='dynamic', cascade='all, delete, delete-orphan', foreign_keys=[Prompt.task_id], passive_deletes=True)
     active_prompt_id = db.Column(
-        db.Integer, db.ForeignKey('prompt.id', use_alter=True, ondelete='CASCADE'), nullable=True)
+        db.Integer, db.ForeignKey('prompt.id', use_alter=True, ondelete='SET NULL'), nullable=True)
     evaluation_statistics = db.Column(db.String(1000), nullable=True)
 
     def to_dict(self):
@@ -73,3 +74,9 @@ class Task(db.Model):
         ]
 
         return filtered_dict
+
+
+@event.listens_for(Task, 'before_delete')
+def _set_active_prompt_null(mapper, connection, target):
+    target.active_prompt_id = None
+    db.session.commit()
