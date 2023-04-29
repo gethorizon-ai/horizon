@@ -1,7 +1,7 @@
 import { Box, Container, Typography } from "@mui/material";
 import HorizonAppBar from "../../components/HorizonAppBar";
 import AccountDrawer from "../../components/AccountDrawer";
-import {DefaultCopyField} from '@eisberg-labs/mui-copy-field';
+import { DefaultCopyField } from '@eisberg-labs/mui-copy-field';
 import { useEffect, useState } from "react";
 import { Auth } from "aws-amplify";
 import { Navigate } from "react-router-dom";
@@ -14,14 +14,15 @@ const initialState = {
     loading: true
 };
 
-function ApiKeyPage(){
+function ApiKeyPage() {
     const [state, setState] = useState(initialState);
     useEffect(() => {
         async function checkUser() {
             await Auth.currentAuthenticatedUser({
                 bypassCache: false
             }).then(user => {
-                setState({...initialState,
+                setState({
+                    ...initialState,
                     user: user,
                     isLoggedIn: true,
                     loading: false
@@ -29,7 +30,8 @@ function ApiKeyPage(){
                 console.log(user)
             }).catch(err => {
                 console.log(err);
-                setState({...initialState,
+                setState({
+                    ...initialState,
                     user: undefined,
                     isLoggedIn: false,
                     loading: false
@@ -59,23 +61,20 @@ function ApiKeyPage(){
             <Navigate to="/login" />
         )
     }
-    return(
+    return (
         <Box>
             <HorizonAppBar user={state.user} signOut={signOut} />
             <Box component="drawer" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
                 <AccountDrawer />
             </Box>
-            <Box component="main" sx={{flexGrow: 1, mt: 3, ml: { sm: `${drawerWidth}px` }}}>
+            <Box component="main" sx={{ flexGrow: 1, mt: 3, ml: { sm: `${drawerWidth}px` } }}>
                 <Container maxWidth="xl">
-                    <Typography variant="h4" align="left" sx={{mb: 3, fontWeight: 700 }} >
+                    <Typography variant="h4" align="left" sx={{ mb: 3, fontWeight: 700 }} >
                         Horizon API Key
                     </Typography>
                     <Typography variant="body1">
-                    Your secret Horizon API key is listed below. Do not share your API key with others or expose it in the browser or other client-side code. Reference the Quickstart guide in the Documentation to quickly integrate Horizon into your workflow.
+                        Welcome! You have successfully created an account and logged in. Please proceed with creating a Horizon API key using the command line interface as described in the <a href="https://docs.gethorizon.ai/quickstart">documentation</a>. You can then create and deploy projects and tasks!
                     </Typography>
-                    <Box sx={{mt: 4}}>
-                        <DefaultCopyField label="Horizon API Key" value={"TBD"} />
-                    </Box>
                 </Container>
             </Box>
         </Box>

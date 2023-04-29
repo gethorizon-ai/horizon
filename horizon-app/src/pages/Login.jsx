@@ -66,7 +66,7 @@ function Login() {
     return (
         <div>
             <Box sx={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-                <Authenticator hideSignUp={true} components={components}>
+                <Authenticator components={components}>
                     {() => {
                         return <Navigate to="/" />
                     }}
