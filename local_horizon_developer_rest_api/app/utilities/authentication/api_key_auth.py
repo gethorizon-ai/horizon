@@ -38,6 +38,6 @@ def api_key_required(f: Callable) -> Callable:
         # kwargs["ctx"] = ctx  # pass the 'ctx' object
 
         # Return f with user object
-        return f(user, *args, **kwargs)
+        return f(*args, **kwargs)
 
     return decorated_function
