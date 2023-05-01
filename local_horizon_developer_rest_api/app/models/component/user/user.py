@@ -17,10 +17,6 @@ class User(db.Model):
         api_key = generate_api_key()
         self.api_key_hash = hashlib.sha256(api_key.encode("UTF-8")).hexdigest()
 
-    @classmethod
-    def create_user_from_cognito(cls, cognito_id):
-        return cls(id=cognito_id)
-
     def generate_new_api_key(self):
         api_key = generate_api_key()
         self.api_key_hash = hashlib.sha256(api_key.encode("UTF-8")).hexdigest()
