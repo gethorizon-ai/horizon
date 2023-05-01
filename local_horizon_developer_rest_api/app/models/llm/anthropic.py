@@ -1,5 +1,5 @@
 from .base import BaseLLM
-from langchain.llms import ChatAnthropic as ChatAnthropicOriginal
+from langchain.chat_models import ChatAnthropic as ChatAnthropicOriginal
 import anthropic
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_result
 from typing import Any
