@@ -82,6 +82,7 @@ def cognito_auth_required(f: Callable) -> Callable:
         cognito_response = cognito.get_user(AccessToken=access_token)
 
         try:
+            print("Trying to access user")
             user = User.query.get(cognito_response["Username"])
         except:
             print(f"Trying to create new user with id: {cognito_response['Username']}")
