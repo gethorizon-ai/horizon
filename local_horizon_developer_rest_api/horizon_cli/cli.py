@@ -358,7 +358,6 @@ def generate_task(
         ]
     except Exception as e:
         # If error with getting task confirmation details, then clean up task record and evaluation dataset before raising exception
-        horizon_ai.delete_evaluation_dataset(task_id)
         horizon_ai.delete_task(task_id)
         click.echo("Failed in task confirmation details")
         click.echo(str(e))
@@ -387,7 +386,6 @@ def generate_task(
     # Cancel task creation if user does not give confirmation
     if not click.confirm("Proceed with task creation?"):
         # Delete task and evaluation dataset, and abort operation
-        horizon_ai.delete_evaluation_dataset(task_id)
         horizon_ai.delete_task(task_id)
         click.echo("Cancelled task creation.")
         return
@@ -402,7 +400,6 @@ def generate_task(
         click.echo(f"Generation latency: {generation_latency}")
     except Exception as e:
         # If error with generating task, then clean up task record and evaluation dataset before raising exception
-        horizon_ai.delete_evaluation_dataset(task_id)
         horizon_ai.delete_task(task_id)
         click.echo("Failed in task generation")
         click.echo(str(e))
