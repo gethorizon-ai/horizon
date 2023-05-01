@@ -324,14 +324,14 @@ def generate_task(
             horizon_ai.openai_api_key = os.environ.get("OPENAI_API_KEY")
         else:
             horizon_ai.openai_api_key = click.prompt(
-                text="OpenAI API Key", hide_input=True
+                text="OpenAI API Key (text hidden)", hide_input=True
             )
     if "claude-instant-v1" in allowed_models or "claude-v1" in allowed_models:
         if os.environ.get("ANTHROPIC_API_KEY"):
             horizon_ai.anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
         else:
             horizon_ai.anthropic_api_key = click.prompt(
-                text="Anthropic API Key", hide_input=True
+                text="Anthropic API Key (text hidden)", hide_input=True
             )
 
     click.echo(f"Evaluating the following models for task generation: {allowed_models}")
@@ -597,7 +597,7 @@ def delete_task(task_id, horizon_api_key):
 @click.option(
     "--openai_api_key",
     default=os.environ.get("OPENAI_API_KEY"),
-    prompt="OpenAI API Key (type 'skip' if you're not using OpenAI)"
+    prompt="OpenAI API Key (text hidden; type 'skip' if you're not using OpenAI)"
     if not os.environ.get("OPENAI_API_KEY")
     else False,
     help="The OpenAI API key for the user.",
@@ -606,7 +606,7 @@ def delete_task(task_id, horizon_api_key):
 @click.option(
     "--anthropic_api_key",
     default=os.environ.get("ANTHROPIC_API_KEY"),
-    prompt="Anthropic API Key (type 'skip' if you're not using Anthropic)"
+    prompt="Anthropic API Key (text hidden; type 'skip' if you're not using Anthropic)"
     if not os.environ.get("ANTHROPIC_API_KEY")
     else False,
     help="The Anthropic API key for the user.",
