@@ -365,7 +365,6 @@ class GenerateTaskAPI(Resource):
 class DeployTaskAPI(Resource):
     @api_key_required
     def post(self):
-        print("HELLO!!!")
         parser = reqparse.RequestParser()
         parser.add_argument(
             "task_id", type=int, required=True, help="Task ID is required"
@@ -391,6 +390,8 @@ class DeployTaskAPI(Resource):
             help="Provide Anthropic API key to deploy Anthropic models",
         )
         args = parser.parse_args()
+
+        print("HI!!!")
 
         # Fetch task and check it is associated with user
         task = (
