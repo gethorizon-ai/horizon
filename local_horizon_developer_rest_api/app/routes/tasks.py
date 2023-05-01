@@ -174,10 +174,6 @@ class TaskAPI(Resource):
             return {"error": "Task not found or not associated with user"}, 404
 
         try:
-            # Delete evaluation dataset, if it exists
-            if task.evaluation_dataset:
-                os.remove(path=task.evaluation_dataset)
-                task.evaluation_dataset = None
             db.session.delete(task)
             db.session.commit()
         except Exception as e:

@@ -86,13 +86,12 @@ class Task(db.Model):
 @event.listens_for(Task, "before_delete")
 def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
     # Delete evaluation dataset, if it exists
-    if target.evaluation_dataset:
+    if target.evaluation_dataset != None:
         os.remove(path=target.evaluation_dataset)
         target.evaluation_dataset = None
 
     # Set active_prompt_id to None
-    if target.active_prompt_id is not None:
+    if target.active_prompt_id != None:
         target.active_prompt_id = None
 
-    session = db.object_session(target)
-    session.flush()
+    db.session.flush()
