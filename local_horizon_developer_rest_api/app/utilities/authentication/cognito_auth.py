@@ -14,6 +14,7 @@ import hmac
 import base64
 from typing import Callable
 from sqlalchemy.exc import IntegrityError
+from requests.exceptions import HTTPError
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -84,19 +85,20 @@ def cognito_auth_required(f: Callable) -> Callable:
         try:
             print("Trying to access user")
             user = User.query.get(cognito_response["Username"])
-        except:
+        except HTTPError as e:
             print(f"Trying to create new user with id: {cognito_response['Username']}")
             # If user does not yet exist, then create new User record in db
-            try:
-                user = User(id=cognito_response["Username"])
-                print("Created new user")
-                db.session.add(user)
-                print("Added user to session")
-                db.session.commit()
-                print("Committed session")
-            except IntegrityError as e:
-                db.session.rollback()
-                return {"error": str(e)}, 400
+            if e.response.status_code == 404:
+                try:
+                    user = User(id=cognito_response["Username"])
+                    print("Created new user")
+                    db.session.add(user)
+                    print("Added user to session")
+                    db.session.commit()
+                    print("Committed session")
+                except IntegrityError as e:
+                    db.session.rollback()
+                    return {"error": str(e)}, 400
 
         g.user = user
 
