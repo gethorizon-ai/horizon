@@ -38,6 +38,7 @@ def deploy_prompt(
 
     # get the model_params from the prompt
     model_params = json.loads(prompt.model)
+    print(f"Model params: {model_params}")
 
     # Add llm api key
     if LLMFactory.llm_classes[model_name]["provider"] == "OpenAI":
@@ -65,6 +66,7 @@ def deploy_prompt(
 
     # get the template_data from the prompt
     template_data = json.loads(prompt.template_data)
+    print(f"Template data: {template_data}")
 
     # Create prompt instance based on if object is zero-shot or few-shot
     if template_type == "prompt":
