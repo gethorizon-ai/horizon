@@ -365,6 +365,7 @@ class GenerateTaskAPI(Resource):
 class DeployTaskAPI(Resource):
     @api_key_required
     def post(self):
+        print("HELLO!!!")
         parser = reqparse.RequestParser()
         parser.add_argument(
             "task_id", type=int, required=True, help="Task ID is required"
