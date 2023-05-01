@@ -94,4 +94,4 @@ def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
     if target.active_prompt_id != None:
         target.active_prompt_id = None
 
-    db.session.flush()
+    db.session.commit()
