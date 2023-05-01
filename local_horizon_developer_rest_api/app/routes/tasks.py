@@ -174,6 +174,10 @@ class TaskAPI(Resource):
             return {"error": "Task not found or not associated with user"}, 404
 
         try:
+            # Delete evaluation dataset, if it exists
+            if task.evaluation_dataset:
+                os.remove(path=task.evaluation_dataset)
+                task.evaluation_dataset = None
             db.session.delete(task)
             db.session.commit()
         except Exception as e:
@@ -267,8 +271,7 @@ class GetTaskConfirmationDetailsAPI(Resource):
         # Call the get_task_confirmation_details function with the task_id
         try:
             task_confirmation_details_response = (
-                task_confirmation_details.get_task_confirmation_details(
-                    task=task)
+                task_confirmation_details.get_task_confirmation_details(task=task)
             )
         except Exception as e:
             return {"error": str(e)}, 400
@@ -444,8 +447,7 @@ class UploadEvaluationDatasetsAPI(Resource):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
 
         # Create the file path to store the CSV file in the data folder
-        file_path = os.path.join(
-            project_dir, "data", evaluation_dataset.filename)
+        file_path = os.path.join(project_dir, "data", evaluation_dataset.filename)
 
         # Save the file to the file path
         evaluation_dataset.save(file_path)

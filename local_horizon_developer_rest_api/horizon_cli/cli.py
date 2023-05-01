@@ -493,13 +493,6 @@ def get_task(task_id, horizon_api_key):
 def delete_task(task_id, horizon_api_key):
     horizon_ai.api_key = horizon_api_key
     try:
-        horizon_ai.delete_evaluation_dataset(task_id)
-    except HTTPError as e:
-        click.echo(f"Error deleting evaluation dataset (HTTP Error): {str(e)}")
-    except Exception as e:
-        click.echo(f"Error deleting evaluation dataset: {str(e)}")
-
-    try:
         result = horizon_ai.delete_task(task_id)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
