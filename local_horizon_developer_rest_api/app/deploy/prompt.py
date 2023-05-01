@@ -92,6 +92,9 @@ def deploy_prompt(
     # format the prompt
     formatted_prompt = prompt_instance.format(**input_values)
 
+    print(f"Formatted prompt: {formatted_prompt}")
+    print(f"Model instance: {type(model_instance)}")
+
     # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
         formatted_prompt = [HumanMessage(content=formatted_prompt)]
