@@ -38,7 +38,7 @@ def run_inference(
         assert ValueError("train_or_test_dataset must be either 'train' or 'test'")
 
     # Filter data to selected evaluation_data_ids, if provided
-    if evaluation_data_id_list != None:
+    if evaluation_data_id_list is not None:
         input_data = input_data.loc[
             input_data["evaluation_data_id"].isin(evaluation_data_id_list)
         ]

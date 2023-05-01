@@ -473,7 +473,7 @@ def segment_evaluation_dataset(
     num_test_data = min(15, len(evaluation_dataset) - num_train_data)
 
     # Use num_test_data input value if provided
-    if num_test_data_input != None:
+    if num_test_data_input is not None:
         num_test_data = min(num_test_data_input, num_test_data)
 
     # Assign input and ground truth data. Keep evaluation_data_id column in all.

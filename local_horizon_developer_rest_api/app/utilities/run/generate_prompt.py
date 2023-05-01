@@ -196,7 +196,7 @@ def generate_prompt_model_configuration(
     for llm, llm_info in task_request.applicable_llms.items():
         # Skip if not one of the allowed models
         if (
-            task_request.allowed_models != None
+            task_request.allowed_models is not None
             and llm not in task_request.allowed_models
         ):
             continue

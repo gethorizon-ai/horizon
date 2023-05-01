@@ -52,7 +52,7 @@ class TaskRequest:
         self.allowed_models = allowed_models
         self.applicable_llms = None
 
-        if user_objective != None and len(user_objective) > 500:
+        if user_objective is not None and len(user_objective) > 500:
             raise ValueError(
                 "User objective can be at most 500 characters to manage token limits."
             )
@@ -162,7 +162,7 @@ class TaskRequest:
 
         for llm, llm_info in self.applicable_llms.items():
             # Skip if not one of the allowed models
-            if self.allowed_models != None and llm not in self.allowed_models:
+            if self.allowed_models is not None and llm not in self.allowed_models:
                 continue
 
             if LLMFactory.llm_classes[llm]["provider"] == "OpenAI":

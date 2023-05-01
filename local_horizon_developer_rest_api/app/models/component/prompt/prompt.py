@@ -50,16 +50,16 @@ class Prompt(db.Model):
             "prompt_type": self.prompt_type,
             "template_type": self.template_type,
             "template_data": json.loads(self.template_data)
-            if self.template_data != None
+            if self.template_data is not None
             else self.template_data,
             "variables": self.variables,
             "few_shot_template": self.few_shot_template,
             "few_shot_example_selector": self.few_shot_example_selector,
-            "model": json.loads(self.model) if self.model != None else self.model,
+            "model": json.loads(self.model) if self.model is not None else self.model,
             "evaluation_job_name": self.evaluation_job_name,
             "model_name": self.model_name,
             "inference_statistics": json.loads(self.inference_statistics)
-            if self.inference_statistics != None
+            if self.inference_statistics is not None
             else self.inference_statistics,
         }
 
@@ -84,7 +84,7 @@ class Prompt(db.Model):
         full_dict = self.to_dict()
         filtered_dict = {key: full_dict[key] for key in filtered_keys}
 
-        if self.template_type != None:
+        if self.template_type is not None:
             # Refine data displayed for template data
             filtered_dict["template_data"] = {
                 key: filtered_dict["template_data"][key]

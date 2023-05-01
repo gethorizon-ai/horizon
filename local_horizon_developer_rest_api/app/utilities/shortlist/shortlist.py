@@ -38,7 +38,7 @@ def shortlist_prompt_model_candidates(
     ]
 
     # Filter to selected stage_ids, if given
-    if stage_id_list != None:
+    if stage_id_list is not None:
         summary_results = summary_results.loc[
             summary_results["stage_id"].isin(stage_id_list)
         ]

@@ -53,12 +53,12 @@ class Task(db.Model):
             "create_timestamp": datetime.isoformat(self.create_timestamp),
             "project_id": self.project_id,
             "allowed_models": json.loads(self.allowed_models)
-            if (self.allowed_models != None and self.allowed_models != "")
+            if (self.allowed_models is not None and self.allowed_models != "")
             else self.allowed_models,
             "active_prompt_id": self.active_prompt_id,
             "prompts": [prompt.to_dict() for prompt in self.prompts.all()],
             "evaluation_statistics": json.loads(self.evaluation_statistics)
-            if self.evaluation_statistics != None
+            if self.evaluation_statistics is not None
             else self.evaluation_statistics,
         }
 
@@ -87,7 +87,7 @@ class Task(db.Model):
 @event.listens_for(Task, "before_delete")
 def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
     # Delete evaluation dataset, if it exists
-    if target.evaluation_dataset != None:
+    if target.evaluation_dataset is not None:
         try:
             os.remove(path=target.evaluation_dataset)
         except:
@@ -95,7 +95,7 @@ def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
         target.evaluation_dataset = None
 
     # Set active_prompt_id to None
-    if target.active_prompt_id != None:
+    if target.active_prompt_id is not None:
         target.active_prompt_id = None
 
     # Commit changes
