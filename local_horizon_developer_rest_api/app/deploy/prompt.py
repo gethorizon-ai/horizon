@@ -34,14 +34,12 @@ def deploy_prompt(
         str: The output or completion of the deployed prompt.
     """
     # get the model_name from the prompt
-    print("HELLO TO YOU!!!")
+
     model_name = prompt.model_name
-    print(f"Model name: {model_name}")
 
     # get the model_params from the prompt
-    print("HI TO YOU!!!")
+
     model_params = json.loads(prompt.model)
-    print(f"Model params: {model_params}")
 
     # Add llm api key
     if LLMFactory.llm_classes[model_name]["provider"] == "OpenAI":
@@ -60,11 +58,9 @@ def deploy_prompt(
 
     # get the template type from the prompt
     template_type = prompt.template_type
-    print(f"Template type: {template_type}")
 
     # get the template_data from the prompt
     template_data = json.loads(prompt.template_data)
-    print(f"Template data: {template_data}")
 
     # Create prompt instance based on if object is zero-shot or few-shot
     if template_type == "prompt":
@@ -91,9 +87,6 @@ def deploy_prompt(
 
     # format the prompt
     formatted_prompt = prompt_instance.format(**input_values)
-
-    print(f"Formatted prompt: {formatted_prompt}")
-    print(f"Model instance: {type(model_instance)}")
 
     # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
