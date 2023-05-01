@@ -34,9 +34,11 @@ def deploy_prompt(
         str: The output or completion of the deployed prompt.
     """
     # get the model_name from the prompt
+    print("HELLO TO YOU!!!")
     model_name = prompt.model_name
 
     # get the model_params from the prompt
+    print("HI TO YOU!!!")
     model_params = json.loads(prompt.model)
     print(f"Model params: {model_params}")
 

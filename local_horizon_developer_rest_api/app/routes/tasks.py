@@ -391,8 +391,6 @@ class DeployTaskAPI(Resource):
         )
         args = parser.parse_args()
 
-        print("HI!!!")
-
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
