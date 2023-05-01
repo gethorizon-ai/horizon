@@ -36,6 +36,7 @@ def deploy_prompt(
     # get the model_name from the prompt
     print("HELLO TO YOU!!!")
     model_name = prompt.model_name
+    print(f"Model name: {model_name}")
 
     # get the model_params from the prompt
     print("HI TO YOU!!!")

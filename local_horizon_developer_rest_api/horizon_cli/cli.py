@@ -323,7 +323,7 @@ def generate_task(
         else:
             horizon_ai.anthropic_api_key = click.prompt(text="Anthropic API Key")
 
-    print(f"Evaluating the following models for task generation: {allowed_models}")
+    click.echo(f"Evaluating the following models for task generation: {allowed_models}")
 
     # Create task record
     try:
