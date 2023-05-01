@@ -84,11 +84,15 @@ def cognito_auth_required(f: Callable) -> Callable:
         try:
             user = User.query.get(cognito_response["Username"])
         except:
+            print(f"Trying to create new user with id: {cognito_response['Username']}")
             # If user does not yet exist, then create new User record in db
             try:
                 user = User(id=cognito_response["Username"])
+                print("Created new user")
                 db.session.add(user)
+                print("Added user to session")
                 db.session.commit()
+                print("Committed session")
             except IntegrityError as e:
                 db.session.rollback()
                 return {"error": str(e)}, 400
