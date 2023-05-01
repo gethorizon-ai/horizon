@@ -93,3 +93,6 @@ def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
     # Set active_prompt_id to None
     if target.active_prompt_id is not None:
         target.active_prompt_id = None
+
+    session = db.object_session(target)
+    session.flush()
