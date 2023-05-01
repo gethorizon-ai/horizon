@@ -88,7 +88,10 @@ class Task(db.Model):
 def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
     # Delete evaluation dataset, if it exists
     if target.evaluation_dataset != None:
-        os.remove(path=target.evaluation_dataset)
+        try:
+            os.remove(path=target.evaluation_dataset)
+        except:
+            pass
         target.evaluation_dataset = None
 
     # Set active_prompt_id to None
