@@ -176,6 +176,7 @@ class TaskAPI(Resource):
         try:
             # Set active_prompt_id to NULL
             task.active_prompt_id = None
+            db.session.commit()
 
             # Delete evaluation dataset, if it exists
             if task.evaluation_dataset:
