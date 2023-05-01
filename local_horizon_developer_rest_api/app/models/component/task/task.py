@@ -87,4 +87,5 @@ def _set_active_prompt_null(mapper, connection, target):
     if target.active_prompt_id is not None:
         target.active_prompt_id = None
     session = db.object_session(target)
-    session.flush()
+    if not session.is_flushing:
+        session.flush()
