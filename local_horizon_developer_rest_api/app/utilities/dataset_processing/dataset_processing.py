@@ -84,6 +84,7 @@ def check_evaluation_dataset(
         AssertionError: insufficient number of columns (must have at least 1).
         AssertionError: improper naming of input variables (must be alphanumeric + underscores, no spaces).
         AssertionError: duplicate input variable names.
+        AssertionError: duplicate rows of data.
     """
     # Check that evaluation data is at most 1 MB file size
     if os.path.getsize(dataset_file_path) > 1000000:
@@ -126,6 +127,15 @@ def check_evaluation_dataset(
     # Check that there are no duplicate input variable names
     if len(input_variables) != len(set(input_variables)):
         raise AssertionError("Input variable names must be unique.")
+
+    # Check that there are no duplicate rows
+    seen_rows = set()
+    for row in data[1:]:
+        row_csv = ",".join(row)
+        if row_csv in seen_rows:
+            raise AssertionError("Data cannot have duplicate rows.")
+        else:
+            seen_rows.add(row_csv)
 
 
 def get_evaluation_dataset(dataset_file_path: str) -> pd.DataFrame:
