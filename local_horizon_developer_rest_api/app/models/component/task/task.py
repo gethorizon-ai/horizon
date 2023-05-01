@@ -95,6 +95,7 @@ def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
     if target.active_prompt_id != None:
         target.active_prompt_id = None
 
-    # Flush changes to the database before delete
-    session = Session.object_session(target)
-    session.flush()
+    # Create a new session for the delete operation
+    session = Session(bind=connection)
+    session.add(target)
+    session.commit()
