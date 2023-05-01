@@ -55,17 +55,12 @@ def deploy_prompt(
             )
         model_params["anthropic_api_key"] = anthropic_api_key
 
-    # define the LLM factory instance
-    llm_factory = LLMFactory()
-
     # Create the model instance
-    model_instance = llm_factory.create_llm(model_name, **model_params)
+    model_instance = LLMFactory.create_llm(model_name, **model_params)
 
     # get the template type from the prompt
     template_type = prompt.template_type
-
-    # define the prompt factory instance
-    prompt_factory = PromptTemplateFactory()
+    print(f"Template type: {template_type}")
 
     # get the template_data from the prompt
     template_data = json.loads(prompt.template_data)
@@ -73,7 +68,7 @@ def deploy_prompt(
 
     # Create prompt instance based on if object is zero-shot or few-shot
     if template_type == "prompt":
-        prompt_instance = prompt_factory.reconstruct_prompt_object(
+        prompt_instance = PromptTemplateFactory.reconstruct_prompt_object(
             template_type, **template_data
         )
     elif template_type == "fewshot":
@@ -82,7 +77,7 @@ def deploy_prompt(
         task_id = prompt.task_id
         task = Task.query.get(task_id)
         dataset_file_path = task.evaluation_dataset
-        prompt_instance = prompt_factory.reconstruct_prompt_object(
+        prompt_instance = PromptTemplateFactory.reconstruct_prompt_object(
             template_type=template_type,
             dataset_file_path=dataset_file_path,
             template_data=template_data,
