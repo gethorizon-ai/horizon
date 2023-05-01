@@ -174,10 +174,6 @@ class TaskAPI(Resource):
             return {"error": "Task not found or not associated with user"}, 404
 
         try:
-            # Set active_prompt_id to NULL
-            task.active_prompt_id = None
-            db.session.commit()
-
             # Delete evaluation dataset, if it exists
             if task.evaluation_dataset:
                 os.remove(path=task.evaluation_dataset)

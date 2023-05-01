@@ -84,5 +84,7 @@ class Task(db.Model):
 
 @event.listens_for(Task, "before_delete")
 def _set_active_prompt_null(mapper, connection, target):
-    print("Deleting task with active prompt id:", target.active_prompt_id)
-    target.active_prompt_id = None
+    if target.active_prompt_id is not None:
+        target.active_prompt_id = None
+    session = db.object_session(target)
+    session.flush()
