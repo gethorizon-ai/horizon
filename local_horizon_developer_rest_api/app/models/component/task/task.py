@@ -86,14 +86,22 @@ class Task(db.Model):
 
 @event.listens_for(Task, "before_delete")
 def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
-    with db.session.no_autoflush:
-        # Delete evaluation dataset, if it exists
-        if target.evaluation_dataset != None:
-            os.remove(path=target.evaluation_dataset)
-            target.evaluation_dataset = None
+    # Delete evaluation dataset, if it exists
+    if target.evaluation_dataset != None:
+        os.remove(path=target.evaluation_dataset)
+        target.evaluation_dataset = None
 
-        # Set active_prompt_id to None
-        if target.active_prompt_id != None:
-            target.active_prompt_id = None
+    # Set active_prompt_id to None
+    if target.active_prompt_id != None:
+        target.active_prompt_id = None
 
-        db.session.flush()
+    # Commit changes
+    connection.execute(
+        target.__table__.update()
+        .where(target.__table__.c.id == target.id)
+        .values(
+            evaluation_dataset=target.evaluation_dataset,
+            active_prompt_id=target.active_prompt_id,
+        )
+    )
+    connection.execute("commit")
