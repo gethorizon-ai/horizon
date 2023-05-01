@@ -122,6 +122,7 @@ def generate_new_api_key(email, password):
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 def list_projects(horizon_api_key):
     horizon_ai.api_key = horizon_api_key
@@ -140,6 +141,7 @@ def list_projects(horizon_api_key):
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 @click.option(
     "--name", prompt="Project name", help="The name of the project to create."
@@ -161,6 +163,7 @@ def create_project(name, horizon_api_key):
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 @click.option(
     "--project_id", prompt="Project ID", help="The ID of the project to retrieve."
@@ -182,6 +185,7 @@ def get_project(project_id, horizon_api_key):
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 @click.option(
     "--project_id", prompt="Project ID", help="The ID of the project to update."
@@ -205,6 +209,7 @@ def update_project(project_id, horizon_api_key, description=None, status=None):
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 @click.option(
     "--project_id", prompt="Project ID", help="The ID of the project to delete."
@@ -229,6 +234,7 @@ def delete_project(project_id, horizon_api_key):
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 def list_tasks(horizon_api_key):
     horizon_ai.api_key = horizon_api_key
@@ -247,6 +253,7 @@ def list_tasks(horizon_api_key):
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 @click.option("--name", prompt="Task name", help="The name of the task to create.")
 @click.option(
@@ -316,12 +323,16 @@ def generate_task(
         if os.environ.get("OPENAI_API_KEY"):
             horizon_ai.openai_api_key = os.environ.get("OPENAI_API_KEY")
         else:
-            horizon_ai.openai_api_key = click.prompt(text="OpenAI API Key")
+            horizon_ai.openai_api_key = click.prompt(
+                text="OpenAI API Key", hide_input=True
+            )
     if "claude-instant-v1" in allowed_models or "claude-v1" in allowed_models:
         if os.environ.get("ANTHROPIC_API_KEY"):
             horizon_ai.anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
         else:
-            horizon_ai.anthropic_api_key = click.prompt(text="Anthropic API Key")
+            horizon_ai.anthropic_api_key = click.prompt(
+                text="Anthropic API Key", hide_input=True
+            )
 
     click.echo(f"Evaluating the following models for task generation: {allowed_models}")
 
@@ -421,6 +432,7 @@ def generate_task(
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 @click.option("--task_id", prompt="Task ID", help="The ID of the task to retrieve.")
 def get_task(task_id, horizon_api_key):
@@ -485,6 +497,7 @@ def get_task(task_id, horizon_api_key):
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 @click.option("--task_id", prompt="Task ID", help="The ID of the task to delete.")
 def delete_task(task_id, horizon_api_key):
@@ -575,6 +588,7 @@ def delete_task(task_id, horizon_api_key):
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 @click.option("--task_id", prompt="Task ID", help="The ID of the task to deploy.")
 @click.option(
@@ -587,6 +601,7 @@ def delete_task(task_id, horizon_api_key):
     if not os.environ.get("OPENAI_API_KEY")
     else False,
     help="The OpenAI API key for the user.",
+    hide_input=True,
 )
 @click.option(
     "--anthropic_api_key",
@@ -595,6 +610,7 @@ def delete_task(task_id, horizon_api_key):
     if not os.environ.get("ANTHROPIC_API_KEY")
     else False,
     help="The Anthropic API key for the user.",
+    hide_input=True,
 )
 def deploy_task(task_id, inputs, horizon_api_key, openai_api_key, anthropic_api_key):
     horizon_ai.api_key = horizon_api_key
@@ -643,6 +659,7 @@ def deploy_task(task_id, inputs, horizon_api_key, openai_api_key, anthropic_api_
     default=os.environ.get("HORIZON_API_KEY"),
     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
+    hide_input=True,
 )
 @click.option(
     "--task_id",
