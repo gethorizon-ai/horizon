@@ -129,21 +129,21 @@ def get_project(project_id):
     return response
 
 
-def update_project(
-    project_id,
-    description=None,
-    status=None,
-):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
-    data = {
-        "description": description,
-        "status": status,
-    }
-    response = _put(endpoint=f"/api/projects/{project_id}", json=data, headers=headers)
-    return response
+# def update_project(
+#     project_id,
+#     description=None,
+#     status=None,
+# ):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+#     data = {
+#         "description": description,
+#         "status": status,
+#     }
+#     response = _put(endpoint=f"/api/projects/{project_id}", json=data, headers=headers)
+#     return response
 
 
 def delete_project(project_id):
@@ -236,14 +236,14 @@ def delete_task(task_id):
     return response
 
 
-# Get the current prompt of a task
-def get_task_curr_prompt(task_id):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"task_id": task_id, "X-Api-Key": api_key}
-    response = _get(endpoint="/api/tasks/get_curr_prompt", headers=headers)
-    return response
+# # Get the current prompt of a task
+# def get_task_curr_prompt(task_id):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"task_id": task_id, "X-Api-Key": api_key}
+#     response = _get(endpoint="/api/tasks/get_curr_prompt", headers=headers)
+#     return response
 
 
 # # Set the current prompt of a task
@@ -320,39 +320,39 @@ def upload_evaluation_dataset(task_id, file_path):
         return response
 
 
-def view_evaluation_dataset(task_id):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key}
-    response = _get(
-        endpoint=f"/api/tasks/{task_id}/view_evaluation_dataset", headers=headers
-    )
-    return response
+# def view_evaluation_dataset(task_id):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"X-Api-Key": api_key}
+#     response = _get(
+#         endpoint=f"/api/tasks/{task_id}/view_evaluation_dataset", headers=headers
+#     )
+#     return response
 
 
-def get_evaluation_dataset(task_id):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key}
-    response = _get(
-        f"/api/tasks/{task_id}/evaluation_dataset",
-        headers=headers,
-    )
-    return response
+# def get_evaluation_dataset(task_id):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"X-Api-Key": api_key}
+#     response = _get(
+#         f"/api/tasks/{task_id}/evaluation_dataset",
+#         headers=headers,
+#     )
+#     return response
 
 
-def delete_evaluation_dataset(task_id):
-    global api_key
-    if api_key == None:
-        raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key}
-    response = _delete(
-        endpoint=f"/api/tasks/{task_id}/delete_evaluation_dataset",
-        headers=headers,
-    )
-    return response
+# def delete_evaluation_dataset(task_id):
+#     global api_key
+#     if api_key == None:
+#         raise Exception("Must set Horizon API key.")
+#     headers = {"X-Api-Key": api_key}
+#     response = _delete(
+#         endpoint=f"/api/tasks/{task_id}/delete_evaluation_dataset",
+#         headers=headers,
+#     )
+#     return response
 
 
 # def create_task(self, name, project_id, task_type, objective, file_path, api_key):

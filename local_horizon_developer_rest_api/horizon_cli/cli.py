@@ -66,7 +66,7 @@ def prompt():
 @click.password_option(
     "--password", prompt="Password", help="The password for the user."
 )
-def authenticate_user(email, password):
+def generate_new_api_key(email, password):
     try:
         result = horizon_ai.generate_new_api_key(email, password)
         formatted_output = json.dumps(result, indent=4)
@@ -120,8 +120,7 @@ def authenticate_user(email, password):
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 def list_projects(horizon_api_key):
@@ -139,8 +138,7 @@ def list_projects(horizon_api_key):
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 @click.option(
@@ -161,8 +159,7 @@ def create_project(name, horizon_api_key):
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 @click.option(
@@ -183,8 +180,7 @@ def get_project(project_id, horizon_api_key):
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 @click.option(
@@ -207,8 +203,7 @@ def update_project(project_id, horizon_api_key, description=None, status=None):
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 @click.option(
@@ -232,8 +227,7 @@ def delete_project(project_id, horizon_api_key):
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 def list_tasks(horizon_api_key):
@@ -251,8 +245,7 @@ def list_tasks(horizon_api_key):
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 @click.option("--name", prompt="Task name", help="The name of the task to create.")
@@ -328,11 +321,9 @@ def generate_task(
         if os.environ.get("ANTHROPIC_API_KEY"):
             horizon_ai.anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
         else:
-            horizon_ai.anthropic_api_key = click.prompt(
-                text="Anthropic API Key")
+            horizon_ai.anthropic_api_key = click.prompt(text="Anthropic API Key")
 
-    print(
-        f"Evaluating the following models for task generation: {allowed_models}")
+    print(f"Evaluating the following models for task generation: {allowed_models}")
 
     # Create task record
     try:
@@ -380,8 +371,7 @@ def generate_task(
     click.echo("")
     click.echo(f"1) Task objective: {objective}")
     click.echo("")
-    click.echo(
-        f"2) Input variables: {task_confirmation_details['input_variables']}")
+    click.echo(f"2) Input variables: {task_confirmation_details['input_variables']}")
     click.echo(
         "* Inferred based on the headers of all but the right-most column in your evaluation dataset."
     )
@@ -432,8 +422,7 @@ def generate_task(
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 @click.option("--task_id", prompt="Task ID", help="The ID of the task to retrieve.")
@@ -497,8 +486,7 @@ def get_task(task_id, horizon_api_key):
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 @click.option("--task_id", prompt="Task ID", help="The ID of the task to delete.")
@@ -595,8 +583,7 @@ def delete_task(task_id, horizon_api_key):
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 @click.option("--task_id", prompt="Task ID", help="The ID of the task to deploy.")
@@ -664,8 +651,7 @@ def deploy_task(task_id, inputs, horizon_api_key, openai_api_key, anthropic_api_
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get(
-        "HORIZON_API_KEY") else False,
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
     help="The Horizon API key for the user.",
 )
 @click.option(
@@ -823,12 +809,12 @@ def view_evaluation_dataset(task_id, horizon_api_key):
 cli.add_command(user)
 cli.add_command(project)
 cli.add_command(task)
-cli.add_command(evaluation_dataset)
+# cli.add_command(evaluation_dataset)
 # cli.add_command(prompt)
 
 # User-related commands
 # user.add_command(register_user)
-user.add_command(authenticate_user)
+user.add_command(generate_new_api_key)
 # user.add_command(get_user)
 # user.add_command(delete_user)
 
@@ -836,7 +822,7 @@ user.add_command(authenticate_user)
 project.add_command(list_projects)
 project.add_command(create_project)
 project.add_command(get_project)
-project.add_command(update_project)
+# project.add_command(update_project)
 project.add_command(delete_project)
 
 # Task-related commands
@@ -851,7 +837,7 @@ task.add_command(deploy_task)
 
 # Evaluation Dataset-related commands
 # evaluation_dataset.add_command(upload_evaluation_dataset)
-evaluation_dataset.add_command(view_evaluation_dataset)
+# evaluation_dataset.add_command(view_evaluation_dataset)
 # evaluation_dataset.add_command(get_evaluation_dataset)
 # evaluation_dataset.add_command(delete_evaluation_dataset)
 
