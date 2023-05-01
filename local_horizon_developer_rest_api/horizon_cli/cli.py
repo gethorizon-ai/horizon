@@ -504,12 +504,12 @@ def get_task(task_id, horizon_api_key):
 def delete_task(task_id, horizon_api_key):
     horizon_ai.api_key = horizon_api_key
     try:
+        horizon_ai.delete_evaluation_dataset(task_id)
         result = horizon_ai.delete_task(task_id)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:
         click.echo(str(e))
-
 
 # Get the current prompt of a task
 # @click.command(name="get-active-prompt")
