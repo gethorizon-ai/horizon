@@ -301,73 +301,62 @@ def process_generate_prompt_model_configuration(
 class GenerateTaskAPI(Resource):
     @api_key_required
     def post(self):
-        with current_app.app_context():
-            parser = reqparse.RequestParser()
-            parser.add_argument(
-                "task_id", type=int, required=True, help="Task ID is required"
-            )
-            parser.add_argument(
-                "objective", type=str, required=True, help="Objective is required"
-            )
-            parser.add_argument(
-                "openai_api_key",
-                type=str,
-                required=False,
-                default=None,
-                help="OpenAI API needed to evaluate OpenAI models",
-            )
-            parser.add_argument(
-                "anthropic_api_key",
-                type=str,
-                required=False,
-                default=None,
-                help="Anthropic API key needed to evaluate Anthropic models",
-            )
-            args = parser.parse_args()
+        parser = reqparse.RequestParser()
+        parser.add_argument(
+            "task_id", type=int, required=True, help="Task ID is required"
+        )
+        parser.add_argument(
+            "objective", type=str, required=True, help="Objective is required"
+        )
+        parser.add_argument(
+            "openai_api_key",
+            type=str,
+            required=False,
+            default=None,
+            help="OpenAI API needed to evaluate OpenAI models",
+        )
+        parser.add_argument(
+            "anthropic_api_key",
+            type=str,
+            required=False,
+            default=None,
+            help="Anthropic API key needed to evaluate Anthropic models",
+        )
+        args = parser.parse_args()
 
-            # Fetch task and check it is associated with user
-            task = (
-                Task.query.join(Project, Project.id == Task.project_id)
-                .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
-                .first()
-            )
-            if not task:
-                return {"error": "Task not found or not associated with user"}, 404
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .first()
+        )
+        if not task:
+            return {"error": "Task not found or not associated with user"}, 404
 
-            # Fetch prompt
-            if not task.active_prompt_id:
-                return {"error": "Active prompt not found for the task"}, 404
-            prompt = Prompt.query.get(task.active_prompt_id)
-            if not prompt:
-                return {"error": "Active prompt does not exist for the task"}, 404
+        # Fetch prompt
+        if not task.active_prompt_id:
+            return {"error": "Active prompt not found for the task"}, 404
+        prompt = Prompt.query.get(task.active_prompt_id)
+        if not prompt:
+            return {"error": "Active prompt does not exist for the task"}, 404
 
-            # Extract the user's hashed API key from the g variable
-            api_key_hash = g.user.api_key_hash
-
-            if api_key_hash not in user_executors:
-                user_executors[api_key_hash] = ThreadPoolExecutor(
-                    max_workers=5)
-
-            # Call the process_generate_prompt_model_configuration function with the provided objective and prompt_id
-            future = user_executors[api_key_hash].submit(
-                process_generate_prompt_model_configuration,
+        # Call the process_generate_prompt_model_configuration function with the provided objective and prompt_id
+        try:
+            generated_prompt = process_generate_prompt_model_configuration(
                 args["objective"],
                 task,
                 prompt,
                 args["openai_api_key"],
                 args["anthropic_api_key"],
             )
+            generated_prompt_dict = generated_prompt
+        except Exception as e:
+            return {"error": str(e)}, 400
 
-            try:
-                generated_prompt = future.result()
-                generated_prompt_dict = generated_prompt
-            except Exception as e:
-                return {"error": str(e)}, 400
-
-            return {
-                "message": "Task generation completed",
-                "generated_prompt": generated_prompt_dict,
-            }, 200
+        return {
+            "message": "Task generation completed",
+            "generated_prompt": generated_prompt_dict,
+        }, 200
 
 
 class DeployTaskAPI(Resource):
