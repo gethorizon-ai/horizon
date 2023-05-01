@@ -6,6 +6,7 @@ import os
 from app.models.component.prompt import Prompt
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import event
+from sqlalchemy.orm import Session
 
 
 class TaskStatus(Enum):
@@ -94,4 +95,6 @@ def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
     if target.active_prompt_id != None:
         target.active_prompt_id = None
 
-    db.session.commit()
+    # Flush changes to the database before delete
+    session = Session.object_session(target)
+    session.flush()
