@@ -2,6 +2,7 @@ from app import db
 from datetime import datetime
 from enum import Enum
 import json
+import os
 from app.models.component.prompt import Prompt
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import event
@@ -83,12 +84,12 @@ class Task(db.Model):
 
 
 @event.listens_for(Task, "before_delete")
-def _set_active_prompt_null(mapper, connection, target):
+def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
+    # Delete evaluation dataset, if it exists
+    if target.evaluation_dataset:
+        os.remove(path=target.evaluation_dataset)
+        target.evaluation_dataset = None
+
+    # Set active_prompt_id to None
     if target.active_prompt_id is not None:
         target.active_prompt_id = None
-    session = db.object_session(target)
-    if session.is_flushed(target):
-        return
-    with session.begin_nested():
-        if session.is_active:
-            session.flush()
