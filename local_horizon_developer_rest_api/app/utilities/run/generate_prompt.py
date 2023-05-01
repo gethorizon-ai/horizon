@@ -352,8 +352,6 @@ def generate_prompt_model_configuration(
             ],
             axis=0,
         ).reset_index(drop=True)
-        # TODO: remove break so that other llms also run
-        # break
 
     # Shortlist best prompt-model candidate across applicable llms
     prompt_model_candidates_final = shortlist.shortlist_prompt_model_candidates(
