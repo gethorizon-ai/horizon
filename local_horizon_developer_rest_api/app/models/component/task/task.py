@@ -87,6 +87,8 @@ def _set_active_prompt_null(mapper, connection, target):
     if target.active_prompt_id is not None:
         target.active_prompt_id = None
     session = db.object_session(target)
+    if session.is_flushed(target):
+        return
     with session.begin_nested():
         if session.is_active:
             session.flush()
