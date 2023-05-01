@@ -85,4 +85,3 @@ class Task(db.Model):
 @event.listens_for(Task, "before_delete")
 def _set_active_prompt_null(mapper, connection, target):
     target.active_prompt_id = None
-    db.session.commit()
