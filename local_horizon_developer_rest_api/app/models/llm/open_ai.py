@@ -33,6 +33,6 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
     def get_model_params_to_store(self) -> dict:
         return {
             "model_name": self.model_name,
-            "temperature": self.model_kwargs["temperature"],
+            "temperature": self.temperaturem,
             "max_tokens": self.max_tokens,
         }

@@ -1,12 +1,12 @@
 from .base import BaseLLM
-from langchain.llms import Anthropic as AnthropicOriginal
+from langchain.llms import ChatAnthropic as ChatAnthropicOriginal
 import anthropic
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_result
 from typing import Any
 import re
 
 
-class Anthropic(BaseLLM, AnthropicOriginal):
+class ChatAnthropic(BaseLLM, ChatAnthropicOriginal):
     def get_model_name(self) -> str:
         return self.model
 
@@ -34,4 +34,4 @@ class Anthropic(BaseLLM, AnthropicOriginal):
         ),
     )
     def generate(self, *args: Any, **kwargs: Any) -> Any:
-        return super(AnthropicOriginal, self).generate(*args, **kwargs)
+        return super(ChatAnthropicOriginal, self).generate(*args, **kwargs)

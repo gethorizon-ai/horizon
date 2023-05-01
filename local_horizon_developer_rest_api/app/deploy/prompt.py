@@ -5,7 +5,7 @@ from app.models.component.task import Task
 from app import db
 from app.models.llm.factory import LLMFactory
 from app.models.llm.open_ai import ChatOpenAI
-from app.models.llm.anthropic import Anthropic
+from app.models.llm.anthropic import ChatAnthropic
 from app.models.prompt.factory import PromptTemplateFactory
 from app.models.prompt.chat import HumanMessage
 from config import Config
@@ -92,12 +92,9 @@ def deploy_prompt(
     # format the prompt
     formatted_prompt = prompt_instance.format(**input_values)
 
-    # If model is ChatOpenAI, then wrap message with HumanMessage object
-    if type(model_instance) == ChatOpenAI:
+    # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
+    if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
         formatted_prompt = [HumanMessage(content=formatted_prompt)]
-    # If model is Anthropic, then wrap message with Human and AI prompts
-    elif type(model_instance) == Anthropic:
-        formatted_prompt = f"{model_instance.HUMAN_PROMPT} {formatted_prompt}{model_instance.AI_PROMPT}"
 
     # generate the output
     output = model_instance.generate([formatted_prompt]).generations[0][0].text.strip()

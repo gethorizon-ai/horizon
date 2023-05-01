@@ -1,7 +1,7 @@
 """Runs inference on a given set of prompt-model candidates and input dataset."""
 
 from app.models.llm.open_ai import ChatOpenAI
-from app.models.llm.anthropic import Anthropic
+from app.models.llm.anthropic import ChatAnthropic
 from app.models.schema import HumanMessage
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
@@ -73,12 +73,9 @@ def run_inference(
 
         formatted_prompt = row["prompt_object"].format(**input_values)
         model_object = row["model_object"]
-        # If model is ChatOpenAI, then wrap message with HumanMessage object
-        if type(model_object) == ChatOpenAI:
+        # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
+        if type(model_object) == ChatOpenAI or type(model_object) == ChatAnthropic:
             formatted_prompt = [HumanMessage(content=formatted_prompt)]
-        # If model is Anthropic, then wrap message with Human and AI prompts
-        elif type(model_object) == Anthropic:
-            formatted_prompt = f"{model_object.HUMAN_PROMPT} {formatted_prompt}{model_object.AI_PROMPT}"
 
         start_time = time.time()
         output = (

@@ -4,7 +4,7 @@ from .open_ai import (
     OpenAI,
     ChatOpenAI,
 )
-from .anthropic import Anthropic
+from .anthropic import ChatAnthropic
 
 
 class LLMFactory:
@@ -26,7 +26,7 @@ class LLMFactory:
             "price_per_data_unit_completion": 0.02 / 1000,
         },
         "claude-instant-v1": {
-            "class": Anthropic,
+            "class": ChatAnthropic,
             "provider": "Anthropic",
             "data_unit": "token",
             "data_limit": 9000,
@@ -34,7 +34,7 @@ class LLMFactory:
             "price_per_data_unit_completion": 5.51 / 1000000,
         },
         "claude-v1": {
-            "class": Anthropic,
+            "class": ChatAnthropic,
             "provider": "Anthropic",
             "data_unit": "token",
             "data_limit": 9000,

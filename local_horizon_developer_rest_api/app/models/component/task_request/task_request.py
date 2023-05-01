@@ -212,15 +212,9 @@ class TaskRequest:
                         test_model_instance = LLMFactory.create_llm(
                             test_model_name, **test_model_params
                         )
-                        output = (
-                            test_model_instance.generate(
-                                [
-                                    f"{test_model_instance.HUMAN_PROMPT} 'test'{test_model_instance.AI_PROMPT}"
-                                ]
-                            )
-                            .generations[0][0]
-                            .text.strip()
-                        )
+                        test_model_instance.generate(
+                            [[HumanMessage(content="test")]]
+                        ).generations[0][0].text.strip()
                     except Exception as e:
                         raise Exception(
                             f"Error when validating Anthropic API key: {str(e)}"

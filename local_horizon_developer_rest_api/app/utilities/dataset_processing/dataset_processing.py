@@ -2,7 +2,7 @@
 
 from app.models.llm.factory import LLMFactory
 from app.models.llm.open_ai import OpenAI, ChatOpenAI
-from app.models.llm.anthropic import Anthropic
+from app.models.llm.anthropic import ChatAnthropic
 import os
 import csv
 import re
@@ -269,7 +269,7 @@ def get_evaluation_data_length(
         token_count = max(
             OpenAI.get_data_length(string),
             ChatOpenAI.get_data_length(string),
-            Anthropic.get_data_length(string),
+            ChatAnthropic.get_data_length(string),
         )
         return token_count
 
@@ -297,12 +297,12 @@ def get_evaluation_data_length(
     max_input_tokens += max(
         OpenAI.get_data_length(output_string),
         ChatOpenAI.get_data_length(output_string),
-        Anthropic.get_data_length(output_string),
+        ChatAnthropic.get_data_length(output_string),
     )
     max_ground_truth_tokens -= min(
         OpenAI.get_data_length(ground_truth_string),
         ChatOpenAI.get_data_length(ground_truth_string),
-        Anthropic.get_data_length(ground_truth_string),
+        ChatAnthropic.get_data_length(ground_truth_string),
     )
     max_input_characters += len(output_string)
     max_ground_truth_characters -= len(ground_truth_string)
