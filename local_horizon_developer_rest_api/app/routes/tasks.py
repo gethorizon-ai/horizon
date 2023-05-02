@@ -16,6 +16,7 @@ import json
 from flask import current_app
 
 
+
 ALLOWED_EXTENSIONS = {"csv"}
 
 
@@ -100,6 +101,7 @@ class CreateTaskAPI(Resource):
 
         except Exception as e:
             db.session.rollback()
+            logging.exception("Error occurred while creating task: %s", e)
             return {"error": str(e)}, 400
 
         return {
@@ -150,7 +152,6 @@ class TaskAPI(Resource):
             task.status = args["status"]
         if args["evaluation_dataset"] is not None:
             task.evaluation_dataset = args["evaluation_dataset"]
-
         try:
             db.session.commit()
         except Exception as e:
