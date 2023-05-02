@@ -20,7 +20,7 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
     subject = "Your Horizon task is ready!"
     text_body = f"""Hello!
 
-Your Horizon task has been successfully created and is ready for deployment. Please see details on it below. You may deploy it by using the task id noted below. Additional information is available at docs.gethorizon.ai.
+Your Horizon task has been successfully created and is ready for deployment. Please see details on it below. You may deploy it by using the task id noted below. Additional information is available at https://docs.gethorizon.ai.
 
 {task_details_formatted}"""
 

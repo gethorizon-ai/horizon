@@ -1,4 +1,5 @@
 import os
+from kombu.utils.url import safequote
 
 # from urllib.parse import quote
 
@@ -33,6 +34,18 @@ class Config:
     HORIZON_OPENAI_API_KEY = os.environ.get("HORIZON_OPENAI_API_KEY")
 
     # Connect celery task queue with AWS SQS
-    CELERY_BROKER_URL = 'redis://localhost'
-    CELERY_RESULT_BACKEND = 'redis://localhost'
+    aws_access_key = safequote(os.environ.get("AWS_ACCESS_KEY"))
+    aws_secret_key = safequote(os.environ.get("AWS_SECRET_KEY"))
+    CELERY_BROKER_URL = f"sqs://{aws_access_key}:{aws_secret_key}@"
     CELERY_TASK_IGNORE_RESULT = True
+    CELERY_BROKER_TRANSPORT_OPTIONS = {
+        "region": AWS_REGION,
+        "polling_interval": 15,
+        "predefined_queues": {
+            "my-q": {
+                "url": "https://sqs.us-west-2.amazonaws.com/520495742003/TaskGeneration.fifo",
+                "access_key_id": aws_access_key,
+                "secret_access_key": aws_secret_key,
+            }
+        },
+    }
