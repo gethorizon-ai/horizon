@@ -1,5 +1,6 @@
 from flask import request, send_file, make_response, g
 from flask_restful import Resource, reqparse
+from celery import shared_task
 from app.models.component import Task, Prompt, Project
 from app import db, api
 from app.utilities.authentication.api_key_auth import api_key_required
@@ -10,10 +11,7 @@ from app.deploy.prompt import deploy_prompt
 from app.models.llm.factory import LLMFactory
 import os
 import csv
-from concurrent.futures import ThreadPoolExecutor
-from flask_restful import Resource, reqparse
 import json
-from flask import current_app
 
 
 
@@ -279,13 +277,12 @@ class GetTaskConfirmationDetailsAPI(Resource):
         }, 200
 
 
-user_executors = {}
-
-
+@shared_task(ignore_result=False)
+# TODO: switch to task and prompt ID
 def process_generate_prompt_model_configuration(
     user_objective: str,
-    task: Task,
-    prompt: Prompt,
+    task_id: int,
+    prompt_id: int,
     openai_api_key: str,
     anthropic_api_key: str,
 ):

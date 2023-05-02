@@ -31,3 +31,8 @@ class Config:
 
     # Horizon's OpenAI API key
     HORIZON_OPENAI_API_KEY = os.environ.get("HORIZON_OPENAI_API_KEY")
+
+    # Connect celery task queue with AWS SQS
+    CELERY_BROKER_URL = 'redis://localhost'
+    CELERY_RESULT_BACKEND = 'redis://localhost'
+    CELERY_TASK_IGNORE_RESULT = True
