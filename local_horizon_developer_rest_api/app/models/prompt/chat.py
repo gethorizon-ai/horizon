@@ -7,6 +7,7 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate as SystemMessagePromptTemplateOriginal,
     MessagesPlaceholder as MessagesPlaceholderOriginal,
     ChatPromptValue as ChatPromptValueOriginal,
+    HumanMessage as HumanMessageOriginal,
 )
 
 
@@ -18,7 +19,9 @@ class ChatMessagePromptTemplate(BasePromptTemplate, ChatMessagePromptTemplateOri
     pass
 
 
-class HumanMessagePromptTemplate(BasePromptTemplate, HumanMessagePromptTemplateOriginal):
+class HumanMessagePromptTemplate(
+    BasePromptTemplate, HumanMessagePromptTemplateOriginal
+):
     pass
 
 
@@ -26,7 +29,9 @@ class AIMessagePromptTemplate(BasePromptTemplate, AIMessagePromptTemplateOrigina
     pass
 
 
-class SystemMessagePromptTemplate(BasePromptTemplate, SystemMessagePromptTemplateOriginal):
+class SystemMessagePromptTemplate(
+    BasePromptTemplate, SystemMessagePromptTemplateOriginal
+):
     pass
 
 
@@ -35,4 +40,8 @@ class MessagesPlaceholder(BasePromptTemplate, MessagesPlaceholderOriginal):
 
 
 class ChatPromptValue(BasePromptTemplate, ChatPromptValueOriginal):
+    pass
+
+
+class HumanMessage(BasePromptTemplate, HumanMessageOriginal):
     pass

@@ -1,3 +1,5 @@
+"""Test creation of different prompt template types."""
+
 import pytest
 from app.models.prompt.factory import PromptTemplateFactory as factory
 from app.models.prompt.chat import (
@@ -8,23 +10,20 @@ from app.models.prompt.chat import (
     HumanMessagePromptTemplate,
     AIMessagePromptTemplate,
     SystemMessagePromptTemplate,
-    MessagesPlaceholder
+    MessagesPlaceholder,
 )
 from app.models.prompt.prompt import PromptTemplate
 from app.models.prompt.fewshot import FewshotPromptTemplate
 from app.models.prompt.fewshot_with_templates import FewshotWithTemplatesPromptTemplate
 from app.models.schema import HumanMessage, AIMessage, SystemMessage
+from config import Config
 from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelector
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
-import os
-from dotenv import load_dotenv
-import openai
 
 
 def test_factory_creation():
-    load_dotenv()
-    openai.api_key = os.getenv('OPENAI_API_KEY')
+    """Test creation of different prompt template types using factory method."""
     # chat_prompt_template = factory.create_prompt_template("chat")
     # assert isinstance(chat_prompt_template, ChatPromptTemplate)
 
@@ -71,20 +70,16 @@ def test_factory_creation():
 
     assert isinstance(prompt_template, PromptTemplate)
 
-    prompt_template.format(
-        query="Which libraries and model providers offer LLMs?"
-    )
+    prompt_template.format(query="Which libraries and model providers offer LLMs?")
 
     # TEST FEW SHOT TEMPLATE
     # create our examples
     examples = [
         {
             "query": "How are you?",
-            "answer": "I can't complain but sometimes I still do."
-        }, {
-            "query": "What time is it?",
-            "answer": "It's time to get a watch."
-        }
+            "answer": "I can't complain but sometimes I still do.",
+        },
+        {"query": "What time is it?", "answer": "It's time to get a watch."},
     ]
 
     # create a example template
@@ -95,8 +90,7 @@ def test_factory_creation():
 
     # create a prompt example from above template
     example_prompt = PromptTemplate(
-        input_variables=["query", "answer"],
-        template=example_template
+        input_variables=["query", "answer"], template=example_template
     )
 
     # now break our previous prompt into a prefix and suffix
@@ -119,7 +113,7 @@ def test_factory_creation():
         prefix=prefix,
         suffix=suffix,
         input_variables=["query"],
-        example_separator="\n\n"
+        example_separator="\n\n",
     )
 
     assert isinstance(few_shot_prompt_template, FewshotPromptTemplate)
@@ -127,30 +121,31 @@ def test_factory_creation():
     examples = [
         {
             "query": "How are you?",
-            "answer": "I can't complain but sometimes I still do."
-        }, {
-            "query": "What time is it?",
-            "answer": "It's time to get a watch."
-        }, {
-            "query": "What is the meaning of life?",
-            "answer": "42"
-        }, {
+            "answer": "I can't complain but sometimes I still do.",
+        },
+        {"query": "What time is it?", "answer": "It's time to get a watch."},
+        {"query": "What is the meaning of life?", "answer": "42"},
+        {
             "query": "What is the weather like today?",
-            "answer": "Cloudy with a chance of memes."
-        }, {
-            "query": "What is your favorite movie?",
-            "answer": "Terminator"
-        }, {
+            "answer": "Cloudy with a chance of memes.",
+        },
+        {"query": "What is your favorite movie?", "answer": "Terminator"},
+        {
             "query": "Who is your best friend?",
-            "answer": "Siri. We have spirited debates about the meaning of life."
-        }, {
+            "answer": "Siri. We have spirited debates about the meaning of life.",
+        },
+        {
             "query": "What should I do today?",
-            "answer": "Stop talking to chatbots on the internet and go outside."
-        }
+            "answer": "Stop talking to chatbots on the internet and go outside.",
+        },
     ]
 
     example_selector = MaxMarginalRelevanceExampleSelector.from_examples(
-        examples, OpenAIEmbeddings(), FAISS, 2)
+        examples,
+        OpenAIEmbeddings(openai_api_key=Config.HORIZON_OPENAI_API_KEY),
+        FAISS,
+        k=2,
+    )
 
     dynamic_prompt_template = factory.create_prompt_template(
         "fewshot",
@@ -159,10 +154,11 @@ def test_factory_creation():
         prefix=prefix,
         suffix=suffix,
         input_variables=["query"],
-        example_separator="\n"
+        example_separator="\n",
     )
 
     assert isinstance(dynamic_prompt_template, FewshotPromptTemplate)
+
 
 # ... the rest of the test functions ...
 

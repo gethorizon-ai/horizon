@@ -1,31 +1,55 @@
-import time
-import numpy as np
+"""Computes cosine similarity for each combination of output and ground truth."""
+
+from app.models.component.inference_evaluation_results import InferenceEvaluationResults
+from app.models.component.task_request import TaskRequest
 from langchain.embeddings import OpenAIEmbeddings
-import copy
-
-
-import numpy as np
-import pandas as pd
 import time
+import numpy as np
 
 
-def get_semantic_cosine_similarity_openAI(df):
-    # Initialize the columns with NaN
-    df['cosine_similarity_openAI'] = np.nan
-    df['latency_openAI'] = np.nan
+def get_semantic_cosine_similarity_openAI(
+    task_request: TaskRequest,
+    inference_evaluation_results: InferenceEvaluationResults,
+    openai_api_key: str,
+) -> None:
+    """Computes cosine similarity for each combination of output and ground truth.
 
-    for i, row in df.iterrows():
+    Inference score and evaluation latency are inserted directly into inference_evaluation_results object.
+
+    Args:
+        task_request (TaskRequest): data structure holding task request information such ground truth dataset.
+        inference_evaluation_results (InferenceEvaluationResults): data structure with inference results.
+        openai_api_key (str): OpenAI API key to use.
+    """
+    # Get ground truth data corresponding to each evaluation_data_id
+    reference_table = inference_evaluation_results.join(
+        task_request.evaluation_dataset[
+            ["evaluation_data_id", "ground_truth"]
+        ].set_index("evaluation_data_id"),
+        on="evaluation_data_id",
+    )
+
+    # Compute cosine similarity over every combination of output and ground truth
+    for index, row in reference_table.iterrows():
         start_time = time.time()
-        if row['output'] != '':
-            completion_embedding = OpenAIEmbeddings(
-            ).embed_query(str(row['output']))
-            highlight_embedding = OpenAIEmbeddings(
-            ).embed_query(str(row['ground_truth']))
-            cosine_similarity = np.dot(completion_embedding, highlight_embedding) / (
-                np.linalg.norm(completion_embedding) * np.linalg.norm(highlight_embedding))
+        if row["output"] != "":
+            output_embedding = OpenAIEmbeddings(
+                openai_api_key=openai_api_key
+            ).embed_query(row["output"])
+            ground_truth_embedding = OpenAIEmbeddings(
+                openai_api_key=openai_api_key
+            ).embed_query(row["ground_truth"])
+            cosine_similarity = np.dot(output_embedding, ground_truth_embedding) / (
+                np.linalg.norm(output_embedding)
+                * np.linalg.norm(ground_truth_embedding)
+            )
         else:
             cosine_similarity = 0
         end_time = time.time()
-        latency = end_time - start_time
-        df['cosine_similarity_openAI'].iloc[i] = cosine_similarity
-        df['latency_openAI'].iloc[i] = latency
+        evaluation_latency = end_time - start_time
+
+        # Record inference quality and evaluation latency in inference_evaluation_results object
+        inference_evaluation_results.loc[index, "inference_quality"] = cosine_similarity
+        inference_evaluation_results.loc[
+            index, "evaluation_latency"
+        ] = evaluation_latency

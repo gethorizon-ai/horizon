@@ -1,40 +1,33 @@
 from flask_restful import Resource, reqparse
-from app.models.component import Experiment, Project, Prompt, Task, User
-from app import db, api
-from app.routes.users import api_key_required
+from app.models.component import Project
+from app.utilities.authentication.api_key_auth import api_key_required
+from app import db
 from sqlalchemy.exc import IntegrityError
-from flask_restful import Api
-from flask import request, send_file, make_response, g
-from io import BytesIO
-import os
-import csv
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import FileStorage
-from flask import Response
-import base64
-import requests
-import pandas as pd
+from flask import g
 
-
-ALLOWED_EXTENSIONS = {'csv'}
+ALLOWED_EXTENSIONS = {"csv"}
 
 
 class ListProjectsAPI(Resource):
     @api_key_required
     def get(self):
-        projects = Project.query.all()
-        return {'projects': [project.to_dict() for project in projects]}, 200
+        projects = Project.query.filter_by(user_id=g.user.id).all()
+        return {
+            "message": "Projects retrieved successfully",
+            "projects": [project.to_dict() for project in projects],
+        }, 200
 
 
 class CreateProjectAPI(Resource):
     @api_key_required
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, required=True,
-                            help='Project name is required')
+        parser.add_argument(
+            "name", type=str, required=True, help="Project name is required"
+        )
         args = parser.parse_args()
 
-        project = Project(name=args['name'], user_id=g.user.id)
+        project = Project(name=args["name"], user_id=g.user.id)
 
         try:
             db.session.add(project)
@@ -43,32 +36,35 @@ class CreateProjectAPI(Resource):
             db.session.rollback()
             return {"error": str(e)}, 400
 
-        return {"message": "Project created successfully", "project": project.to_dict()}, 201
+        return {
+            "message": "Project created successfully",
+            "project": project.to_dict(),
+        }, 201
 
 
 class ProjectAPI(Resource):
     @api_key_required
     def get(self, project_id):
-        project = Project.query.get(project_id)
+        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
         if not project:
-            return {"error": "Project not found"}, 404
+            return {"error": "Project not found or not associated with user"}, 404
         return project.to_dict(), 200
 
     @api_key_required
     def put(self, project_id):
-        project = Project.query.get(project_id)
+        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
         if not project:
-            return {"error": "Project not found"}, 404
+            return {"error": "Project not found or not associated with user"}, 404
 
         parser = reqparse.RequestParser()
-        parser.add_argument('description', type=str)
-        parser.add_argument('status', type=str)
+        parser.add_argument("description", type=str)
+        parser.add_argument("status", type=str)
         args = parser.parse_args()
 
-        if args['description'] is not None:
-            project.description = args['description']
-        if args['status'] is not None:
-            project.status = args['status']
+        if args["description"] is not None:
+            project.description = args["description"]
+        if args["status"] is not None:
+            project.status = args["status"]
 
         try:
             db.session.commit()
@@ -76,13 +72,16 @@ class ProjectAPI(Resource):
             db.session.rollback()
             return {"error": str(e)}, 400
 
-        return {"message": "Project updated successfully", "project": project.to_dict()}, 200
+        return {
+            "message": "Project updated successfully",
+            "project": project.to_dict(),
+        }, 200
 
     @api_key_required
     def delete(self, project_id):
-        project = Project.query.get(project_id)
+        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
         if not project:
-            return {"error": "Project not found"}, 404
+            return {"error": "Project not found or not associated with user"}, 404
 
         try:
             db.session.delete(project)
@@ -95,9 +94,9 @@ class ProjectAPI(Resource):
 
 
 def register_routes(api):
-    api.add_resource(ListProjectsAPI, '/api/projects')
-    api.add_resource(CreateProjectAPI, '/api/projects/create')
-    api.add_resource(ProjectAPI, '/api/projects/<int:project_id>')
+    api.add_resource(ListProjectsAPI, "/api/projects")
+    api.add_resource(CreateProjectAPI, "/api/projects/create")
+    api.add_resource(ProjectAPI, "/api/projects/<int:project_id>")
 
 
 # curl - X GET - H "Content-Type: application/json" - H "X-Api-Key: 44d244b5-d8a9-4b06-94f9-3a57c7d1f805" http: // 54.188.108.247: 5000/api/projects

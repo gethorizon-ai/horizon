@@ -1,53 +1,55 @@
+"""Generates prompt candidates based on user-provided objective and input variables."""
+
 from app.models.prompt.factory import PromptTemplateFactory
-from app.models.llm.factory import LLMFactory
-from app.models.schema import HumanMessage
-from app.models.llm.open_ai import OpenAI, ChatOpenAI
 from app.models.llm.base import BaseLLM
-from app.models.component.experiment import Experiment
-import pandas as pd
+from app.models.component.task_request import TaskRequest
+from app.models.component.prompt_model_candidates import PromptModelCandidates
+from app.utilities.generation import base
+from app.utilities.generation import prompt_generation_metaprompts
+from app.utilities.generation import prompt_generation_models
 import copy
 
 
-def prompt_generation_user_objective(experiment: Experiment, model_object: BaseLLM, num_prompts: int, global_prompt_id: list, prompt_template_type: str) -> pd.DataFrame:
+def prompt_generation_user_objective(
+    task_request: TaskRequest,
+    model_object: BaseLLM,
+    num_prompts: int,
+    starting_prompt_model_id: int,
+    openai_api_key: str,
+) -> PromptModelCandidates:
+    """Generates prompt candidates based on user-provided objective and input variables.
+
+    Args:
+        task_request (TaskRequest): details for this task creation run
+        model_object (BaseLLM): LLM to use with generated prompt
+        num_prompts (int): number of prompt candidates to generate
+        starting_prompt_model_id (int): starting id for prompt-model candidates
+        openai_api_key (str): OpenAI API key to use.
+
+    Returns:
+        PromptModelCandidates: data structure with generated prompt-model candidates
     """
-    Generate prompt candidates based on user-provided objective and input variables
-    """
-    metaprompt = PromptTemplateFactory.create_prompt_template(prompt_template_type, template="""You are an intelligent English professor. You will craft an instruction that I can give to my friend to accomplish the following objective:
-    OBJECTIVE: {objective}
-    I need to include the following input variables in the instruction:
-    INPUT VARIABLES: {input_variables}
-    What instruction should I give to my friend to accomplish the objective? Do not do the work for my friend, but rather craft an instruction so he can do it. Make sure the objective is clearly communicated in the instruction, along with any supporting information to help my friend do the best possible job. ONLY GIVE ME THE INSTRUCTION, NOTHING ELSE!!!
-    INSTRUCTION:""", input_variables=['objective', 'input_variables'])
+    # Get metaprompt and format it
+    metaprompt = prompt_generation_metaprompts.get_metaprompt_user_objective()
+    formatted_metaprompt = metaprompt.format(
+        objective=task_request.user_objective,
+        input_variables=base.generate_input_variables_string(
+            input_variables=task_request.input_variables
+        ),
+    )
 
-    formatted_metaprompt = metaprompt.format(objective=experiment.user_objective,
-                                             input_variables=', '.join('{input_variable}'.format(input_variable='<' + input_var + '>') for input_var in experiment.input_variables))
+    # Get LLM
+    metaprompt_model = prompt_generation_models.get_model_user_objective(
+        num_prompts=num_prompts, openai_api_key=openai_api_key
+    )
 
-    prompt_suffix = """\n\n==\nBEGIN:\n\n"""
-    for input_var in experiment.input_variables:
-        prompt_suffix += '<' + input_var + '>: {' + input_var + '}\n'
-    prompt_suffix += '<OUTPUT>:'
+    # Generate prompt candidates
+    responses = metaprompt_model.generate([formatted_metaprompt]).generations[0]
+    prompt_suffix = base.generate_prompt_suffix(
+        input_variables=task_request.input_variables
+    )
 
-    # define the LLM factory instance
-    llm_factory = LLMFactory()
-
-    # define the prompt template factory instance
-    model_params = {
-        "model_name": "text-davinci-003",
-        "temperature": 0.4,
-        "max_tokens": 1000,
-        "n": num_prompts,
-        "best_of": num_prompts
-    }
-
-    # Create the model instance
-    metaprompt_model = llm_factory.create_llm("openai", **model_params)
-
-    if type(metaprompt_model) == ChatOpenAI:
-        formatted_metaprompt = [HumanMessage(content=formatted_metaprompt)]
-    responses = metaprompt_model.generate(
-        [formatted_metaprompt]).generations[0]
-
-    prompt_id_list = []
+    prompt_model_id_list = []
     generation_id_list = []
     prompt_object_list = []
     prompt_prefix_list = []
@@ -57,24 +59,26 @@ def prompt_generation_user_objective(experiment: Experiment, model_object: BaseL
         prompt_prefix = responses[i].text.strip()
         prompt_template = prompt_prefix + prompt_suffix
         try:
-            generated_prompt = PromptTemplateFactory.create_prompt_template("prompt",
-                                                                            template=prompt_template, input_variables=experiment.input_variables)
+            generated_prompt = PromptTemplateFactory.create_prompt_template(
+                "prompt",
+                template=prompt_template,
+                input_variables=task_request.input_variables,
+            )
         except:
             continue
 
-        prompt_id_list.append(global_prompt_id[0])
-        global_prompt_id[0] += 1
-        generation_id_list.append('[user_objective]')
+        prompt_model_id_list.append(starting_prompt_model_id)
+        starting_prompt_model_id += 1
+        generation_id_list.append("[user_objective]")
         prompt_object_list.append(generated_prompt)
         prompt_prefix_list.append(prompt_prefix)
         model_object_list.append(copy.deepcopy(model_object))
 
-    result = pd.DataFrame({
-        'prompt_id': prompt_id_list,
-        'generation_id': generation_id_list,
-        'prompt_object': prompt_object_list,
-        'prompt_prefix': prompt_prefix_list,
-        'model_object': model_object_list
-    })
-
-    return result
+    prompt_model_candidates = PromptModelCandidates(
+        prompt_model_id_list=prompt_model_id_list,
+        generation_id_list=generation_id_list,
+        prompt_object_list=prompt_object_list,
+        prompt_prefix_list=prompt_prefix_list,
+        model_object_list=model_object_list,
+    )
+    return prompt_model_candidates

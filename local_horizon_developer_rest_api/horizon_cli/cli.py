@@ -1,12 +1,14 @@
-from horizon_ai import APIClient
+import horizon_ai
 import os
 import json
 import click
 import configparser
+import time
+from requests.exceptions import HTTPError
 
 
 config = configparser.ConfigParser()
-config.read(os.path.expanduser('~/.horizonai.cfg'))
+config.read(os.path.expanduser("~/.horizonai.cfg"))
 
 
 @click.group()
@@ -39,316 +41,683 @@ def prompt():
     pass
 
 
-@click.command(name='register')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--username', prompt='Username', help='The username for the new user.')
-@click.option('--email', prompt='Email', help='The email for the new user.')
-@click.option('--password', prompt='Password', help='The password for the new user.')
-def register_user(base_url, username, email, password):
-    client = APIClient(base_url)
-    result = client.register_user(username, email, password)
-    click.echo(result)
+# User-related methods
 
 
-@click.command(name='authenticate')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--username', prompt='Username', help='The username for the user.')
-@click.option('--password', prompt='Password', help='The password for the user.')
-def authenticate_user(base_url, username, password):
-    client = APIClient(base_url)
-    result = client.authenticate_user(username, password)
-    click.echo(result)
+# Register user
+# @click.command(name="register")
+# @click.option("--name", prompt="Name", help="The name for the new user.")
+# @click.option("--email", prompt="Email", help="The email for the new user.")
+# @click.password_option(
+#     "--password", prompt="Password", help="The password for the new user."
+# )
+# def register_user(name, email, password):
+#     try:
+#         result = horizon_ai.register_user(name, email, password)
+#         formatted_output = json.dumps(result, indent=4)
+#         click.echo(formatted_output)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
-@click.command(name='get')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--user_id', prompt='User ID', help='The ID of the user.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-def get_user(base_url, user_id, api_key):
-    client = APIClient(base_url)
-    result = client.get_user(user_id, api_key)
-    click.echo(result)
+# Generate new Horizon API key for user
+@click.command(name="api-key")
+@click.option("--email", prompt="Email", help="The email for the user.")
+@click.password_option(
+    "--password", prompt="Password", help="The password for the user."
+)
+def generate_new_api_key(email, password):
+    try:
+        result = horizon_ai.generate_new_api_key(email, password)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
-@click.command(name='delete')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--user_id', prompt='User ID', help='The ID of the user to delete.')
-def delete_user(base_url, user_id, api_key):
-    client = APIClient(base_url)
-    result = client.delete_user(user_id, api_key)
-    click.echo(result)
+# Get user details
+# @click.command(name="get")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# def get_user(horizon_api_key):
+#     horizon_ai.api_key = horizon_api_key
+#     try:
+#         result = horizon_ai.get_user()
+#         formatted_output = json.dumps(result, indent=4)
+#         click.echo(formatted_output)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
-@click.command(name='list')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-def list_projects(base_url, api_key):
-    client = APIClient(base_url)
-    result = client.list_projects(api_key)
-    click.echo(result)
+# Delete user
+# @click.command(name="delete")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# @click.option("--user_id", prompt="User ID", help="The ID of the user to delete.")
+# def delete_user(user_id, horizon_api_key):
+#     horizon_ai.api_key = horizon_api_key
+#     try:
+#         result = horizon_ai.delete_user(user_id)
+#         formatted_output = json.dumps(result, indent=4)
+#         click.echo(formatted_output)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
-@click.command(name='create')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--name', prompt='Project name', help='The name of the project to create.')
-def create_project(base_url, name, api_key):
-    client = APIClient(base_url)
-    result = client.create_project(name, api_key)
-    # Extract the desired elements from the result
-    message = result['message']
-    project_id = result['project']['id']
-    project_name = result['project']['name']
+# Project-related methods
 
-    # Create a new dictionary with only the desired elements
-    output = {
-        'message': message,
-        'project': {
-            'id': project_id,
-            'name': project_name
-        }
-    }
 
-    # Format the output dictionary as a JSON string with indentation
-    formatted_output = json.dumps(output, indent=4)
+# List projects
+@click.command(name="list")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+def list_projects(horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.list_projects()
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
-    # Print the formatted output
-    click.echo(formatted_output)
+
+# Create project
+@click.command(name="create")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option(
+    "--name", prompt="Project name", help="The name of the project to create."
+)
+def create_project(name, horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.create_project(name)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
 # Get Project
-@click.command(name='get')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--project_id', prompt='Project ID', help='The ID of the project to retrieve.')
-def get_project(base_url, project_id, api_key):
-    client = APIClient(base_url)
-    result = client.get_project(project_id, api_key)
-    click.echo(result)
+@click.command(name="get")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option(
+    "--project_id", prompt="Project ID", help="The ID of the project to retrieve."
+)
+def get_project(project_id, horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.get_project(project_id)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
 # Update Project
-@click.command(name='update')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--project_id', prompt='Project ID', help='The ID of the project to update.')
-@click.option('--description', help='The new description for the project.')
-@click.option('--status', help='The new status for the project.')
-def update_project(base_url, project_id, api_key, description=None, status=None):
-    client = APIClient(base_url)
-    result = client.update_project(
-        project_id, api_key, description, status)
-    click.echo(result)
-
-
-cli.add_command(update_project)
+@click.command(name="update")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option(
+    "--project_id", prompt="Project ID", help="The ID of the project to update."
+)
+@click.option("--description", help="The new description for the project.")
+@click.option("--status", help="The new status for the project.")
+def update_project(project_id, horizon_api_key, description=None, status=None):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.update_project(project_id, description, status)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
 # Delete Project
-@click.command(name='delete')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--project_id', prompt='Project ID', help='The ID of the project to delete.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-def delete_project(base_url, project_id, api_key):
-    client = APIClient(base_url)
-    result = client.delete_project(project_id, api_key)
-    click.echo(result)
+@click.command(name="delete")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option(
+    "--project_id", prompt="Project ID", help="The ID of the project to delete."
+)
+def delete_project(project_id, horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.delete_project(project_id)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
+
+
+# Task-related methods
 
 
 # List Tasks
-@click.command(name='list')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-def list_tasks(base_url, api_key):
-    client = APIClient(base_url)
-    result = client.list_tasks(api_key)
-    click.echo(result)
+@click.command(name="list")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+def list_tasks(horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.list_tasks()
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
-# Create Task
-@click.command(name='create')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--name', prompt='Task name', help='The name of the task to create.')
-@click.option('--project_id', prompt='Project ID', help='The ID of the project that the task belongs to.')
+# Create Task record and generate prompt for it
+@click.command(name="generate")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option("--name", prompt="Task name", help="The name of the task to create.")
+@click.option(
+    "--project_id",
+    prompt="Associated project ID",
+    help="The ID of the project that the task belongs to.",
+)
 # @click.option('--task_type', prompt='Task type', help='The type of the task to create.')
-@click.option('--task_type', default='text_generation', help='The type of the task to create.')
-@ click.option('--objective', prompt='Objective', help='The objective of the task to generate.')
-@click.option('--file_path', prompt='File Path', help='The path to the file containing the evaluation datasets to upload.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-def create_task(base_url, name, project_id, task_type, objective, file_path, api_key):
-    client = APIClient(base_url)
-    result = client.create_task(
-        name, project_id, task_type, objective, file_path, api_key)
-    # Extract the desired elements from the result
-    task_id = result['task_id']  # Update this line
-    prompt_template = result['generated_prompt']['template']
+@click.option(
+    "--task_type", default="text_generation", help="The type of the task to create."
+)
+@click.option(
+    "--objective",
+    prompt="Task objective",
+    help="The objective of the task to generate.",
+)
+@click.option(
+    "--file_path",
+    prompt="Evaluation data file path",
+    help="The path to the file containing the evaluation datasets to upload.",
+)
+# click.option(
+#     "--openai_api_key",
+#     default=os.environ.get("OPENAI_API_KEY"),
+#     prompt="OpenAI API Key (type 'skip' if you're not using OpenAI)"
+#     if not os.environ.get("OPENAI_API_KEY")
+#     else False,
+#     help="The OpenAI API key for the user.",
+# )
+# click.option(
+#     "--anthropic_api_key",
+#     default=os.environ.get("ANTHROPIC_API_KEY"),
+#     prompt="Anthropic API Key (type 'skip' if you're not using Anthropic)"
+#     if not os.environ.get("ANTHROPIC_API_KEY")
+#     else False,
+#     help="The Anthropic API key for the user.",
+# )
+def generate_task(
+    name,
+    project_id,
+    task_type,
+    objective,
+    file_path,
+    horizon_api_key,
+    # openai_api_key,
+    # anthropic_api_key,
+):
+    horizon_ai.api_key = horizon_api_key
+    # horizon_ai.openai_api_key = openai_api_key
+    # horizon_ai.anthropic_api_key = anthropic_api_key
 
-    # Replace '\n' with actual new lines in the string
-    formatted_prompt_template = prompt_template.replace('\\n', '\n')
+    # Ask user which models they'd like to include
+    allowed_models = []
+    if click.confirm("Include [OpenAI]-[gpt-3.5-turbo]?"):
+        allowed_models.append("gpt-3.5-turbo")
+    if click.confirm("Include [OpenAI]-[text-davinci-003]?"):
+        allowed_models.append("text-davinci-003")
+    if click.confirm("Include [Anthropic]-[claude-instant-v1]?"):
+        allowed_models.append("claude-instant-v1")
+    if click.confirm("Include [Anthropic]-[claude-v1]?"):
+        allowed_models.append("claude-v1")
+    if len(allowed_models) == 0:
+        raise Exception("Must select at least one model to include")
 
-    output = {}
+    # Set appropriate LLM API keys
+    if "gpt-3.5-turbo" in allowed_models or "text-davinci-003" in allowed_models:
+        if os.environ.get("OPENAI_API_KEY"):
+            horizon_ai.openai_api_key = os.environ.get("OPENAI_API_KEY")
+        else:
+            horizon_ai.openai_api_key = click.prompt(
+                text="OpenAI API Key (text hidden)", hide_input=True
+            )
+    if "claude-instant-v1" in allowed_models or "claude-v1" in allowed_models:
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            horizon_ai.anthropic_api_key = os.environ.get("ANTHROPIC_API_KEY")
+        else:
+            horizon_ai.anthropic_api_key = click.prompt(
+                text="Anthropic API Key (text hidden)", hide_input=True
+            )
 
-    # DEMO PURPOSES ONLY Before complete implementation
-    # Add the new key-value pairs to the output dictionary
-    output["task_id"] = task_id
-    output["quality_score"] = 0.98
-    output["evaluations_completed"] = 4739
-    output["model_recommended"] = "gpt 3.5"
-    output["few_shot"] = "no"
-    output["few_shot_approach"] = "N/A"
-    output["prompt_template"] = formatted_prompt_template
-    # Create a new dictionary with only the desired elements
-    # output = {
-    #     'task_id': task_id,
-    #     'prompt_template': formatted_prompt_template
-    # }
+    click.echo(f"Evaluating the following models for task generation: {allowed_models}")
 
-    # # DEMO PURPOSES ONLY Before complete implementation
-    # # Add the new key-value pairs to the output dictionary
-    # output["quality_score"] = 0.98
-    # output["evaluations_completed"] = 4739
-    # output["model_recommended"] = "gpt 3.5"
-    # output["prompt_technique"] = "role play"
-    # output["few_shot"] = "no"
-    # output["few_shot_approach"] = "N/A"
+    # Create task record
+    try:
+        task_creation_response = horizon_ai.create_task(
+            name, task_type, project_id, allowed_models
+        )
+        task_id = task_creation_response["task"]["id"]
+    except Exception as e:
+        click.echo("Failed in task creation")
+        click.echo(str(e))
+        return
 
-    # Format the output dictionary as a JSON string with indentation
-    formatted_output = json.dumps(output, indent=4)
+    # Upload evaluation dataset
+    try:
+        upload_dataset_response = horizon_ai.upload_evaluation_dataset(
+            task_id, file_path
+        )
+    except Exception as e:
+        # If uploading evaluation dataset fails, then delete previously created task
+        horizon_ai.delete_task(task_id)
+        click.echo("Failed in dataset upload")
+        click.echo(str(e))
+        return
 
-    # Print the formatted output
+    # Confirm key details of task creation (e.g., estimated cost) with user before proceeding
+    try:
+        task_confirmation_details_response = horizon_ai.get_task_confirmation_details(
+            task_id
+        )
+        task_confirmation_details = task_confirmation_details_response[
+            "task_confirmation_details"
+        ]
+    except Exception as e:
+        # If error with getting task confirmation details, then clean up task record and evaluation dataset before raising exception
+        horizon_ai.delete_task(task_id)
+        click.echo("Failed in task confirmation details")
+        click.echo(str(e))
+        return
+
+    click.echo("=====")
+    click.echo(
+        "Please confirm the following parameters for your task creation request:"
+    )
+    click.echo("")
+    click.echo(f"1) Task objective: {objective}")
+    click.echo("")
+    click.echo(f"2) Input variables: {task_confirmation_details['input_variables']}")
+    click.echo(
+        "* Inferred based on the headers of all but the right-most column in your evaluation dataset."
+    )
+    click.echo("")
+    click.echo(
+        f"3) Estimated LLM provider cost: ${task_confirmation_details['cost_estimate']['total_cost']['low']}-{task_confirmation_details['cost_estimate']['total_cost']['high']}"
+    )
+    click.echo(
+        "* This is entirely the LLM provider cost and not a Horizon charge. Actual cost may vary."
+    )
+    click.echo("=====")
+
+    # Cancel task creation if user does not give confirmation
+    if not click.confirm("Proceed with task creation?"):
+        # Delete task and evaluation dataset, and abort operation
+        horizon_ai.delete_task(task_id)
+        click.echo("Cancelled task creation.")
+        return
+
+    # Given user's confirmation, continue with task creation
+    try:
+        click.echo("Proceeding with task creation...")
+        start_time = time.time()
+        generate_response = horizon_ai.generate_task(task_id, objective)
+        end_time = time.time()
+        generation_latency = end_time - start_time
+        click.echo(f"Generation latency: {generation_latency}")
+    except Exception as e:
+        # If error with generating task, then clean up task record and evaluation dataset before raising exception
+        horizon_ai.delete_task(task_id)
+        click.echo("Failed in task generation")
+        click.echo(str(e))
+        return
+
+    # Print info about the newly created task object
+    click.echo("=====")
+    click.echo(
+        "Task creation completed successfully. Here are details about your task:"
+    )
+    formatted_output = json.dumps(generate_response, indent=4)
     click.echo(formatted_output)
 
 
 # Get Task
-@click.command(name='get')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--task_id', prompt='Task ID', help='The ID of the task to retrieve.')
-def get_task(base_url, task_id, api_key):
-    client = APIClient(base_url)
-    result = client.get_task(task_id, api_key)
-    click.echo(result)
+@click.command(name="get")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option("--task_id", prompt="Task ID", help="The ID of the task to retrieve.")
+def get_task(task_id, horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.get_task(task_id)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
-# Update Task
-@click.command(name='update')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--task_id', prompt='Task ID', help='The ID of the task to update.')
-@click.option('--description', help='The new description for the task.')
-@click.option('--task_type', help='The new task type for the task.')
-@click.option('--evaluation_dataset', help='The new evaluation datasets for the task.')
-@click.option('--delete_evaluation_dataset', default=False, is_flag=True, help='Whether to delete the evaluation datasets for the task.')
-@click.option('--status', help='The new status for the task.')
-def update_task(base_url, task_id, api_key, description=None, task_type=None, status=None, evaluation_dataset=None, delete_evaluation_dataset=None):
-    client = APIClient(base_url)
-    result = client.update_task(
-        task_id, api_key, description, task_type, status, evaluation_dataset, delete_evaluation_dataset)
-    click.echo(result)
+# # Update Task
+# @click.command(name="update")
+# @click.option(
+#     "--base_url", default="http://127.0.0.1:5000", help="The base URL for the API."
+# )
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# @click.option("--task_id", prompt="Task ID", help="The ID of the task to update.")
+# @click.option("--description", help="The new description for the task.")
+# @click.option("--task_type", help="The new task type for the task.")
+# @click.option("--evaluation_dataset", help="The new evaluation datasets for the task.")
+# @click.option(
+#     "--delete_evaluation_dataset",
+#     default=False,
+#     is_flag=True,
+#     help="Whether to delete the evaluation datasets for the task.",
+# )
+# @click.option("--status", help="The new status for the task.")
+# def update_task(
+#     base_url,
+#     task_id,
+#     horizon_api_key,
+#     description=None,
+#     task_type=None,
+#     status=None,
+#     evaluation_dataset=None,
+#     delete_evaluation_dataset=None,
+# ):
+#     client = APIClient(base_url)
+#     result = client.update_task(
+#         task_id,
+#         horizon_api_key,
+#         description,
+#         task_type,
+#         status,
+#         evaluation_dataset,
+#         delete_evaluation_dataset,
+#     )
+#     click.echo(result)
 
 
 # Delete Task
-@click.command(name='delete')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--task_id', prompt='Task ID', help='The ID of the task to delete.')
-def delete_task(base_url, task_id, api_key):
-    client = APIClient(base_url)
-    result = client.delete_task(task_id, api_key)
-    click.echo(result)
+@click.command(name="delete")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option("--task_id", prompt="Task ID", help="The ID of the task to delete.")
+def delete_task(task_id, horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.delete_task(task_id)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except HTTPError as e:
+        click.echo(f"Error deleting task (HTTP Error): {str(e)}")
+    except Exception as e:
+        click.echo(f"Error deleting task: {str(e)}")
 
 
 # Get the current prompt of a task
-@click.command(name='get-active-prompt')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--task_id', prompt='Task ID', help='The ID of the task.')
-def get_task_curr_prompt(base_url, task_id, api_key):
-    client = APIClient(base_url)
-    result = client.get_task_curr_prompt(task_id, api_key)
-    click.echo(result)
+# @click.command(name="get-active-prompt")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# @click.option("--task_id", prompt="Task ID", help="The ID of the task.")
+# def get_task_curr_prompt(task_id, horizon_api_key):
+#     horizon_ai.api_key = horizon_api_key
+#     try:
+#         result = horizon_ai.get_task_curr_prompt(task_id)
+#         click.echo(result)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
 # Set the current prompt of a task
-@click.command(name='set-active-prompt')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--task_id', prompt='Task ID', help='The ID of the task.')
-@click.option('--prompt_id', prompt='Prompt ID', help='The ID of the prompt to set as the current prompt for the task.')
-def set_task_curr_prompt(base_url, task_id, prompt_id, api_key):
-    client = APIClient(base_url)
-    result = client.set_task_curr_prompt(task_id, prompt_id, api_key)
-    click.echo(result)
+# @click.command(name="set-active-prompt")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# @click.option("--task_id", prompt="Task ID", help="The ID of the task.")
+# @click.option(
+#     "--prompt_id",
+#     prompt="Prompt ID",
+#     help="The ID of the prompt to set as the current prompt for the task.",
+# )
+# def set_task_curr_prompt(task_id, prompt_id, horizon_api_key):
+#     horizon_ai.api_key = horizon_api_key
+#     try:
+#         result = horizon_ai.set_task_curr_prompt(task_id, prompt_id)
+#         click.echo(result)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
 # Generate a task
-@ click.command(name='generate')
-@ click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@ click.option('--task_id', prompt='Task ID', help='The ID of the task to generate.')
-@ click.option('--objective', prompt='Objective', help='The objective of the task to generate.')
-def generate_task(base_url, task_id, objective, api_key):
-    client = APIClient(base_url)
-    result = client.generate_task(task_id, objective, api_key)
-    click.echo(result)
+# @click.command(name="generate")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# @click.option("--task_id", prompt="Task ID", help="The ID of the task to generate.")
+# @click.option(
+#     "--objective", prompt="Objective", help="The objective of the task to generate."
+# )
+# @click.option(
+#     "--openai_api_key",
+#     default=os.environ.get("OPENAI_API_KEY"),
+#     prompt="OpenAI API Key" if not os.environ.get("OPENAI_API_KEY") else False,
+#     help="The OpenAI API key for the user.",
+# )
+# def generate_task(task_id, objective, horizon_api_key, openai_api_key):
+#     horizon_ai.api_key = horizon_api_key
+#     horizon_ai.openai_api_key = openai_api_key
+#     try:
+#         result = horizon_ai.generate_task(task_id, objective)
+#         click.echo(result)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
 # Deploy a task
-@ click.command(name='deploy')
-@ click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@ click.option('--task_id', prompt='Task ID', help='The ID of the task to deploy.')
-@ click.option('--inputs', prompt='Inputs', help='The inputs to the task in JSON format.')
-def deploy_task(base_url, task_id, inputs, api_key):
-    inputs_dict = json.loads(inputs)
-    client = APIClient(base_url)
-    result = client.deploy_task(task_id, inputs_dict, api_key)
-    click.echo(result)
+@click.command(name="deploy")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option("--task_id", prompt="Task ID", help="The ID of the task to deploy.")
+@click.option(
+    "--inputs", prompt="Inputs", help="The inputs to the task in JSON format."
+)
+@click.option(
+    "--openai_api_key",
+    default=os.environ.get("OPENAI_API_KEY"),
+    prompt="OpenAI API Key (text hidden; type 'skip' if you're not using OpenAI)"
+    if not os.environ.get("OPENAI_API_KEY")
+    else False,
+    help="The OpenAI API key for the user.",
+    hide_input=True,
+)
+@click.option(
+    "--anthropic_api_key",
+    default=os.environ.get("ANTHROPIC_API_KEY"),
+    prompt="Anthropic API Key (text hidden; type 'skip' if you're not using Anthropic)"
+    if not os.environ.get("ANTHROPIC_API_KEY")
+    else False,
+    help="The Anthropic API key for the user.",
+    hide_input=True,
+)
+def deploy_task(task_id, inputs, horizon_api_key, openai_api_key, anthropic_api_key):
+    horizon_ai.api_key = horizon_api_key
+    horizon_ai.openai_api_key = openai_api_key
+    horizon_ai.anthropic_api_key = anthropic_api_key
+    try:
+        inputs_dict = json.loads(inputs)
+        result = horizon_ai.deploy_task(task_id, inputs_dict)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
 # Upload Evaluation Dataset
-@click.command(name='upload')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--task_id', prompt='Task ID', help='The ID of the task to upload evaluation datasets for.')
-@click.option('--file_path', prompt='File Path', help='The path to the file containing the evaluation datasets to upload.')
-def upload_evaluation_dataset(base_url, task_id, file_path, api_key):
-    client = APIClient(base_url)
-    result = client.upload_evaluation_dataset(task_id, file_path, api_key)
-    click.echo(result)
+# @click.command(name="upload")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# @click.option(
+#     "--task_id",
+#     prompt="Task ID",
+#     help="The ID of the task to upload evaluation datasets for.",
+# )
+# @click.option(
+#     "--file_path",
+#     prompt="File Path",
+#     help="The path to the file containing the evaluation datasets to upload.",
+# )
+# def upload_evaluation_dataset(task_id, file_path, horizon_api_key):
+#     horizon_ai.api_key = horizon_api_key
+#     try:
+#         result = horizon_ai.upload_evaluation_dataset(task_id, file_path)
+#         click.echo(result)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
 # View Evaluation Dataset
-@click.command(name='veiw')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--task_id', prompt='Task ID', help='The ID of the task to view evaluation datasets for.')
-def view_evaluation_dataset(base_url, task_id, api_key):
-    client = APIClient(base_url)
-    result = client.view_evaluation_dataset(task_id, api_key)
-    click.echo(result)
+@click.command(name="view")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option(
+    "--task_id",
+    prompt="Task ID",
+    help="The ID of the task to view evaluation datasets for.",
+)
+def view_evaluation_dataset(task_id, horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.view_evaluation_dataset(task_id)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
-# Get Evaluation Dataset
-@click.command(name='download')
-@click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--task_id', prompt='Task ID', help='The ID of the task to get evaluation datasets for.')
-def get_evaluation_dataset(task_id, api_key):
-    client = APIClient()
-    result = client.get_evaluation_dataset(task_id, api_key)
-    click.echo(result)
+# # Get Evaluation Dataset
+# @click.command(name="download")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# @click.option(
+#     "--task_id",
+#     prompt="Task ID",
+#     help="The ID of the task to get evaluation datasets for.",
+# )
+# def get_evaluation_dataset(task_id, horizon_api_key):
+#     horizon_ai.api_key = horizon_api_key
+#     try:
+#         result = horizon_ai.get_evaluation_dataset(task_id)
+#         click.echo(result)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
 # Delete Evaluation Dataset
-@click.command(name='delete')
-@click.option('--api_key', default=os.environ.get('HORIZONAI_API_KEY'), prompt='API Key' if not os.environ.get('HORIZONAI_API_KEY') else False, help='The API key for the user.')
-@click.option('--task_id', prompt='Task ID', help='The ID of the task to delete evaluation datasets for.')
-def delete_evaluation_dataset(base_url, api_key, task_id):
-    client = APIClient(base_url)
-    result = client.delete_evaluation_dataset(task_id, api_key)
-    click.echo(result)
+# @click.command(name="delete")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# @click.option(
+#     "--task_id",
+#     prompt="Task ID",
+#     help="The ID of the task to delete evaluation datasets for.",
+# )
+# def delete_evaluation_dataset(horizon_api_key, task_id):
+#     horizon_ai.api_key = horizon_api_key
+#     try:
+#         result = horizon_ai.delete_evaluation_dataset(task_id)
+#         click.echo(result)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
 # # List prompts
@@ -374,14 +743,24 @@ def delete_evaluation_dataset(base_url, api_key, task_id):
 
 
 # # Get prompt information
-# @click.command()
-# @click.option('--base_url', default='http://127.0.0.1:5000', help='The base URL for the API.')
-# @click.option('--prompt_id', prompt='Prompt ID', help='The ID of the prompt to retrieve.')
-# @click.option('--api_key', prompt='API Key', help='The API key for the user.')
-# def get_prompt(base_url, prompt_id, api_key):
-#     client = APIClient(base_url)
-#     result = client.get_prompt(prompt_id, api_key)
-#     click.echo(result)
+# @click.command(name="get")
+# @click.option(
+#     "--horizon_api_key",
+#     default=os.environ.get("HORIZON_API_KEY"),
+#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+#     help="The Horizon API key for the user.",
+# )
+# @click.option(
+#     "--prompt_id", prompt="Prompt ID", help="The ID of the prompt to retrieve."
+# )
+# def get_prompt(prompt_id, horizon_api_key):
+#     horizon_ai.api_key = horizon_api_key
+#     try:
+#         result = horizon_ai.get_prompt(prompt_id)
+#         formatted_output = json.dumps(result, indent=4)
+#         click.echo(formatted_output)
+#     except Exception as e:
+#         click.echo(str(e))
 
 
 # # Update prompt
@@ -437,35 +816,37 @@ def delete_evaluation_dataset(base_url, api_key, task_id):
 cli.add_command(user)
 cli.add_command(project)
 cli.add_command(task)
-cli.add_command(evaluation_dataset)
-cli.add_command(prompt)
+# cli.add_command(evaluation_dataset)
+# cli.add_command(prompt)
 
 # User-related commands
-user.add_command(register_user)
-user.add_command(authenticate_user)
-user.add_command(get_user)
-user.add_command(delete_user)
+# user.add_command(register_user)
+user.add_command(generate_new_api_key)
+# user.add_command(get_user)
+# user.add_command(delete_user)
 
 # Project-related commands
+project.add_command(list_projects)
 project.add_command(create_project)
 project.add_command(get_project)
-project.add_command(update_project)
+# project.add_command(update_project)
 project.add_command(delete_project)
 
 # Task-related commands
 task.add_command(list_tasks)
-task.add_command(create_task)
-task.add_command(get_task)
-task.add_command(get_task_curr_prompt)
-task.add_command(set_task_curr_prompt)
 task.add_command(generate_task)
+task.add_command(get_task)
+task.add_command(delete_task)
+# task.add_command(get_task_curr_prompt)
+# task.add_command(set_task_curr_prompt)
+# task.add_command(generate_task)
 task.add_command(deploy_task)
 
 # Evaluation Dataset-related commands
-evaluation_dataset.add_command(upload_evaluation_dataset)
-evaluation_dataset.add_command(view_evaluation_dataset)
-evaluation_dataset.add_command(get_evaluation_dataset)
-evaluation_dataset.add_command(delete_evaluation_dataset)
+# evaluation_dataset.add_command(upload_evaluation_dataset)
+# evaluation_dataset.add_command(view_evaluation_dataset)
+# evaluation_dataset.add_command(get_evaluation_dataset)
+# evaluation_dataset.add_command(delete_evaluation_dataset)
 
 # commented prompt-related commands
 # prompt.add_command(list_prompts)
@@ -479,9 +860,10 @@ evaluation_dataset.add_command(delete_evaluation_dataset)
 # Enable auto-completion
 try:
     import click_completion
+
     click_completion.init()
 except ImportError:
     pass
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

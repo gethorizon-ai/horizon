@@ -1,158 +1,80 @@
-from flask import request, g
-from flask_restful import Resource, reqparse, Api
-from functools import wraps
-from app.models.component import User
-from app import db, api
-from werkzeug.security import generate_password_hash, check_password_hash
+from app.utilities.authentication.cognito_auth import cognito_auth_required
+from flask import g
+from flask_restful import Resource
+from app import db
 from sqlalchemy.exc import IntegrityError
-from warrant import Cognito
-import os
-import boto3
-from config import Config
-import logging
-from botocore.exceptions import ClientError
-import hashlib
-import hmac
-import base64
+from app.utilities.context import RequestContext
 
-logging.basicConfig(level=logging.DEBUG)
+# class RegisterAPI(Resource):
+#     def post(self):
+#         parser = reqparse.RequestParser()
+#         parser.add_argument("name", type=str, required=True, help="Name is required")
+#         parser.add_argument("email", type=str, required=True, help="Email is required")
+#         parser.add_argument(
+#             "password", type=str, required=True, help="Password is required"
+#         )
+#         args = parser.parse_args()
 
+#         try:
+#             user = User(args["name"], args["email"], password=args["password"])
+#             db.session.add(user)
+#             db.session.commit()
+#         except Exception as e:
+#             return {"error": str(e)}, 400
 
-config = Config()
-cognito_pool_id = config.COGNITO_POOL_ID
-cognito_client_id = config.COGNITO_CLIENT_ID
-cognito_client_secret = config.COGNITO_CLIENT_SECRET
-region_name = config.AWS_REGION
-cognito = boto3.client('cognito-idp', region_name=region_name)
-
-
-def calculate_secret_hash(client_secret, email, client_id):
-    message = email + client_id
-    dig = hmac.new(bytes(client_secret, 'utf-8'), msg=bytes(message,
-                   'utf-8'), digestmod=hashlib.sha256).digest()
-    return base64.b64encode(dig).decode()
+#         return {"message": "User registered successfully"}, 201
 
 
-def api_key_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        api_key = request.headers.get('X-Api-Key')
-        if not api_key:
-            return {"error": "API key required"}, 401
-
-        user = User.query.filter_by(api_key=api_key).first()
-        if not user:
-            return {"error": "Invalid API key"}, 401
-
-        g.user = user
-
-        return f(*args, **kwargs)
-    return decorated_function
-
-
-def cognito_auth_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        email = request.form.get('email')
-        password = request.form.get('password')
-
-        if not email or not password:
-            return {"error": "Email and password required"}, 401
-
-        secret_hash = calculate_secret_hash(
-            cognito_client_secret, email, cognito_client_id)
-
-        try:
-            response = cognito.admin_initiate_auth(
-                UserPoolId=cognito_pool_id,
-                ClientId=cognito_client_id,
-                AuthFlow='ADMIN_USER_PASSWORD_AUTH',
-                AuthParameters={
-                    'USERNAME': email,
-                    'PASSWORD': password,
-                    'SECRET_HASH': secret_hash,
-                },
-            )
-        except ClientError as e:
-            return {"error": str(e)}, 401
-
-        access_token = response['AuthenticationResult']['AccessToken']
-        g.user = cognito.get_user(AccessToken=access_token)
-
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
-class RegisterAPI(Resource):
+class GenerateAPIKeyAPI(Resource):
+    @cognito_auth_required
     def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, required=True,
-                            help='Name is required')
-        parser.add_argument('email', type=str, required=True,
-                            help='Email is required')
-        parser.add_argument('password', type=str,
-                            required=True, help='Password is required')
-        args = parser.parse_args()
+        user = g.user
+        if not user:
+            return {"error": "User not found"}, 404
 
+        api_key = user.generate_new_api_key()
         try:
-            user = User(args['name'], args['email'], password=args['password'])
-            db.session.add(user)
             db.session.commit()
-        except Exception as e:
+        except IntegrityError as e:
+            db.session.rollback()
             return {"error": str(e)}, 400
 
-        return {"message": "User registered successfully", "api_key": user.api_key}, 201
-
-
-class AuthenticateAPI(Resource):
-    def post(self):
-        parser = reqparse.RequestParser()
-        parser.add_argument('email', type=str, required=True,
-                            help='Email is required')
-        parser.add_argument('password', type=str,
-                            required=True, help='Password is required')
-        args = parser.parse_args()
-
-        user = User.authenticate(args['email'], args['password'])
-        if not user:
-            return {"error": "Authentication failed"}, 401
-
         return {
-            "api_key": user.api_key,
-            "message": "User authenticated successfully"
+            "api_key": api_key,
+            "message": "API key generated successfully. Please store this securely as it cannot be retrieved. If lost, a new API key will need to be generated.",
         }, 200
 
 
-class GetUserAPI(Resource):
-    @cognito_auth_required
-    def get(self):
-        user = g.user
-        if not user:
-            return {"error": "User not found"}, 404
-        return user.to_dict(), 200
+# class GetUserAPI(Resource):
+#     @cognito_auth_required
+#     def get(self):
+#         user = g.user
+#         if not user:
+#             return {"error": "User not found"}, 404
+#         return user.to_dict(), 200
 
 
-class DeleteUserAPI(Resource):
-    @cognito_auth_required
-    def delete(self):
-        user = g.user
-        if not user:
-            return {"error": "User not found"}, 404
+# class DeleteUserAPI(Resource):
+#     @cognito_auth_required
+#     def delete(self):
+#         user = g.user
+#         if not user:
+#             return {"error": "User not found"}, 404
 
-        try:
-            user.cognito.admin_delete_user()
-        except Exception as e:
-            return {"error": str(e)}, 400
+#         try:
+#             user.cognito.admin_delete_user()
+#         except Exception as e:
+#             return {"error": str(e)}, 400
 
-        return {"message": "User deleted successfully"}, 200
+#         return {"message": "User deleted successfully"}, 200
 
 
 def register_routes(api):
-    api.add_resource(RegisterAPI, '/api/users/register')
-    api.add_resource(AuthenticateAPI, '/api/users/authenticate')
-    api.add_resource(GetUserAPI, '/api/users/')
-    api.add_resource(DeleteUserAPI, '/api/users/')
+    # api.add_resource(RegisterAPI, "/api/users/register")
+    # api.add_resource(AuthenticateAPI, '/api/users/authenticate')
+    api.add_resource(GenerateAPIKeyAPI, "/api/users/generate_new_api_key")
+    # api.add_resource(GetUserAPI, "/api/users/")
+    # api.add_resource(DeleteUserAPI, "/api/users/")
 
 
 # Register a new user:

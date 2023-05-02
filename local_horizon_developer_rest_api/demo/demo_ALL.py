@@ -7,14 +7,15 @@ horizon = horizon_ai.APIClient(base_url="http://127.0.0.1:5000")
 
 # Register a new user
 register_response = horizon.register_user(
-    "testuser_26", "testuser_26@example.com", "testpassword")
+    "testuser_40", "testuser_40@example.com", "testpassword"
+)
 print(register_response)
 # Extract the user_id from the register_response
 user_id = register_response["user_id"]
 print("Register response:", register_response)  # Print the register_response
 
 # Authenticate the user
-auth_response = horizon.authenticate_user("testuser", "testpassword")
+auth_response = horizon.authenticate_user("testuser_40", "testpassword")
 api_key = auth_response["api_key"]
 
 # Get a user's information
@@ -31,14 +32,16 @@ project_info = horizon.get_project(project_id, api_key)
 print(project_info)
 
 updated_project = horizon.update_project(
-    project_id, api_key, description="New description", status="In progress")
+    project_id, api_key, description="New description", status="In progress"
+)
 print(updated_project)
 
 # Test tasks-related methods
 objective = "Generate the first 1-3 lines of a personalized email to a prospect from the perspective of a sales person at a security tech company"
-file_path = "/Users/linatawfik/Documents/horizon/local_horizon_developer_rest_api/demo/data/email_gen_demo.csv"
-task = horizon.create_task("Test Task", project_id,
-                           "text_generation", objective, file_path, api_key)
+file_path = "./data/email_gen_demo.csv"
+task = horizon.create_task(
+    "Test Task", project_id, "text_generation", objective, file_path, api_key
+)
 print(task)
 task_id = task["task_id"]
 
@@ -69,8 +72,13 @@ task_id = task["task_id"]
 
 # # define objective and inputs
 # objective = "Generate the first 1-3 lines of a personalized email to a prospect from the perspective of a sales person at a security tech company"
-inputs = {"name": "Joni Tuominen", "industry": "Sporting Goods", "company": "Rapala VMC", "title": "Vice President, Global Business Development & IT",
-          "notes": "They are an experienced leader in the consumer goods industry with expertise in business management, finance, project management, and strategic planning. They are passionate about consumer good brands with great growth\n-5-year anniversary at Rapala VMC is coming up."}
+inputs = {
+    "name": "Joni Tuominen",
+    "industry": "Sporting Goods",
+    "company": "Rapala VMC",
+    "title": "Vice President, Global Business Development & IT",
+    "notes": "They are an experienced leader in the consumer goods industry with expertise in business management, finance, project management, and strategic planning. They are passionate about consumer good brands with great growth\n-5-year anniversary at Rapala VMC is coming up.",
+}
 
 
 # # Test generate_task
@@ -109,23 +117,23 @@ print(deployed_task)
 # print(deployed_prompt)
 
 
-# # Cleanup section
+# Cleanup section
 # # Delete prompt
-# # delete_prompt = horizon.delete_prompt(prompt_id, api_key)
-# # print(delete_prompt)
+# delete_prompt = horizon.delete_prompt(prompt_id, api_key)
+# print(delete_prompt)
 
-# # Delete task
-# delete_task = horizon.delete_task(task_id, api_key)
-# print(delete_task)
+# Delete task
+delete_task = horizon.delete_task(task_id, api_key)
+print(delete_task)
 
-# # Delete evaluation datasets
-# delete_datasets = horizon.delete_evaluation_dataset(project_id, api_key)
-# print(delete_datasets)
+# Delete evaluation datasets
+delete_datasets = horizon.delete_evaluation_dataset(project_id, api_key)
+print(delete_datasets)
 
-# # Delete project
-# delete_project = horizon.delete_project(project_id, api_key)
-# print(delete_project)
+# Delete project
+delete_project = horizon.delete_project(project_id, api_key)
+print(delete_project)
 
-# # Delete user
-# delete_user = horizon.delete_user(user_id, api_key)
-# print(delete_user)
+# Delete user
+delete_user = horizon.delete_user(api_key)
+print(delete_user)
