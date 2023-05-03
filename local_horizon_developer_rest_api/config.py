@@ -30,8 +30,13 @@ class Config:
     COGNITO_CLIENT_ID = os.environ.get("COGNITO_CLIENT_ID")
     COGNITO_CLIENT_SECRET = os.environ.get("COGNITO_CLIENT_SECRET")
 
-    # Horizon's OpenAI API key
+    # Horizon's LLM provider keys
     HORIZON_OPENAI_API_KEY = os.environ.get("HORIZON_OPENAI_API_KEY")
+    HORIZON_ANTHROPIC_API_KEY = os.environ.get("HORIZON_ANTHROPIC_API_KEY")
+
+    # Horizon AI test details
+    HORIZON_TEST_EMAIL = os.environ.get("HORIZON_TEST_EMAIL")
+    HORIZON_TEST_PASSWORD = os.environ.get("HORIZON_TEST_PASSWORD")
 
     # Connect celery task queue with AWS SQS
     aws_access_key = safequote(os.environ.get("AWS_ACCESS_KEY"))
