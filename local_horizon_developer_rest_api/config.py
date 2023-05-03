@@ -42,7 +42,7 @@ class Config:
         "region": AWS_REGION,
         "polling_interval": 15,
         "predefined_queues": {
-            "my-q": {
+            "TaskGeneration.fifo": {
                 "url": "https://sqs.us-west-2.amazonaws.com/520495742003/TaskGeneration.fifo",
                 "access_key_id": aws_access_key,
                 "secret_access_key": aws_secret_key,
@@ -50,7 +50,7 @@ class Config:
         },
     }
     CELERY = {
-        "BROKER_URL": CELERY_BROKER_URL,
-        "TASK_IGNORE_RESULT": CELERY_TASK_IGNORE_RESULT,
-        "BROKER_TRANSPORT_OPTIONS": CELERY_BROKER_TRANSPORT_OPTIONS,
+        "broker_url": CELERY_BROKER_URL,
+        "task_ignore_result": CELERY_TASK_IGNORE_RESULT,
+        "broker_transport_options": CELERY_BROKER_TRANSPORT_OPTIONS,
     }
