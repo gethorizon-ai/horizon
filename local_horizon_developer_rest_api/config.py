@@ -41,13 +41,13 @@ class Config:
     CELERY_BROKER_TRANSPORT_OPTIONS = {
         "region": AWS_REGION,
         "polling_interval": 15,
-        "predefined_queues": {
-            "TaskGeneration.fifo": {
-                "url": "https://sqs.us-west-2.amazonaws.com/520495742003/TaskGeneration.fifo",
-                "access_key_id": aws_access_key,
-                "secret_access_key": aws_secret_key,
-            }
-        },
+        # "predefined_queues": {
+        #     "TaskGeneration.fifo": {
+        #         "url": "https://sqs.us-west-2.amazonaws.com/520495742003/TaskGeneration.fifo",
+        #         "access_key_id": aws_access_key,
+        #         "secret_access_key": aws_secret_key,
+        #     }
+        # },
     }
     CELERY = {
         "broker_url": CELERY_BROKER_URL,
