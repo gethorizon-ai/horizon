@@ -13,7 +13,7 @@ def test_celery_queue():
     task_type = "Text generation"
     objective = "Generate the first 1-3 lines of a marketing email"
     allowed_models = ["claude-instant-v1"]
-    evaluation_data_file_path = "Data/Data/email_gen_demo.csv"
+    evaluation_data_file_path = "data/data/email_gen_demo.csv"
 
     # Generate Horizon API key
     test_email = Config.HORIZON_TEST_EMAIL
