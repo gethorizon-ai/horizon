@@ -14,6 +14,7 @@ from app.models.llm.factory import LLMFactory
 import os
 import csv
 import json
+import logging
 
 
 ALLOWED_EXTENSIONS = {"csv"}
