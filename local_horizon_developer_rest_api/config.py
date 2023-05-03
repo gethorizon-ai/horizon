@@ -49,3 +49,8 @@ class Config:
             }
         },
     }
+    CELERY = {
+        "BROKER_URL": CELERY_BROKER_URL,
+        "TASK_IGNORE_RESULT": CELERY_TASK_IGNORE_RESULT,
+        "CELERY_BROKER_TRANSPORT_OPTIONS": CELERY_BROKER_TRANSPORT_OPTIONS,
+    }
