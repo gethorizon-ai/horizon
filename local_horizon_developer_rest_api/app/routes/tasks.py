@@ -298,18 +298,18 @@ def process_generate_prompt_model_configuration(
         openai_api_key (str, optional): OpenAI API key to use if wanting to consider OpenAI models. Defaults to None.
         anthropic_api_key (str, optional): Anthropic API key to use if wanting to consider Anthropic models. Defaults to None.
     """
-    # Get task, prompt, and user objects, along with user's email address
-    task = Task.query.get(task_id)
-    prompt = Prompt.query.get(prompt_id)
-    user = (
-        User.query.join(Project, Project.user_id == User.id)
-        .filter(Project.id == task.project_id)
-        .first()
-    )
-    user_email = get_user_email(username=user.id)
-
-    # Attempt prompt-model configuration algorithm
     try:
+        # Get task, prompt, and user objects, along with user's email address
+        task = Task.query.get(task_id)
+        prompt = Prompt.query.get(prompt_id)
+        user = (
+            User.query.join(Project, Project.user_id == User.id)
+            .filter(Project.id == task.project_id)
+            .first()
+        )
+        user_email = get_user_email(username=user.id)
+
+        # Attempt prompt-model configuration algorithm
         task_configuration_dict = generate_prompt.generate_prompt_model_configuration(
             user_objective=user_objective,
             task=task,
