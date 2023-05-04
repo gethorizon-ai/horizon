@@ -55,10 +55,9 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
 <body>
 Hi,<br />
 Success - your Horizon Task has completed optimization and is ready for deployment.<br />
-Simply refer to the "task id" below to deploy (more information <a href="https://docs.gethorizon.ai">here</a>).<br /><br />
+Simply refer to the "task id" below to deploy (more information in our <a href="https://docs.gethorizon.ai">docs</a>).<br /><br />
 
-Summary of Task below (access additional details via CLI):<br /><br />
-
+Summary of Task below (access additional details via CLI):<br />
 <ul>
 <li><b>Name:</b> {name}</li>
 <li><b>Objective:</b> {objective}</li>
@@ -79,8 +78,8 @@ Summary of Task below (access additional details via CLI):<br /><br />
 <li><b>Model:</b> {model_name}</li>
 <li><b>Inference statistics:</b></li>
     <ul> 
-    <li><b>Inference quality:</b> {inference_quality:02d}</li>
-    <li><b>Inference latency:</b> {inference_latency:02d}</li>
+    <li><b>Inference quality:</b> {inference_quality:.2f}</li>
+    <li><b>Inference latency:</b> {inference_latency:.2f}</li>
     </ul>
 </ul><br /><br />
 
