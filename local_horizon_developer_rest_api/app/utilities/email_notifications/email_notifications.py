@@ -45,7 +45,7 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
         "inference_quality"
     ]
     inference_latency = task_details["prompts"][0]["inference_statistics"][
-        "inference)latency"
+        "inference_latency"
     ]
 
     # Configure email parameters
