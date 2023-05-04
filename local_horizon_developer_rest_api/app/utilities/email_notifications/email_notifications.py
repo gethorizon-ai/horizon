@@ -25,15 +25,22 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
         "number_of_inferences_and_evaluations_done"
     ]
     template_type = task_details["prompts"][0]["template_type"]
-    prefix = task_details["prompts"][0]["template_data"]["prefix"]
+    if template_type == "fewshot":
+        prefix = task_details["prompts"][0]["template_data"]["prefix"]
+    elif template_type == "prompt":
+        prefix = task_details["prompts"][0]["template_data"]["template"]
     input_variables = task_details["prompts"][0]["template_data"]["input_variables"]
     if template_type == "fewshot":
         few_shot_example_selector = task_details["prompts"][0][
             "few_shot_example_selector"
         ]
-    else:
+    elif template_type == "prompt":
         few_shot_example_selector = None
-    model = task_details["prompts"][0]["model"]["model"]
+    # Parse model name from model parameters (differs for OpenAI vs Anthropic models)
+    try:
+        model_name = task_details["prompts"][0]["model"]["model_name"]
+    except:
+        model_name = task_details["prompts"][0]["model"]["model"]
     inference_quality = task_details["prompts"][0]["inference_statistics"][
         "inference_quality"
     ]
@@ -69,7 +76,7 @@ Summary of Task below (access additional details via CLI):<br /><br />
     <li>Input variables: {input_variables}</li>
     <li>Few shot example selector: {few_shot_example_selector}</li>
     </ul>
-<li>Model: {model}</li>
+<li>Model: {model_name}</li>
 <li>Inference statistics:</li>
     <ul> 
     <li>Inference quality: {inference_quality}</li>
