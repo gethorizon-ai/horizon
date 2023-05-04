@@ -77,7 +77,7 @@ Summary of Task below (access additional details via CLI):<br />
     <li><b>Few shot example selector:</b> {few_shot_example_selector}</li>
     </ul>
 <li><b>Models considered:</b> {allowed_models}</li>
-<li><b>Model:</b> {model_name}</li>
+<li><b>Model selected:</b> {model_name}</li>
 <li><b>Inference statistics:</b></li>
     <ul> 
     <li><b>Inference quality:</b> {inference_quality:.2f}</li>
