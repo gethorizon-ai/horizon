@@ -36,6 +36,7 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
         ]
     elif template_type == "prompt":
         few_shot_example_selector = None
+    allowed_models = task_details["allowed_models"]
     # Parse model name from model parameters (differs for OpenAI vs Anthropic models)
     try:
         model_name = task_details["prompts"][0]["model"]["model_name"]
@@ -75,6 +76,7 @@ Summary of Task below (access additional details via CLI):<br />
     <li><b>Input variables:</b> {input_variables}</li>
     <li><b>Few shot example selector:</b> {few_shot_example_selector}</li>
     </ul>
+<li><b>Models considered:</b> {allowed_models}</li>
 <li><b>Model:</b> {model_name}</li>
 <li><b>Inference statistics:</b></li>
     <ul> 
