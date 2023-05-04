@@ -83,7 +83,9 @@ Summary of Task below (access additional details via CLI):<br />
     <li><b>Inference quality:</b> {inference_quality:.2f}</li>
     <li><b>Inference latency:</b> {inference_latency:.2f}</li>
     </ul>
-</ul>
+</ul><br /><br />
+
+<b>Horizon AI</b>
 </body>
 </html>"""
 
