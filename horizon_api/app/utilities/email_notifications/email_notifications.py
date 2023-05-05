@@ -3,7 +3,7 @@
 import boto3
 import json
 
-client = boto3.client("sesv2")
+client = boto3.client("sesv2", region_name="us-west-2")
 
 
 def email_task_creation_success(user_email: str, task_details: dict) -> None:
@@ -88,7 +88,6 @@ Summary of Task below (access additional details via CLI):<br />
 <b>Horizon AI</b>
 </body>
 </html>"""
-
 
     # Send email
     response = client.send_email(
