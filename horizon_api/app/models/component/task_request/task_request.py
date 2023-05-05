@@ -7,6 +7,10 @@ from app.utilities.dataset_processing import dataset_processing
 from app.models.llm.factory import LLMFactory
 from app.models.schema import HumanMessage
 from typing import List
+import boto3
+from botocore.exceptions import ClientError
+from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
+import os
 
 
 class TaskRequest:
@@ -14,7 +18,7 @@ class TaskRequest:
 
     def __init__(
         self,
-        dataset_file_path: str,
+        dataset_s3_key: str,
         user_objective: str = None,
         allowed_models: list = None,
         synthetic_data_generation: bool = False,
@@ -57,6 +61,9 @@ class TaskRequest:
                 "User objective can be at most 500 characters to manage token limits."
             )
 
+        # Download the evaluation dataset from S3 and save it locally
+        dataset_file_path = download_file_from_s3_and_save_locally(dataset_s3_key)
+
         # Check evaluation dataset meets requirements
         dataset_processing.check_evaluation_dataset(
             dataset_file_path=dataset_file_path,
@@ -67,6 +74,9 @@ class TaskRequest:
         self.evaluation_dataset = dataset_processing.get_evaluation_dataset(
             dataset_file_path=dataset_file_path
         )
+
+        # Delete the file from the local file system
+        os.remove(dataset_file_path)
 
         # Set input variables
         self.input_variables = dataset_processing.get_input_variables(
