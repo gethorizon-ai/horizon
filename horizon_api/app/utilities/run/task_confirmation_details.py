@@ -279,7 +279,7 @@ def get_task_confirmation_details(task: Task) -> dict:
 
     # Create TaskRequest instance
     task_request = TaskRequest(
-        dataset_file_path=task.evaluation_dataset,
+        dataset_s3_key=task.evaluation_dataset,
         allowed_models=json.loads(task.allowed_models),
     )
 
