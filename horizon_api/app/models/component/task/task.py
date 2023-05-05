@@ -6,13 +6,13 @@ import os
 from app.models.component.prompt import Prompt
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import event
+from app.utilities.S3.s3_util import delete_file_from_s3
 
 
 class TaskStatus(Enum):
     CREATED = "created"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
-
 
 
 class Task(db.Model):
@@ -22,7 +22,7 @@ class Task(db.Model):
     name = db.Column(db.String(64), nullable=False)
     objective = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
-    evaluation_dataset = db.Column(db.String(1000), nullable=True)
+    evaluation_dataset = db.Column(db.Text, nullable=True)
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
     create_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
@@ -86,10 +86,10 @@ class Task(db.Model):
 
 @event.listens_for(Task, "before_delete")
 def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
-    # Delete evaluation dataset, if it exists
+    # Delete evaluation dataset from S3, if it exists
     if target.evaluation_dataset is not None:
         try:
-            os.remove(path=target.evaluation_dataset)
+            delete_file_from_s3(target.evaluation_dataset)
         except:
             pass
         target.evaluation_dataset = None
