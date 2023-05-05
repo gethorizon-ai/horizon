@@ -1,6 +1,8 @@
 import boto3
 import os
 from config import Config
+import tempfile
+import requests
 
 s3 = boto3.client("s3")
 S3_BUCKET = Config.S3_BUCKET
@@ -20,3 +22,15 @@ def download_file_from_s3(key):
 
 def delete_file_from_s3(key):
     s3.delete_object(Bucket=S3_BUCKET, Key=key)
+
+
+def download_file_from_s3_and_save_locally(key):
+    presigned_url = download_file_from_s3(key)
+    response = requests.get(presigned_url)
+
+    # Create a temporary file and write the content of the response
+    with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+        temp_file.write(response.content)
+        temp_file_path = temp_file.name
+
+    return temp_file_path
