@@ -70,7 +70,6 @@ def generate_prompt_model_configuration(
         user_objective=task.objective,
         allowed_models=json.loads(task.allowed_models),
         dataset_file_path=task.evaluation_dataset,
-        num_test_data_input=1,  # TODO: remove test data points constraint
     )
 
     # Check that relevant API keys are provided for each allowed model and are valid
