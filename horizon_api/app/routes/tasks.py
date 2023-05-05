@@ -1,6 +1,5 @@
 from flask import request, send_file, make_response, g
 from flask_restful import Resource, reqparse
-
 from celery import shared_task
 from app.models.component import User, Task, Prompt, Project
 from app import db, api
@@ -10,14 +9,17 @@ from app.utilities.run import generate_prompt
 from app.utilities.run import task_confirmation_details
 from app.utilities.dataset_processing import dataset_processing
 from app.utilities.email_notifications import email_notifications
-
 from app.deploy.prompt import deploy_prompt
 from app.models.llm.factory import LLMFactory
+from app.utilities.S3.s3_util import (
+    upload_file_to_s3,
+    download_file_from_s3,
+    delete_file_from_s3,
+)
 import os
 import csv
 import json
 import logging
-
 
 
 ALLOWED_EXTENSIONS = {"csv"}
@@ -282,7 +284,6 @@ class GetTaskConfirmationDetailsAPI(Resource):
         }, 200
 
 
-
 @shared_task(ignore_result=True)
 def process_generate_prompt_model_configuration(
     user_objective: str,
@@ -333,7 +334,6 @@ def process_generate_prompt_model_configuration(
         )
 
 
-
 class GenerateTaskAPI(Resource):
     @api_key_required
     def post(self):
@@ -376,7 +376,6 @@ class GenerateTaskAPI(Resource):
         if not prompt:
             return {"error": "Active prompt does not exist for the task"}, 404
 
-
         # Call the process_generate_prompt_model_configuration function as a background job with the provided details
         try:
             result_id = process_generate_prompt_model_configuration.delay(
@@ -391,9 +390,7 @@ class GenerateTaskAPI(Resource):
             return {"error": str(e)}, 400
 
         return {
-
             "message": "Task generation initiated. You will be emailed with your task details once the job is completed.",
-
         }, 200
 
 
@@ -461,7 +458,6 @@ class DeployTaskAPI(Resource):
 class UploadEvaluationDatasetsAPI(Resource):
     @api_key_required
     def post(self, task_id):
-        # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
             .filter(Task.id == task_id, Project.user_id == g.user.id)
@@ -473,31 +469,30 @@ class UploadEvaluationDatasetsAPI(Resource):
         if "evaluation_dataset" not in request.files:
             return {"error": f"No file provided\n{request.files}"}, 400
 
-        # Get the current working directory (your project folder)
         project_dir = os.getcwd()
-
         evaluation_dataset = request.files["evaluation_dataset"]
 
         if not allowed_file(evaluation_dataset.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
 
-        # Create the file path to store the CSV file in the data folder
-        file_path = os.path.join(project_dir, "data", evaluation_dataset.filename)
+        temp_file_path = os.path.join(project_dir, "temp", evaluation_dataset.filename)
+        evaluation_dataset.save(temp_file_path)
 
-        # Save the file to the file path
-        evaluation_dataset.save(file_path)
+        s3_key = f"evaluation_datasets/{task_id}/{evaluation_dataset.filename}"
+        upload_file_to_s3(temp_file_path, s3_key)
 
-        # Check validity of evaluation dataset
+        os.remove(temp_file_path)
+
         try:
             dataset_processing.check_evaluation_dataset_and_data_length(
-                dataset_file_path=file_path
+                dataset_file_path=temp_file_path
             )
         except Exception as e:
-            # If invalid dataset, remove file from storage and return error
-            os.remove(path=file_path)
+            delete_file_from_s3(s3_key)
             return {"error": str(e)}, 400
 
-        task.evaluation_dataset = file_path
+        task.evaluation_dataset = s3_key
+
         try:
             db.session.commit()
         except Exception as e:
@@ -513,7 +508,6 @@ class UploadEvaluationDatasetsAPI(Resource):
 class ViewEvaluationDatasetsAPI(Resource):
     @api_key_required
     def get(self, task_id):
-        # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
             .filter(Task.id == task_id, Project.user_id == g.user.id)
@@ -527,48 +521,18 @@ class ViewEvaluationDatasetsAPI(Resource):
                 "error": "No evaluation dataset file associated with this task"
             }, 404
 
-        with open(
-            task.evaluation_dataset, "r", encoding="utf-8"
-        ) as evaluation_dataset_file:
-            reader = csv.DictReader(evaluation_dataset_file)
-            evaluation_dataset = [row for row in reader]
+        s3_key = task.evaluation_dataset
+        presigned_url = download_file_from_s3(s3_key)
 
         return {
             "message": "Evaluation dataset retrieved successfully",
-            "evaluation_dataset": evaluation_dataset,
+            "evaluation_dataset_url": presigned_url,
         }, 200
-
-
-class EvaluationDatasetsAPI(Resource):
-    @api_key_required
-    def get(self, task_id):
-        # Fetch task and check it is associated with user
-        task = (
-            Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
-            .first()
-        )
-        if not task:
-            return {"error": "Task not found or not associated with user"}, 404
-
-        if not task.evaluation_dataset:
-            return {"error": "No evaluation datasets available"}, 404
-
-        response = make_response(
-            send_file(
-                task.evaluation_dataset,
-                attachment_filename="evaluation_dataset.csv",
-                as_attachment=True,
-            )
-        )
-        response.headers["Content-Type"] = "text/csv"
-        return response
 
 
 class DeleteEvaluationDatasetsAPI(Resource):
     @api_key_required
     def delete(self, task_id):
-        # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
             .filter(Task.id == task_id, Project.user_id == g.user.id)
@@ -582,8 +546,11 @@ class DeleteEvaluationDatasetsAPI(Resource):
                 "error": "No evaluation dataset file associated with this task"
             }, 404
 
-        os.remove(path=task.evaluation_dataset)
+        s3_key = task.evaluation_dataset
+        delete_file_from_s3(s3_key)
+
         task.evaluation_dataset = None
+
         try:
             db.session.commit()
         except Exception as e:
@@ -614,9 +581,6 @@ def register_routes(api):
     )
     api.add_resource(
         ViewEvaluationDatasetsAPI, "/api/tasks/<int:task_id>/view_evaluation_dataset"
-    )
-    api.add_resource(
-        EvaluationDatasetsAPI, "/api/tasks/<int:task_id>/evaluation_dataset"
     )
     api.add_resource(
         DeleteEvaluationDatasetsAPI,
