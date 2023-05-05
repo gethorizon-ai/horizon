@@ -455,9 +455,14 @@ class DeployTaskAPI(Resource):
             return {"error": f"Failed with exception: {str(e)}"}, 400
 
 
+import logging
+
+
 class UploadEvaluationDatasetsAPI(Resource):
     @api_key_required
     def post(self, task_id):
+        logging.info("UploadEvaluationDatasetsAPI: Start processing the request")
+
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
             .filter(Task.id == task_id, Project.user_id == g.user.id)
@@ -488,6 +493,9 @@ class UploadEvaluationDatasetsAPI(Resource):
                 dataset_file_path=temp_file_path
             )
         except Exception as e:
+            logging.error(
+                f"UploadEvaluationDatasetsAPI: Error in check_evaluation_dataset_and_data_length - {str(e)}"
+            )
             delete_file_from_s3(s3_key)
             return {"error": str(e)}, 400
 
@@ -496,9 +504,13 @@ class UploadEvaluationDatasetsAPI(Resource):
         try:
             db.session.commit()
         except Exception as e:
+            logging.error(
+                f"UploadEvaluationDatasetsAPI: Error during commit - {str(e)}"
+            )
             db.session.rollback()
             return {"error": str(e)}, 400
 
+        logging.info("UploadEvaluationDatasetsAPI: Finished processing the request")
         return {
             "message": "Evaluation datasets uploaded successfully",
             "task": task.to_dict_filtered(),
