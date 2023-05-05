@@ -455,13 +455,6 @@ class DeployTaskAPI(Resource):
             return {"error": f"Failed with exception: {str(e)}"}, 400
 
 
-import logging
-
-
-import logging
-import os
-
-
 class UploadEvaluationDatasetsAPI(Resource):
     @api_key_required
     def post(self, task_id):
