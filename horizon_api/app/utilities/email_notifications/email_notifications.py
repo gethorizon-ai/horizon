@@ -13,6 +13,7 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
         user_email (str): user email address.
         task_details (dict): data to share with the user regarding their new task in JSON format.
     """
+
     # Parse task details
     name = task_details["name"]
     objective = task_details["objective"]
@@ -88,6 +89,7 @@ Summary of Task below (access additional details via CLI):<br />
 </body>
 </html>"""
 
+
     # Send email
     response = client.send_email(
         FromEmailAddress="noreply@gethorizon.ai",
@@ -105,6 +107,7 @@ Summary of Task below (access additional details via CLI):<br />
                         "Data": html_body,
                         "Charset": "UTF-8",
                     },
+
                 },
             },
         },
@@ -121,6 +124,7 @@ def email_task_creation_error(user_email: str, error_message: dict) -> None:
     # Configure email parameters
     subject = "Error with your Horizon task request"
     text_body = f"""Hello! Unfortunately, your Horizon task request had the following error. Please email us at team@gethorizon.ai if you need help troubleshooting.
+
 
 {error_message}"""
 

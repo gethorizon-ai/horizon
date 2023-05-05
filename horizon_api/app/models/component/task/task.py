@@ -14,6 +14,7 @@ class TaskStatus(Enum):
     COMPLETED = "completed"
 
 
+
 class Task(db.Model):
     """Task model."""
 

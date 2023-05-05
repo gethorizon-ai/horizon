@@ -12,6 +12,7 @@ import openai
 from typing import Any
 
 
+
 class OpenAI(BaseLLM, OpenAIOriginal):
     def get_model_name(self) -> str:
         return self.model_name
@@ -27,6 +28,7 @@ class OpenAI(BaseLLM, OpenAIOriginal):
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
+
 
     # Add additional retry functionality for OpenAI inference calls
     @retry(
@@ -78,3 +80,4 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
     )
     def generate(self, *args: Any, **kwargs: Any) -> Any:
         return super(ChatOpenAIOriginal, self).generate(*args, **kwargs)
+

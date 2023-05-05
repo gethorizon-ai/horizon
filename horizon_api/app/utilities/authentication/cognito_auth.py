@@ -36,6 +36,7 @@ def calculate_secret_hash(client_secret, email, client_id):
     return base64.b64encode(dig).decode()
 
 
+
 def get_user_email(username: str) -> str:
     """Gets user's email address from Cognito user pool.
 
@@ -54,6 +55,7 @@ def get_user_email(username: str) -> str:
             break
 
     return email
+
 
 
 def cognito_auth_required(f: Callable) -> Callable:

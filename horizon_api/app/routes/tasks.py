@@ -1,5 +1,6 @@
 from flask import request, send_file, make_response, g
 from flask_restful import Resource, reqparse
+
 from celery import shared_task
 from app.models.component import User, Task, Prompt, Project
 from app import db, api
@@ -9,12 +10,14 @@ from app.utilities.run import generate_prompt
 from app.utilities.run import task_confirmation_details
 from app.utilities.dataset_processing import dataset_processing
 from app.utilities.email_notifications import email_notifications
+
 from app.deploy.prompt import deploy_prompt
 from app.models.llm.factory import LLMFactory
 import os
 import csv
 import json
 import logging
+
 
 
 ALLOWED_EXTENSIONS = {"csv"}
@@ -279,6 +282,7 @@ class GetTaskConfirmationDetailsAPI(Resource):
         }, 200
 
 
+
 @shared_task(ignore_result=True)
 def process_generate_prompt_model_configuration(
     user_objective: str,
@@ -329,6 +333,7 @@ def process_generate_prompt_model_configuration(
         )
 
 
+
 class GenerateTaskAPI(Resource):
     @api_key_required
     def post(self):
@@ -371,6 +376,7 @@ class GenerateTaskAPI(Resource):
         if not prompt:
             return {"error": "Active prompt does not exist for the task"}, 404
 
+
         # Call the process_generate_prompt_model_configuration function as a background job with the provided details
         try:
             result_id = process_generate_prompt_model_configuration.delay(
@@ -380,11 +386,14 @@ class GenerateTaskAPI(Resource):
                 openai_api_key=args["openai_api_key"],
                 anthropic_api_key=args["anthropic_api_key"],
             )
+
         except Exception as e:
             return {"error": str(e)}, 400
 
         return {
+
             "message": "Task generation initiated. You will be emailed with your task details once the job is completed.",
+
         }, 200
 
 

@@ -30,7 +30,6 @@ def create_app():
 
     api = Api()
     from app.register_endpoints import register_all_routes
-
     register_all_routes(api)
     api.init_app(app)
 
@@ -48,3 +47,4 @@ def celery_init_app(app: Flask) -> Celery:
     celery_app.set_default()
     app.extensions["celery"] = celery_app
     return celery_app
+
