@@ -2,6 +2,14 @@ from langchain.llms import OpenAI as OpenAIOriginal
 from langchain.chat_models import ChatOpenAI as ChatOpenAIOriginal
 from .base import BaseLLM
 import tiktoken
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
+import openai
+from typing import Any
 
 
 class OpenAI(BaseLLM, OpenAIOriginal):
@@ -20,6 +28,23 @@ class OpenAI(BaseLLM, OpenAIOriginal):
             "max_tokens": self.max_tokens,
         }
 
+    # Add additional retry functionality for OpenAI inference calls
+    @retry(
+        reraise=True,
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        stop=stop_after_attempt(6),
+        # Retry only if error is not invalid API key (status code 401) or unprocessable entity (status code 422)
+        retry=(
+            retry_if_exception_type(openai.error.Timeout)
+            | retry_if_exception_type(openai.error.APIError)
+            | retry_if_exception_type(openai.error.APIConnectionError)
+            | retry_if_exception_type(openai.error.RateLimitError)
+            | retry_if_exception_type(openai.error.ServiceUnavailableError)
+        ),
+    )
+    def generate(self, *args: Any, **kwargs: Any) -> Any:
+        return super(OpenAIOriginal, self).generate(*args, **kwargs)
+
 
 class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
     def get_model_name(self) -> str:
@@ -36,3 +61,20 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
+
+    # Add additional retry functionality for OpenAI inference calls
+    @retry(
+        reraise=True,
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        stop=stop_after_attempt(6),
+        # Retry only if error is not invalid API key (status code 401) or unprocessable entity (status code 422)
+        retry=(
+            retry_if_exception_type(openai.error.Timeout)
+            | retry_if_exception_type(openai.error.APIError)
+            | retry_if_exception_type(openai.error.APIConnectionError)
+            | retry_if_exception_type(openai.error.RateLimitError)
+            | retry_if_exception_type(openai.error.ServiceUnavailableError)
+        ),
+    )
+    def generate(self, *args: Any, **kwargs: Any) -> Any:
+        return super(ChatOpenAIOriginal, self).generate(*args, **kwargs)
