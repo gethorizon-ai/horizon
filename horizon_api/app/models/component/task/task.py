@@ -6,14 +6,13 @@ import os
 from app.models.component.prompt import Prompt
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import event
-from sqlalchemy.orm import Session
-
 
 
 class TaskStatus(Enum):
-    CREATED = 'created'
-    IN_PROGRESS = 'in_progress'
-    COMPLETED = 'completed'
+    CREATED = "created"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
 
 
 class Task(db.Model):

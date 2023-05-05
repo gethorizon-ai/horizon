@@ -1,19 +1,22 @@
 from flask import request, send_file, make_response, g
 from flask_restful import Resource, reqparse
-from app.models.component import Task, Prompt, Project
+
+from celery import shared_task
+from app.models.component import User, Task, Prompt, Project
 from app import db, api
 from app.utilities.authentication.api_key_auth import api_key_required
+from app.utilities.authentication.cognito_auth import get_user_email
 from app.utilities.run import generate_prompt
 from app.utilities.run import task_confirmation_details
 from app.utilities.dataset_processing import dataset_processing
+from app.utilities.email_notifications import email_notifications
+
 from app.deploy.prompt import deploy_prompt
 from app.models.llm.factory import LLMFactory
 import os
 import csv
-from concurrent.futures import ThreadPoolExecutor
-from flask_restful import Resource, reqparse
 import json
-from flask import current_app
+import logging
 
 
 
@@ -279,23 +282,56 @@ class GetTaskConfirmationDetailsAPI(Resource):
         }, 200
 
 
-user_executors = {}
 
-
+@shared_task(ignore_result=True)
 def process_generate_prompt_model_configuration(
     user_objective: str,
-    task: Task,
-    prompt: Prompt,
-    openai_api_key: str,
-    anthropic_api_key: str,
-):
-    return generate_prompt.generate_prompt_model_configuration(
-        user_objective=user_objective,
-        task=task,
-        prompt=prompt,
-        openai_api_key=openai_api_key,
-        anthropic_api_key=anthropic_api_key,
-    )
+    task_id: int,
+    prompt_id: int,
+    openai_api_key: str = None,
+    anthropic_api_key: str = None,
+) -> None:
+    """Runs prompt-model configuration algorithm as background job.
+
+    Emails results of algorithm to user upon completion.
+
+    Args:
+        user_objective (str): objectuse of the use case.
+        task_id (int): id corresponding to task record.
+        prompt_id (int): id corresponding to prompt record.
+        openai_api_key (str, optional): OpenAI API key to use if wanting to consider OpenAI models. Defaults to None.
+        anthropic_api_key (str, optional): Anthropic API key to use if wanting to consider Anthropic models. Defaults to None.
+    """
+    try:
+        # Get task, prompt, and user objects, along with user's email address
+        task = Task.query.get(task_id)
+        prompt = Prompt.query.get(prompt_id)
+        user = (
+            User.query.join(Project, Project.user_id == User.id)
+            .filter(Project.id == task.project_id)
+            .first()
+        )
+        user_email = get_user_email(username=user.id)
+
+        # Attempt prompt-model configuration algorithm
+        task_configuration_dict = generate_prompt.generate_prompt_model_configuration(
+            user_objective=user_objective,
+            task=task,
+            prompt=prompt,
+            openai_api_key=openai_api_key,
+            anthropic_api_key=anthropic_api_key,
+        )
+
+        # If successful, email job results to user
+        email_notifications.email_task_creation_success(
+            user_email=user_email, task_details=task_configuration_dict
+        )
+    except Exception as e:
+        # If failed, email error details to user
+        email_notifications.email_task_creation_error(
+            user_email=user_email, error_message=str(e)
+        )
+
 
 
 class GenerateTaskAPI(Resource):
@@ -340,22 +376,24 @@ class GenerateTaskAPI(Resource):
         if not prompt:
             return {"error": "Active prompt does not exist for the task"}, 404
 
-        # Call the process_generate_prompt_model_configuration function with the provided objective and prompt_id
+
+        # Call the process_generate_prompt_model_configuration function as a background job with the provided details
         try:
-            generated_prompt = process_generate_prompt_model_configuration(
-                args["objective"],
-                task,
-                prompt,
-                args["openai_api_key"],
-                args["anthropic_api_key"],
+            result_id = process_generate_prompt_model_configuration.delay(
+                user_objective=args["objective"],
+                task_id=task.id,
+                prompt_id=prompt.id,
+                openai_api_key=args["openai_api_key"],
+                anthropic_api_key=args["anthropic_api_key"],
             )
-            generated_prompt_dict = generated_prompt
+
         except Exception as e:
             return {"error": str(e)}, 400
 
         return {
-            "message": "Task generation completed",
-            "generated_prompt": generated_prompt_dict,
+
+            "message": "Task generation initiated. You will be emailed with your task details once the job is completed.",
+
         }, 200
 
 

@@ -36,6 +36,28 @@ def calculate_secret_hash(client_secret, email, client_id):
     return base64.b64encode(dig).decode()
 
 
+
+def get_user_email(username: str) -> str:
+    """Gets user's email address from Cognito user pool.
+
+    Args:
+        username (str): username in Cognito user pool.
+
+    Returns:
+        str: user's email address.
+    """
+    response = cognito.admin_get_user(UserPoolId=cognito_pool_id, Username=username)
+
+    email = None
+    for attr in response["UserAttributes"]:
+        if attr["Name"] == "email":
+            email = attr["Value"]
+            break
+
+    return email
+
+
+
 def cognito_auth_required(f: Callable) -> Callable:
     """Provides function wrapper to authenticate user credentials through Cognito.
 
