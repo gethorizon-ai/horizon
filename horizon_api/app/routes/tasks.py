@@ -458,6 +458,10 @@ class DeployTaskAPI(Resource):
 import logging
 
 
+import logging
+import os
+
+
 class UploadEvaluationDatasetsAPI(Resource):
     @api_key_required
     def post(self, task_id):
@@ -480,13 +484,10 @@ class UploadEvaluationDatasetsAPI(Resource):
         if not allowed_file(evaluation_dataset.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
 
-        temp_file_path = os.path.join(project_dir, "temp", evaluation_dataset.filename)
+        temp_dir = os.path.join(project_dir, "temp")
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_file_path = os.path.join(temp_dir, evaluation_dataset.filename)
         evaluation_dataset.save(temp_file_path)
-
-        s3_key = f"evaluation_datasets/{task_id}/{evaluation_dataset.filename}"
-        upload_file_to_s3(temp_file_path, s3_key)
-
-        os.remove(temp_file_path)
 
         try:
             dataset_processing.check_evaluation_dataset_and_data_length(
@@ -499,6 +500,9 @@ class UploadEvaluationDatasetsAPI(Resource):
             delete_file_from_s3(s3_key)
             return {"error": str(e)}, 400
 
+        s3_key = f"evaluation_datasets/{task_id}/{evaluation_dataset.filename}"
+        upload_file_to_s3(temp_file_path, s3_key)
+        os.remove(temp_file_path)
         task.evaluation_dataset = s3_key
 
         try:
