@@ -494,8 +494,10 @@ class UploadEvaluationDatasetsAPI(Resource):
             return {"error": str(e)}, 400
 
         s3_key = f"evaluation_datasets/{task_id}/{evaluation_dataset.filename}"
-        upload_file_to_s3(temp_file_path, s3_key)
+        with open(temp_file_path, "rb") as temp_file:
+            upload_file_to_s3(temp_file, s3_key)
         os.remove(temp_file_path)
+
         task.evaluation_dataset = s3_key
 
         try:
