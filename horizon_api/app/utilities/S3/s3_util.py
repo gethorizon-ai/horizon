@@ -1,0 +1,22 @@
+import boto3
+import os
+from config import Config
+
+s3 = boto3.client("s3")
+S3_BUCKET = Config.S3_BUCKET
+
+
+def upload_file_to_s3(file, key):
+    s3.upload_fileobj(file, S3_BUCKET, key)
+
+
+def download_file_from_s3(key):
+    return s3.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": S3_BUCKET, "Key": key},
+        ExpiresIn=3600,
+    )
+
+
+def delete_file_from_s3(key):
+    s3.delete_object(Bucket=S3_BUCKET, Key=key)
