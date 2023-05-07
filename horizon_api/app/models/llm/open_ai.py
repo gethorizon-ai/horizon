@@ -45,7 +45,7 @@ class OpenAI(BaseLLM, OpenAIOriginal):
     def generate(self, *args: Any, **kwargs: Any) -> Any:
         # TODO: Remove
         print(f"Model API key just before calling LLM: {self.openai_api_key[-10:]}")
-        print(f"OpenAI key in openai package: {openai.api_key}")
+        print(f"OpenAI key in openai package: {openai.api_key[-10:]}")
         print("-----")
         return super(OpenAIOriginal, self).generate(*args, **kwargs)
 
@@ -83,6 +83,6 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
     def generate(self, *args: Any, **kwargs: Any) -> Any:
         # TODO: Remove
         print(f"Model API key just before calling LLM: {self.openai_api_key[-10:]}")
-        print(f"OpenAI key in openai package: {openai.api_key}")
+        print(f"OpenAI key in openai package: {openai.api_key[-10:]}")
         print("-----")
         return super(ChatOpenAIOriginal, self).generate(*args, **kwargs)
