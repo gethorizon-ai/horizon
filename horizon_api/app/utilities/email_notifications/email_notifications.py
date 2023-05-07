@@ -32,6 +32,12 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
         prefix = html.escape(
             str(task_details["prompts"][0]["template_data"]["template"])
         )
+    # TODO: Remove
+    prefix = html.escape(
+        str(
+            """Please compose a creative opener for a marketing email to <var_name> who is in the <var_industry> sector, employed by <var_company> as <var_title>. Incorporate their name, industry, company, and title together with the following details: <var_notes>.\n\n==\nEXAMPLES:"""
+        )
+    )
     input_variables = html.escape(
         str(task_details["prompts"][0]["template_data"]["input_variables"])
     )
