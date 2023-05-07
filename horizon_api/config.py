@@ -39,7 +39,7 @@ class Config:
     # }
     CELERY_BROKER_TRANSPORT_OPTIONS = {
         "predefined_queues": {
-            "celery_dev": {
+            "celery": {
                 "url": "https://sqs.us-west-2.amazonaws.com/520495742003/celery_dev",
                 "access_key_id": aws_access_key,
                 "secret_access_key": aws_secret_key,
