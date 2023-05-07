@@ -66,14 +66,13 @@ def run_inference(
 
         # Format prompt and generate inference
         print(
-            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']} | generation_id: {row['generation_id']}"
+            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']}"
         )
-        # print(row["prompt_object"])
+        print(row["generation_id"])
+        print(row["prompt_object"])
 
         formatted_prompt = row["prompt_object"].format(**input_values)
         model_object = row["model_object"]
-        print(f"Model API key: {model_object.openai_api_key[-10:]}")
-        print("-----")
         # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
         if type(model_object) == ChatOpenAI or type(model_object) == ChatAnthropic:
             formatted_prompt = [HumanMessage(content=formatted_prompt)]
