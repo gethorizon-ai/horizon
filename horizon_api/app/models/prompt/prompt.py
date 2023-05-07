@@ -1,5 +1,4 @@
 from .base import BasePromptTemplate
-from app.utilities.dataset_processing import dataset_processing
 from langchain.prompts.prompt import PromptTemplate as PromptTemplateOriginal
 
 

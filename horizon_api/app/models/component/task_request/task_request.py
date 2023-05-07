@@ -3,12 +3,14 @@
 Class organizes information around Task request, including objective, input variables, and evaluation dataset.
 """
 
-from app.utilities.dataset_processing import dataset_processing
+from app.utilities.dataset_processing import data_check
+from app.utilities.dataset_processing import input_variables
+from app.utilities.dataset_processing import data_length
+from app.utilities.dataset_processing import llm_applicability
+from app.utilities.dataset_processing import segment_data
 from app.models.llm.factory import LLMFactory
 from app.models.schema import HumanMessage
 from typing import List
-import boto3
-from botocore.exceptions import ClientError
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 import os
 
@@ -65,13 +67,13 @@ class TaskRequest:
         dataset_file_path = download_file_from_s3_and_save_locally(dataset_s3_key)
 
         # Check evaluation dataset meets requirements
-        dataset_processing.check_evaluation_dataset(
+        data_check.check_evaluation_dataset(
             dataset_file_path=dataset_file_path,
             synthetic_data_generation=synthetic_data_generation,
         )
 
         # Set evaluation dataset
-        self.evaluation_dataset = dataset_processing.get_evaluation_dataset(
+        self.evaluation_dataset = data_check.get_evaluation_dataset(
             dataset_file_path=dataset_file_path
         )
 
@@ -79,12 +81,12 @@ class TaskRequest:
         os.remove(dataset_file_path)
 
         # Set input variables
-        self.input_variables = dataset_processing.get_input_variables(
+        self.input_variables = input_variables.get_input_variables(
             evaluation_dataset=self.evaluation_dataset
         )
 
         # Set evaluation data length
-        evaluation_data_length = dataset_processing.get_evaluation_data_length(
+        evaluation_data_length = data_length.get_evaluation_data_length(
             evaluation_dataset=self.evaluation_dataset
         )
         self.max_input_tokens = evaluation_data_length["max_input_tokens"]
@@ -95,7 +97,7 @@ class TaskRequest:
         ]
 
         # Set applicable llms
-        self.applicable_llms = dataset_processing.get_applicable_llms(
+        self.applicable_llms = llm_applicability.get_applicable_llms(
             max_input_tokens=self.max_input_tokens,
             max_ground_truth_tokens=self.max_ground_truth_tokens,
             max_input_characters=self.max_input_characters,
@@ -118,7 +120,7 @@ class TaskRequest:
             )
 
         # Segment evaluation dataset into input and ground_truth datasets
-        evaluation_dataset_segments = dataset_processing.segment_evaluation_dataset(
+        evaluation_dataset_segments = segment_data.segment_evaluation_dataset(
             evaluation_dataset=self.evaluation_dataset,
             num_test_data_input=self.num_test_data,
         )
@@ -141,7 +143,7 @@ class TaskRequest:
         Returns:
             List[str]: list of input variable names.
         """
-        return dataset_processing.get_normalized_input_variables(
+        return input_variables.get_normalized_input_variables(
             evaluation_dataset=self.evaluation_dataset
         )
 
