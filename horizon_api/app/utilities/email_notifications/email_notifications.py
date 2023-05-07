@@ -14,7 +14,7 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
         task_details (dict): data to share with the user regarding their new task.
     """
 
-    # Parse task details
+    # Parse task details. Escape certain characters (e.g., angle brackets) for use with html
     name = html.escape(str(task_details["name"]))
     objective = html.escape(str(task_details["objective"]))
     task_id = html.escape(str(task_details["id"]))
@@ -27,17 +27,13 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
     ]
     template_type = html.escape(str(task_details["prompts"][0]["template_type"]))
     if template_type == "fewshot":
-        prefix = html.escape(str(task_details["prompts"][0]["template_data"]["prefix"]))
+        prefix = html.escape(
+            str(task_details["prompts"][0]["template_data"]["prefix"])
+        ).replace("\n", "<br>")
     elif template_type == "prompt":
         prefix = html.escape(
             str(task_details["prompts"][0]["template_data"]["template"])
-        )
-    # TODO: Remove
-    prefix = html.escape(
-        str(
-            """Please compose a creative opener for a marketing email to <var_name> who is in the <var_industry> sector, employed by <var_company> as <var_title>. Incorporate their name, industry, company, and title together with the following details: <var_notes>.\n\n==\nEXAMPLES:"""
-        )
-    ).replace("\n", "<br>")
+        ).replace("\n", "<br>")
     input_variables = html.escape(
         str(task_details["prompts"][0]["template_data"]["input_variables"])
     )

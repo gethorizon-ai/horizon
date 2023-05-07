@@ -82,6 +82,7 @@ def adaptive_filtering(
     shortlisted_prompt_model_candidates = prompt_model_candidates.copy()
     aggregated_inference_evaluation_results = InferenceEvaluationResults()
     for i in range(num_iterations):
+        print(f"Beginning iteration {i}")
         inference_evaluation_results = inference.run_inference(
             task_request=task_request,
             prompt_model_candidates=shortlisted_prompt_model_candidates,
