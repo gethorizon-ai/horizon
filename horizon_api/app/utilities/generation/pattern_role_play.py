@@ -43,6 +43,9 @@ def prompt_generation_pattern_role_play(
         num_prompts=num_prompts, openai_api_key=openai_api_key
     )
 
+    # TODO: Remove
+    print(f"API key used for prompt gen: {metaprompt_model.openai_api_key[-10:]}")
+
     # Generate prompt candidates
     responses = metaprompt_model.generate([formatted_metaprompt]).generations[0]
     prompt_suffix = base.generate_prompt_suffix(
