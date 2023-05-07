@@ -99,6 +99,9 @@ Summary of Task below (access additional details via CLI):<br />
 </body>
 </html>"""
 
+    # Convert newlines to html line breaks
+    html_body = html_body.replace("\n", "<br>")
+
     print(html_body)
 
     # Send email
