@@ -37,7 +37,7 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
         str(
             """Please compose a creative opener for a marketing email to <var_name> who is in the <var_industry> sector, employed by <var_company> as <var_title>. Incorporate their name, industry, company, and title together with the following details: <var_notes>.\n\n==\nEXAMPLES:"""
         )
-    )
+    ).replace("\n", "<br>")
     input_variables = html.escape(
         str(task_details["prompts"][0]["template_data"]["input_variables"])
     )
@@ -65,11 +65,11 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
     html_body = f"""
 <html>
 <body>
-Hi,
-Success - your Horizon Task has completed optimization and is ready for deployment.
-Simply refer to the "task id" below to deploy (more information in our <a href="https://docs.gethorizon.ai">docs</a>).
+Hi,<br />
+Success - your Horizon Task has completed optimization and is ready for deployment.<br />
+Simply refer to the "task id" below to deploy (more information in our <a href="https://docs.gethorizon.ai">docs</a>).<br /><br />
 
-Summary of Task below (access additional details via CLI):
+Summary of Task below (access additional details via CLI):<br />
 <ul>
 <li><b>Name:</b> {name}</li>
 <li><b>Objective:</b> {objective}</li>
@@ -94,13 +94,10 @@ Summary of Task below (access additional details via CLI):
     <li><b>Inference quality:</b> {inference_quality:.2f}</li>
     <li><b>Inference latency:</b> {inference_latency:.2f}</li>
     </ul>
-</ul>
+</ul><br />
 <b>Horizon AI</b>
 </body>
 </html>"""
-
-    # Convert newlines to html line breaks
-    html_body = html_body.replace("\n", "<br>")
 
     print(html_body)
 
