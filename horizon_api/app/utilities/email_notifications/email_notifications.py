@@ -95,8 +95,6 @@ Summary of Task below (access additional details via CLI):<br />
 </body>
 </html>"""
 
-    print(html_body)
-
     # Send email
     response = client.send_email(
         FromEmailAddress="noreply@gethorizon.ai",
