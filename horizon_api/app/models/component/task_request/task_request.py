@@ -4,7 +4,7 @@ Class organizes information around Task request, including objective, input vari
 """
 
 from app.utilities.dataset_processing import data_check
-from app.utilities.dataset_processing import input_variables
+from app.utilities.dataset_processing import input_variable_naming
 from app.utilities.dataset_processing import data_length
 from app.utilities.dataset_processing import llm_applicability
 from app.utilities.dataset_processing import segment_data
@@ -81,7 +81,7 @@ class TaskRequest:
         os.remove(dataset_file_path)
 
         # Set input variables
-        self.input_variables = input_variables.get_input_variables(
+        self.input_variables = input_variable_naming.get_input_variables(
             evaluation_dataset=self.evaluation_dataset
         )
 
@@ -143,7 +143,7 @@ class TaskRequest:
         Returns:
             List[str]: list of input variable names.
         """
-        return input_variables.get_normalized_input_variables(
+        return input_variable_naming.get_normalized_input_variables(
             evaluation_dataset=self.evaluation_dataset
         )
 

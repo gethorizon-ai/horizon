@@ -1,6 +1,6 @@
 import json
 from app import db
-from app.utilities.dataset_processing import input_variables
+from app.utilities.dataset_processing import input_variable_naming
 from typing import TYPE_CHECKING
 import json
 
@@ -93,7 +93,7 @@ class Prompt(db.Model):
             # Normalize input variable names
             filtered_dict["template_data"][
                 "input_variables"
-            ] = input_variables.normalize_input_variable_list(
+            ] = input_variable_naming.normalize_input_variable_list(
                 filtered_dict["template_data"]["input_variables"]
             )
 
