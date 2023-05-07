@@ -64,15 +64,6 @@ def segment_evaluation_dataset(
     # Determine size of test dataset. Allocate at most ideal_sample_size or what's left after allocating num_train_data
     num_test_data = min(ideal_sample_size, len(evaluation_dataset) - num_train_data)
 
-    print(f"num_train_data: {num_train_data}")
-    print(f"num_test_data: {num_test_data}")
-
-    # # Assume 80/20 split with at least 5 and at most 10 training data points
-    # num_train_data = min(10, max(5, int(len(evaluation_dataset) * 0.2)))
-
-    # # Assume at most 15 test data points
-    # num_test_data = min(15, len(evaluation_dataset) - num_train_data)
-
     # Use num_test_data input value if provided
     if num_test_data_input is not None:
         num_test_data = min(num_test_data_input, num_test_data)
