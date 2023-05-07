@@ -72,7 +72,7 @@ def run_inference(
 
         formatted_prompt = row["prompt_object"].format(**input_values)
         model_object = row["model_object"]
-        print("Model API key: {model_object.openai_api_key[-10:]}")
+        print(f"Model API key: {model_object.openai_api_key[-10:]}")
         # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
         if type(model_object) == ChatOpenAI or type(model_object) == ChatAnthropic:
             formatted_prompt = [HumanMessage(content=formatted_prompt)]
