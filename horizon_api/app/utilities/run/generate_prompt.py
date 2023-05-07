@@ -70,7 +70,6 @@ def generate_prompt_model_configuration(
         dataset_s3_key=task.evaluation_dataset,
         user_objective=task.objective,
         allowed_models=json.loads(task.allowed_models),
-        num_test_data_input=3,  # TODO: remove
     )
 
     # Check that relevant API keys are provided for each allowed model and are valid

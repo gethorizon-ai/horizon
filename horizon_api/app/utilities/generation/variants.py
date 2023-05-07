@@ -42,12 +42,6 @@ def prompt_generation_variants(
         openai_api_key=openai_api_key
     )
 
-    # TODO: Remove
-    print(
-        f"API key used for prompt gen: {metaprompt_model_generation.openai_api_key[-10:]}"
-    )
-    print(f"API key used for prompt gen: {metaprompt_model_check.openai_api_key[-10:]}")
-
     prompt_suffix = base.generate_prompt_suffix(
         input_variables=task_request.input_variables
     )

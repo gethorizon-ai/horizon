@@ -29,9 +29,6 @@ def get_semantic_cosine_similarity_openAI(
         on="evaluation_data_id",
     )
 
-    # TODO: Remove
-    print(f"API key used for evaluation: {openai_api_key[-10:]}")
-
     # Compute cosine similarity over every combination of output and ground truth
     for index, row in reference_table.iterrows():
         start_time = time.time()
