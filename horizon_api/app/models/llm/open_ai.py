@@ -12,7 +12,6 @@ import openai
 from typing import Any
 
 
-
 class OpenAI(BaseLLM, OpenAIOriginal):
     def get_model_name(self) -> str:
         return self.model_name
@@ -29,7 +28,6 @@ class OpenAI(BaseLLM, OpenAIOriginal):
             "max_tokens": self.max_tokens,
         }
 
-
     # Add additional retry functionality for OpenAI inference calls
     @retry(
         reraise=True,
@@ -45,6 +43,8 @@ class OpenAI(BaseLLM, OpenAIOriginal):
         ),
     )
     def generate(self, *args: Any, **kwargs: Any) -> Any:
+        # Reset OpenAI API key in case it was changed by other processes (e.g., OpenAI embeddings)
+        openai.api_key = self.openai_api_key
         return super(OpenAIOriginal, self).generate(*args, **kwargs)
 
 
@@ -79,5 +79,6 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
         ),
     )
     def generate(self, *args: Any, **kwargs: Any) -> Any:
+        # Reset OpenAI API key in case it was changed by other processes (e.g., OpenAI embeddings)
+        openai.api_key = self.openai_api_key
         return super(ChatOpenAIOriginal, self).generate(*args, **kwargs)
-
