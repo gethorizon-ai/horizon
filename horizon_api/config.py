@@ -7,7 +7,7 @@ class Config:
     password = os.environ.get("DB_PASSWORD")
     hostname = os.environ.get("DB_HOSTNAME")
     port = os.environ.get("DB_PORT")
-    database_name = os.environ.get("DB_NAME")
+    database_name = "horizon_aditya"  # TODO: os.environ.get("DB_NAME")
     S3_BUCKET = "horizon-api-001"
 
     SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{username}:{password}@{hostname}:{port}/{database_name}"
