@@ -20,6 +20,7 @@ import os
 import json
 import logging
 import datamodel_code_generator
+from pathlib import Path
 import tempfile
 
 
@@ -620,9 +621,9 @@ class UploadOutputSchemasAPI(Resource):
             ) as pydantic_model_temp_file:
                 pydantic_model_temp_file_path = pydantic_model_temp_file.name
                 datamodel_code_generator.generate(
-                    input_=output_schema_temp_file_path,
+                    input_=Path(output_schema_temp_file_path),
                     input_file_type="jsonschema",
-                    output=pydantic_model_temp_file_path,
+                    output=Path(pydantic_model_temp_file_path),
                 )
 
         except Exception as e:
