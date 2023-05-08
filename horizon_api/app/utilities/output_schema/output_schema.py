@@ -21,6 +21,9 @@ def get_pydantic_object_from_s3(pydantic_model_s3_key: str) -> BaseModel:
         pydantic_model_s3_key
     )
 
+    with open(pydantic_model_file_path, "r") as file:
+        print(file.read())
+
     # Try to import Pydantic model
     pydantic_module_name = os.path.basename(pydantic_model_file_path)[:-3]
     pydantic_module_spec = importlib.util.spec_from_file_location(
