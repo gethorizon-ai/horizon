@@ -11,6 +11,8 @@ from app.utilities.dataset_processing import segment_data
 from app.models.llm.factory import LLMFactory
 from app.models.schema import HumanMessage
 from typing import List
+import boto3
+from botocore.exceptions import ClientError
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 import os
 
