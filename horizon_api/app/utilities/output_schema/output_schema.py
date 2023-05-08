@@ -21,6 +21,8 @@ def get_pydantic_object_from_s3(pydantic_model_s3_key: str) -> BaseModel:
         pydantic_model_s3_key
     )
 
+    print(pydantic_model_file_path)
+
     with open(pydantic_model_file_path, "r") as file:
         print(file.read())
 
