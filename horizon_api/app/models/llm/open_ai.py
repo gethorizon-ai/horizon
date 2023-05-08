@@ -43,6 +43,8 @@ class OpenAI(BaseLLM, OpenAIOriginal):
         ),
     )
     def generate(self, *args: Any, **kwargs: Any) -> Any:
+        # Reset OpenAI API key in case it was changed by other processes (e.g., OpenAI embeddings)
+        openai.api_key = self.openai_api_key
         return super(OpenAIOriginal, self).generate(*args, **kwargs)
 
 
@@ -77,4 +79,6 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
         ),
     )
     def generate(self, *args: Any, **kwargs: Any) -> Any:
+        # Reset OpenAI API key in case it was changed by other processes (e.g., OpenAI embeddings)
+        openai.api_key = self.openai_api_key
         return super(ChatOpenAIOriginal, self).generate(*args, **kwargs)

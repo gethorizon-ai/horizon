@@ -1,6 +1,6 @@
 from .base import BasePromptTemplate
 from app.models.prompt import prompt
-from app.utilities.dataset_processing import dataset_processing
+from app.utilities.dataset_processing import data_check
 from langchain.prompts.few_shot import FewShotPromptTemplate as FewShotPromptOriginal
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
@@ -22,7 +22,7 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
             FewshotPromptTemplate: few shot prompt object to be deployed.
         """
         # Get evaluation dataset and convert each row to dict
-        evaluation_dataset = dataset_processing.get_evaluation_dataset(
+        evaluation_dataset = data_check.get_evaluation_dataset(
             dataset_file_path=dataset_file_path
         )
         evaluation_dataset = evaluation_dataset.drop("evaluation_data_id", axis=1)

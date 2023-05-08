@@ -1,6 +1,5 @@
 """Defines parameters used for prompt generation algorithm."""
 
-# TODO: update to parameters for full prompt generation algorithm
 PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
     "stage_1": {
         "num_prompts_user_objective": 10,
