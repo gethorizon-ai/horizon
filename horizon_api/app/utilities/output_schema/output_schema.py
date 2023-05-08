@@ -32,10 +32,12 @@ def get_pydantic_object_from_s3(pydantic_model_s3_key: str) -> BaseModel:
         pydantic_module_name, pydantic_model_file_path
     )
     pydantic_module_object = importlib.util.module_from_spec(pydantic_module_spec)
+    sys.modules[pydantic_module_name] = pydantic_module_object
     pydantic_module_spec.loader.exec_module(pydantic_module_object)
 
     # Pydantic class / object assumed to be called "OutputSchema"
     pydantic_object = pydantic_module_object.OutputSchema
+    del sys.modules[pydantic_module_name]
 
     # Remove temp file
     os.remove(pydantic_model_file_path)
