@@ -22,7 +22,9 @@ def get_pydantic_object_from_s3(pydantic_model_s3_key: str) -> BaseModel:
     )
 
     # Add .py extension to the file path
-    pydantic_model_file_path = os.path.splitext(pydantic_model_file_path)[0] + ".py"
+    new_pydantic_model_file_path = os.path.splitext(pydantic_model_file_path)[0] + ".py"
+    os.rename(pydantic_model_file_path, new_pydantic_model_file_path)
+    pydantic_model_file_path = new_pydantic_model_file_path
 
     print(pydantic_model_file_path)
 
