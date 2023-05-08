@@ -37,7 +37,7 @@ def generate_prompt_model_configuration(
 ) -> dict:
     """Generate the optimal prompt-model candidate for a given objective and evaluation dataset.
 
-    Horizon's OpenAI API key is used for prompt generation and embeddings (user's API LLM API keys still used for inference)
+    Horizon's OpenAI API key is used for prompt generation and embeddings (user's API LLM API keys still used for inference).
 
     Args:
         user_objective (str): objectuse of the use case.
@@ -68,6 +68,7 @@ def generate_prompt_model_configuration(
     # Create the TaskRequest instance
     task_request = TaskRequest(
         dataset_s3_key=task.evaluation_dataset,
+        pydantic_model_s3_key=task.pydantic_model,
         user_objective=task.objective,
         allowed_models=json.loads(task.allowed_models),
     )

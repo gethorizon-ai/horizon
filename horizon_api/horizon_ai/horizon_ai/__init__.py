@@ -320,6 +320,20 @@ def upload_evaluation_dataset(task_id, file_path):
         return response
 
 
+def upload_output_schema(task_id, file_path):
+    global api_key
+    if api_key == None:
+        raise Exception("Must set Horizon API key.")
+    headers = {"X-Api-Key": api_key}
+    with open(file_path, "rb") as f:
+        response = _post(
+            endpoint=f"/api/tasks/{task_id}/upload_output_schema",
+            files={"output_schema": f},
+            headers=headers,
+        )
+        return response
+
+
 # def view_evaluation_dataset(task_id):
 #     global api_key
 #     if api_key == None:

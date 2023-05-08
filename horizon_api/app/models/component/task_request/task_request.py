@@ -10,10 +10,9 @@ from app.utilities.dataset_processing import llm_applicability
 from app.utilities.dataset_processing import segment_data
 from app.models.llm.factory import LLMFactory
 from app.models.schema import HumanMessage
-from typing import List
-import boto3
-from botocore.exceptions import ClientError
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
+from app.utilities.output_schema import output_schema
+from typing import List
 import os
 
 
@@ -23,6 +22,7 @@ class TaskRequest:
     def __init__(
         self,
         dataset_s3_key: str,
+        pydantic_model_s3_key: str = None,
         user_objective: str = None,
         allowed_models: list = None,
         synthetic_data_generation: bool = False,
@@ -31,7 +31,8 @@ class TaskRequest:
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
         Args:
-            dataset_file_path (str): path to evaluation dataset.
+            dataset_s3_key (str): s3 key for evaluation dataset.
+            pydantic_model_s3_key (str, optional): s3 key for pydantic model of output schema. Defaults to None.
             user_objective (str, optional): task objective. Defaults to None.
             allowed_models (list, optional): list of allowed models for this task. Defaults to None.
             synthetic_data_generation (bool, optional): whether this task request is to generate synthetic data. Defaults to False.
@@ -47,6 +48,7 @@ class TaskRequest:
         self.user_objective = user_objective
         self.input_variables = None
         self.evaluation_dataset = None
+        self.pydantic_object = None
         self.input_data_train = None
         self.ground_truth_data_train = None
         self.input_data_test = None
@@ -68,6 +70,14 @@ class TaskRequest:
         # Download the evaluation dataset from S3 and save it locally
         dataset_file_path = download_file_from_s3_and_save_locally(dataset_s3_key)
 
+        # Get Pydantic object for output schema if it exists
+        if pydantic_model_s3_key:
+            self.pydantic_object = output_schema.get_pydantic_object_from_s3(
+                pydantic_model_s3_key=pydantic_model_s3_key
+            )
+            print(self.pydantic_object.schema_json(indent=4))
+
+        # TODO: if Pydantic object created, check ground_truth matches output schema
         # Check evaluation dataset meets requirements
         data_check.check_evaluation_dataset(
             dataset_file_path=dataset_file_path,
@@ -79,7 +89,7 @@ class TaskRequest:
             dataset_file_path=dataset_file_path
         )
 
-        # Delete the file from the local file system
+        # Delete dataset file from the local file system
         os.remove(dataset_file_path)
 
         # Set input variables

@@ -359,6 +359,21 @@ def generate_task(
         click.echo(str(e))
         return
 
+    # Ask user if they want to add output schema
+    if click.confirm("Add JSON file with data schema for LLM output?"):
+        output_schema_file_path = click.prompt(
+            text="Path to JSON file with data schema for LLM output"
+        )
+        try:
+            upload_output_schema_response = horizon_ai.upload_output_schema(
+                task_id, output_schema_file_path
+            )
+        except Exception as e:
+            horizon_ai.delete_task(task_id)
+            click.echo("Failed in output schema upload")
+            click.echo(str(e))
+            return
+
     # Confirm key details of task creation (e.g., estimated cost) with user before proceeding
     try:
         task_confirmation_details_response = horizon_ai.get_task_confirmation_details(
