@@ -10,6 +10,8 @@ from app.models.prompt.factory import PromptTemplateFactory
 from app.models.prompt.chat import HumanMessage
 from config import Config
 import json
+from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
+import os
 
 
 def deploy_prompt(
@@ -69,16 +71,21 @@ def deploy_prompt(
         )
     elif template_type == "fewshot":
         # If few shot, get evaluation dataset from task
-        # Reconstruct few shot example selector with embeddings using Horizon's OpenAI API key
         task_id = prompt.task_id
         task = Task.query.get(task_id)
-        dataset_file_path = task.evaluation_dataset
+        dataset_s3_key = task.evaluation_dataset
+
+        # Download the dataset from S3 and save it locally
+        dataset_file_path = download_file_from_s3_and_save_locally(dataset_s3_key)
         prompt_instance = PromptTemplateFactory.reconstruct_prompt_object(
             template_type=template_type,
             dataset_file_path=dataset_file_path,
             template_data=template_data,
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
+
+        # Delete the dataset file from the local file system
+        os.remove(dataset_file_path)
 
     # Modify input variables by prepending "var_" as done in Task creation process (to prevent names from matching internal horizonai
     # variable names)

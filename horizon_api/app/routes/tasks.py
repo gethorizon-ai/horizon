@@ -7,7 +7,7 @@ from app.utilities.authentication.api_key_auth import api_key_required
 from app.utilities.authentication.cognito_auth import get_user_email
 from app.utilities.run import generate_prompt
 from app.utilities.run import task_confirmation_details
-from app.utilities.dataset_processing import dataset_processing
+from app.utilities.dataset_processing import data_check
 from app.utilities.email_notifications import email_notifications
 from app.deploy.prompt import deploy_prompt
 from app.models.llm.factory import LLMFactory
@@ -390,7 +390,9 @@ class GenerateTaskAPI(Resource):
             return {"error": str(e)}, 400
 
         return {
+
             "message": "Task generation initiated. This generally takes 0.5-2.0 hours depending on the selected models, data size, and LLM provider latency. You will be emailed once the job is completed.",
+
         }, 200
 
 
@@ -483,7 +485,7 @@ class UploadEvaluationDatasetsAPI(Resource):
         evaluation_dataset.save(temp_file_path)
 
         try:
-            dataset_processing.check_evaluation_dataset_and_data_length(
+            data_check.check_evaluation_dataset_and_data_length(
                 dataset_file_path=temp_file_path
             )
         except Exception as e:

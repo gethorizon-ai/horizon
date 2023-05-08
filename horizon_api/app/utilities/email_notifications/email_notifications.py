@@ -1,7 +1,7 @@
 """Enables sending transactional emails to users."""
 
 import boto3
-import json
+import html
 
 client = boto3.client("sesv2", region_name="us-west-2")
 
@@ -11,38 +11,44 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
 
     Args:
         user_email (str): user email address.
-        task_details (dict): data to share with the user regarding their new task in JSON format.
+        task_details (dict): data to share with the user regarding their new task.
     """
 
-    # Parse task details
-    name = task_details["name"]
-    objective = task_details["objective"]
-    task_id = task_details["id"]
-    project_id = task_details["project_id"]
+    # Parse task details. Escape certain characters (e.g., angle brackets) for use with html
+    name = html.escape(str(task_details["name"]))
+    objective = html.escape(str(task_details["objective"]))
+    task_id = html.escape(str(task_details["id"]))
+    project_id = html.escape(str(task_details["project_id"]))
     number_of_prompt_model_candidates = task_details["evaluation_statistics"][
         "number_of_prompt_model_candidates_considered"
     ]
     number_of_inferences_evaluations_done = task_details["evaluation_statistics"][
         "number_of_inferences_and_evaluations_done"
     ]
-    template_type = task_details["prompts"][0]["template_type"]
+    template_type = html.escape(str(task_details["prompts"][0]["template_type"]))
     if template_type == "fewshot":
-        prefix = task_details["prompts"][0]["template_data"]["prefix"]
+        prefix = html.escape(
+            str(task_details["prompts"][0]["template_data"]["prefix"])
+        ).replace("\n", "<br>")
     elif template_type == "prompt":
-        prefix = task_details["prompts"][0]["template_data"]["template"]
-    input_variables = task_details["prompts"][0]["template_data"]["input_variables"]
+        prefix = html.escape(
+            str(task_details["prompts"][0]["template_data"]["template"])
+        ).replace("\n", "<br>")
+    input_variables = html.escape(
+        str(task_details["prompts"][0]["template_data"]["input_variables"])
+    )
     if template_type == "fewshot":
-        few_shot_example_selector = task_details["prompts"][0][
-            "few_shot_example_selector"
-        ]
+        few_shot_example_selector = html.escape(
+            str(task_details["prompts"][0]["few_shot_example_selector"])
+        )
     elif template_type == "prompt":
         few_shot_example_selector = None
-    allowed_models = task_details["allowed_models"]
+    allowed_models = html.escape(str(task_details["allowed_models"]))
     # Parse model name from model parameters (differs for OpenAI vs Anthropic models)
     try:
-        model_name = task_details["prompts"][0]["model"]["model_name"]
+        model_name = html.escape(str(task_details["prompts"][0]["model"]["model_name"]))
     except:
-        model_name = task_details["prompts"][0]["model"]["model"]
+        model_name = html.escape(str(task_details["prompts"][0]["model"]["model"]))
     inference_quality = task_details["prompts"][0]["inference_statistics"][
         "inference_quality"
     ]
@@ -72,7 +78,7 @@ Summary of Task below (access additional details via CLI):<br />
     </ul>
 <li><b>Template type:</b> {template_type}</li>
 <li><b>Template data:</b></li>
-    <ul> 
+    <ul>
     <li><b>Prefix:</b> {prefix}</li>
     <li><b>Input variables:</b> {input_variables}</li>
     <li><b>Few shot example selector:</b> {few_shot_example_selector}</li>
@@ -80,7 +86,7 @@ Summary of Task below (access additional details via CLI):<br />
 <li><b>Models considered:</b> {allowed_models}</li>
 <li><b>Model selected:</b> {model_name}</li>
 <li><b>Inference statistics:</b></li>
-    <ul> 
+    <ul>
     <li><b>Inference quality:</b> {inference_quality:.2f}</li>
     <li><b>Inference latency:</b> {inference_latency:.2f}</li>
     </ul>
@@ -106,24 +112,23 @@ Summary of Task below (access additional details via CLI):<br />
                         "Data": html_body,
                         "Charset": "UTF-8",
                     },
-
                 },
             },
         },
     )
 
 
-def email_task_creation_error(user_email: str, error_message: dict) -> None:
+def email_task_creation_error(user_email: str, error_message: str) -> None:
     """Emails user to inform them that their task creation request failed.
 
     Args:
         user_email (str): user email address.
-        task_details (dict): data to share with the user regarding the error with task creation.
+        error_message (str): data to share with the user regarding the error with task creation.
     """
     # Configure email parameters
     subject = "Error with your Horizon task request"
+    error_message = html.escape(str(error_message))
     text_body = f"""Hello! Unfortunately, your Horizon task request had the following error. Please email us at team@gethorizon.ai if you need help troubleshooting.
-
 
 {error_message}"""
 
