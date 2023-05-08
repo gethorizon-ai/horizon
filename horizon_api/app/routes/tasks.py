@@ -20,6 +20,7 @@ import os
 import csv
 import json
 import logging
+import tempfile
 
 
 ALLOWED_EXTENSIONS = {"csv"}
@@ -390,9 +391,7 @@ class GenerateTaskAPI(Resource):
             return {"error": str(e)}, 400
 
         return {
-
             "message": "Task generation initiated. This generally takes 0.5-2.0 hours depending on the selected models, data size, and LLM provider latency. You will be emailed once the job is completed.",
-
         }, 200
 
 
@@ -479,10 +478,9 @@ class UploadEvaluationDatasetsAPI(Resource):
         if not allowed_file(evaluation_dataset.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
 
-        temp_dir = os.path.join(project_dir, "temp")
-        os.makedirs(temp_dir, exist_ok=True)
-        temp_file_path = os.path.join(temp_dir, evaluation_dataset.filename)
-        evaluation_dataset.save(temp_file_path)
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as temp_file:
+            temp_file_path = temp_file.name
+            evaluation_dataset.save(temp_file_path)
 
         try:
             data_check.check_evaluation_dataset_and_data_length(
@@ -492,7 +490,7 @@ class UploadEvaluationDatasetsAPI(Resource):
             logging.error(
                 f"UploadEvaluationDatasetsAPI: Error in check_evaluation_dataset_and_data_length - {str(e)}"
             )
-            delete_file_from_s3(s3_key)
+            os.remove(temp_file_path)  # Delete the temporary file
             return {"error": str(e)}, 400
 
         s3_key = f"evaluation_datasets/{task_id}/{evaluation_dataset.filename}"
