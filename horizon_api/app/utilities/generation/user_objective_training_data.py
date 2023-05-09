@@ -38,13 +38,14 @@ def prompt_generation_user_objective_training_data(
             task_request=task_request, openai_api_key=openai_api_key
         )
     )
-    print(few_shot_metaprompt)
+    print(f"Few shot metaprompt for user obj training data: {few_shot_metaprompt}")
     formatted_metaprompt = few_shot_metaprompt.format(
         objective=task_request.user_objective,
         input_variables=base.generate_input_variables_string(
             input_variables=task_request.input_variables
         ),
     )
+    print(f"Formatted metaprompt for user obj training data: {formatted_metaprompt}")
 
     # Get LLM
     metaprompt_model = prompt_generation_models.get_model_user_objective_training_data(
