@@ -144,7 +144,8 @@ def check_evaluation_dataset(
 def get_evaluation_dataset(dataset_file_path: str) -> pd.DataFrame:
     """Convert evaluation dataset csv into DataFrame.
 
-    Assumes evaluation dataset has been checked appropriately.
+    Assumes evaluation dataset has been checked appropriately. Escapes curly braces for use with format string method by adding extra
+    curly brace (e.g., converts '{'  to '{{').
 
     Args:
         dataset_file_path (str): file path to evaluation dataset.
@@ -172,6 +173,11 @@ def get_evaluation_dataset(dataset_file_path: str) -> pd.DataFrame:
 
     # Add evaluation_data_id column
     evaluation_dataset["evaluation_data_id"] = evaluation_dataset.index
+
+    # Escape curly braces
+    evaluation_dataset = evaluation_dataset.applymap(
+        lambda x: x.replace("{", "{{").replace("}", "}}")
+    )
 
     # Return processed evaluation dataset
     return evaluation_dataset
