@@ -81,6 +81,8 @@ class PostProcessing:
             text=original_output
         )
         print(f"Cleaned output: {cleaned_output}")
+        json.loads(cleaned_output)
+        print("Successfully loaded cleaned output")
 
         # If retry_with_error_output_parser is setup, then try parsing with it. Enables 1 retry currently
         if self.retry_with_error_output_parser:
