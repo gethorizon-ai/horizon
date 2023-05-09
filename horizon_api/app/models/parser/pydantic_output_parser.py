@@ -45,6 +45,7 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
         Returns:
             T: Pydantic model object.
         """
+        print("THIS METHOD WAS CALLED!")
         try:
             # Greedy search for 1st json candidate.
             match = re.search(
