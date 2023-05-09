@@ -7,6 +7,8 @@ from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 from app.utilities.output_schema import output_schema
 from langchain.prompts.base import StringPromptValue  # TODO: create internal wrapper
 import copy
+import re
+import json
 
 
 # Final output value if unable to align llm output with output schema requirements
@@ -74,6 +76,12 @@ class PostProcessing:
             str: output string satisfying output schema requirements.
         """
         print(f"Original output: {original_output}")
+        # Clean output by escaping invalid JSON control characters (e.g., newlines)
+        cleaned_output = PostProcessing.escape_invalid_json_control_characters(
+            text=original_output
+        )
+        print(f"Cleaned output: {original_output}")
+
         # If retry_with_error_output_parser is setup, then try parsing with it. Enables 1 retry currently
         if self.retry_with_error_output_parser:
             try:
@@ -93,3 +101,23 @@ class PostProcessing:
                 return parsed_output.json()
             except:
                 raise ValueError(FINAL_ERROR_MESSAGE)
+
+    def escape_invalid_json_control_characters(text: str) -> str:
+        """Helper function that escapes invalid control characters from structured text from llm.
+
+        Args:
+            text (str): text from which to escape invalid control characters.
+
+        Returns:
+            str: updated text without invalid control characters.
+        """
+        # Greedy search for 1st json candidate.
+        match = re.search(
+            r"\{.*\}", text.strip(), re.MULTILINE | re.IGNORECASE | re.DOTALL
+        )
+        json_str = ""
+        if match:
+            json_str = match.group()
+
+        # First load json_str with strict=False, then use JSON dumps to convert back to string while escaping control characters
+        return json.dumps(json.loads(json_str, strict=False))
