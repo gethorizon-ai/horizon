@@ -18,7 +18,7 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
             str: output format instructions to append to prompt prefix.
         """
         return (
-            "\n\n==OUTPUT FORMAT:\n\n"
+            "\n\n==\nOUTPUT FORMAT:\n\n"
             + PydanticOutputParserOriginal.get_format_instructions(self)
             .replace("{", "{{")
             .replace("}", "}}")

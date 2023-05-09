@@ -80,6 +80,7 @@ class PostProcessing:
         Returns:
             str: output string satisfying output schema requirements.
         """
+        print(f"Original output: {original_output}")
         # If retry_with_error_output_parser is setup, then try parsing with it. Enables 1 retry currently
         if self.retry_with_error_output_parser:
             try:
