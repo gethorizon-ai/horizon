@@ -175,14 +175,14 @@ def get_evaluation_dataset(
         .reset_index(drop=True)
     )
 
-    # Add evaluation_data_id column
-    evaluation_dataset["evaluation_data_id"] = evaluation_dataset.index
-
     # Escape curly braces
     if escape_characters:
         evaluation_dataset = evaluation_dataset.applymap(
             lambda x: x.replace("{", "{{").replace("}", "}}")
         )
+
+    # Add evaluation_data_id column
+    evaluation_dataset["evaluation_data_id"] = evaluation_dataset.index
 
     # Return processed evaluation dataset
     return evaluation_dataset
