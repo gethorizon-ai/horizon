@@ -19,6 +19,6 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
         """
         print("Got request to get output format instructions")
         print(
-            f"Standard output format instructions: {super(PydanticOutputParserOriginal, self).get_format_instructions()}"
+            f"Standard output format instructions: {PydanticOutputParserOriginal.get_format_instructions(self)}"
         )
         return "\n\n" + PydanticOutputParserOriginal.get_format_instructions(self)
