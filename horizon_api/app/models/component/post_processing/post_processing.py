@@ -86,7 +86,7 @@ class PostProcessing:
         if self.retry_with_error_output_parser:
             try:
                 parsed_output = self.retry_with_error_output_parser.parse_with_prompt(
-                    completion=original_output,
+                    completion=cleaned_output,
                     prompt_value=StringPromptValue(text=prompt_string),
                 )
                 return parsed_output.json()
@@ -96,7 +96,7 @@ class PostProcessing:
         else:
             try:
                 parsed_output = self.pydantic_output_parser.parse(
-                    text=original_output,
+                    text=cleaned_output,
                 )
                 return parsed_output.json()
             except:
