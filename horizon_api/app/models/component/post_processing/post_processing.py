@@ -82,7 +82,6 @@ class PostProcessing:
             try:
                 print(f"Original prompt string: {prompt_string}")
                 prompt_value = StringPromptValue(text=prompt_string)
-                print("Converted to StringPromptValue")
                 parsed_output = self.retry_with_error_output_parser.parse_with_prompt(
                     completion=original_output,
                     prompt_value=prompt_value,
