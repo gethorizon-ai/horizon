@@ -51,8 +51,12 @@ class Task(db.Model):
             "objective": self.objective,
             "task_type": self.task_type,
             "evaluation_dataset": self.evaluation_dataset,
-            "output_schema": self.output_schema,
-            "pydantic_model": self.pydantic_model,
+            "output_schema": os.path.basename(self.output_schema)
+            if (self.output_schema is not None)
+            else "Undefined",
+            "pydantic_model": os.path.basename(self.pydantic_model)
+            if (self.pydantic_model is not None)
+            else "Undefined",
             "status": self.status,
             "create_timestamp": datetime.isoformat(self.create_timestamp),
             "project_id": self.project_id,
@@ -72,6 +76,7 @@ class Task(db.Model):
             "id",
             "name",
             "objective",
+            "output_schema",
             "project_id",
             "allowed_models",
             "active_prompt_id",

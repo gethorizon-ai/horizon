@@ -28,6 +28,9 @@ class OpenAI(BaseLLM, OpenAIOriginal):
             "max_tokens": self.max_tokens,
         }
 
+    def set_temperature(self, temperature: float) -> None:
+        self.temperature = temperature
+
     # Add additional retry functionality for OpenAI inference calls
     @retry(
         reraise=True,
@@ -63,6 +66,9 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
             "temperature": self.temperature,
             "max_tokens": self.max_tokens,
         }
+
+    def set_temperature(self, temperature: float) -> None:
+        self.model_kwargs["temperature"] = temperature
 
     # Add additional retry functionality for OpenAI inference calls
     @retry(

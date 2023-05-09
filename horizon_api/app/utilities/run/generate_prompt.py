@@ -1,4 +1,4 @@
-"""Generate prompt-model candidate for task."""
+"""Generate prompt-model configuration for task."""
 
 from app.models.prompt import factory
 from app.models.llm.factory import LLMFactory
@@ -208,7 +208,7 @@ def generate_prompt_model_configuration(
             continue
         print(f"working on {llm}")
 
-        # Set llm api key
+        # Set user's llm api key
         if LLMFactory.llm_classes[llm]["provider"] == "OpenAI":
             llm_api_key = openai_api_key
         elif LLMFactory.llm_classes[llm]["provider"] == "Anthropic":
@@ -221,7 +221,7 @@ def generate_prompt_model_configuration(
             llm_api_key=llm_api_key,
         )
 
-        # Create llm instance
+        # Create llm instance with user's llm api key
         llm_instance = LLMFactory.create_llm(llm, **llm_instance_params)
         print(f"Created llm instance for {llm}")
 
@@ -237,7 +237,7 @@ def generate_prompt_model_configuration(
             )
         )
 
-        # Add llm instance to post_processing for retry attempts
+        # Add llm instance to post_processing retry attempts, if applicable
         if post_processing:
             post_processing.update_llm_for_retry_with_error_output_parser(
                 llm=copy.deepcopy(llm_instance)
@@ -258,6 +258,7 @@ def generate_prompt_model_configuration(
                 "num_iterations"
             ],
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+            post_processing=post_processing,
         )
         aggregated_inference_evaluation_results = pd.concat(
             [aggregated_inference_evaluation_results, inference_evaluation_results],
@@ -285,6 +286,7 @@ def generate_prompt_model_configuration(
             prompt_model_candidates=prompt_model_candidates_stage_2,
             train_or_test_dataset="test",
             stage_id="stage_2",
+            post_processing=post_processing,
         )
         evaluation.run_evaluation(
             task_request=task_request,
@@ -350,6 +352,7 @@ def generate_prompt_model_configuration(
                 "num_iterations"
             ],
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+            post_processing=post_processing,
         )
         aggregated_inference_evaluation_results = pd.concat(
             [aggregated_inference_evaluation_results, inference_evaluation_results],

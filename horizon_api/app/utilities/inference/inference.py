@@ -86,9 +86,13 @@ def run_inference(
 
         # Conduct post-processing if applicable
         if post_processing:
-            output = post_processing.parse_and_retry_if_needed(
-                completion=output, prompt_string=formatted_prompt
-            )
+            try:
+                output = post_processing.parse_and_retry_if_needed(
+                    original_output=output, prompt_string=formatted_prompt
+                )
+            except:
+                # If output fails to satisfy output schema requirements, then set output to empty value
+                output = ""
 
         end_time = time.time()
         inference_latency = end_time - start_time
