@@ -45,7 +45,7 @@ class PostProcessing:
         # Initialize RetryWithErrorOutputParser if llm object provided
         self.retry_with_error_output_parser = None
         if llm:
-            self.retry_with_error_output_parser = RetryWithErrorOutputParser(
+            self.retry_with_error_output_parser = RetryWithErrorOutputParser.from_llm(
                 parser=self.pydantic_output_parser, llm=llm
             )
 
