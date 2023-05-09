@@ -2,6 +2,7 @@
 
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
+from app.models.component.post_processing.post_processing import PostProcessing
 from app.models.prompt.factory import PromptTemplateFactory
 from app.utilities.generation import base
 from app.utilities.generation import prompt_generation_metaprompts
@@ -16,6 +17,7 @@ def prompt_generation_few_shots(
     prompt_model_candidates: PromptModelCandidates,
     starting_prompt_model_id: int,
     openai_api_key: str,
+    post_processing: PostProcessing = None,
 ) -> PromptModelCandidates:
     """Generates few-shot based prompts for each of the given prompts.
 
@@ -23,6 +25,7 @@ def prompt_generation_few_shots(
         task_request (TaskRequest): details for this task creation run.
         prompt_model_candidates (PromptModelCandidates): data structure with current set of prompt-model candidates.
         starting_prompt_model_id (int): starting id for new prompt-model candidates.
+        post_processing (PostProcessing, optional): details on llm output post-processing operations. Defaults to None.
 
     Returns:
         PromptModelCandidates: new set of few-shot based prompt-model candidates.
@@ -38,6 +41,12 @@ def prompt_generation_few_shots(
             input_variables=task_request.input_variables
         )
     )
+
+    # If post_processing is defined, then append output format instructions to prefix
+    output_format_instructions = ""
+    if post_processing:
+        output_format_instructions = post_processing.output_format_instructions
+
     suffix_request = base.generate_prompt_suffix(
         input_variables=task_request.input_variables
     ).strip()
@@ -49,7 +58,9 @@ def prompt_generation_few_shots(
     model_object_list = []
     # Iterate through each prompt-model candidate and produce a few shot version of it
     for index, row in prompt_model_candidates.iterrows():
-        few_shot_prompt_prefix = row["prompt_prefix"] + "\n\n==\nEXAMPLES:"
+        few_shot_prompt_prefix = (
+            row["prompt_prefix"] + output_format_instructions + "\n\n==\nEXAMPLES:"
+        )
         model_name = row["model_object"].get_model_name()
 
         # create the example selector

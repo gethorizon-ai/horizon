@@ -1,6 +1,7 @@
 """Generates syntactic variants of the given prompts that are semantically similar to the original."""
 
 from app.models.component.prompt_model_candidates import PromptModelCandidates
+from app.models.component.post_processing.post_processing import PostProcessing
 from app.utilities.generation import base
 from app.utilities.generation import prompt_generation_metaprompts
 from app.utilities.generation import prompt_generation_models
@@ -16,6 +17,7 @@ def prompt_generation_variants(
     num_variants: int,
     starting_prompt_model_id: int,
     openai_api_key: str,
+    post_processing: PostProcessing = None,
 ) -> PromptModelCandidates:
     """Generates syntactic variants of the given prompts that are semantically similar to the original. Assumes prompts are
     PromptTemplate objects.
@@ -26,6 +28,7 @@ def prompt_generation_variants(
         num_variants (int): number of syntatic variants to generate for each existing prompt-model candidate.
         starting_prompt_model_id (int): starting id for new prompt-model candidates.
         openai_api_key (str): OpenAI API key to use.
+        post_processing (PostProcessing, optional): details on llm output post-processing operations. Defaults to None.
 
     Returns:
         PromptModelCandidates: new set of variant prompt-model candidates.
@@ -41,6 +44,11 @@ def prompt_generation_variants(
     metaprompt_model_check = prompt_generation_models.get_model_variants_check(
         openai_api_key=openai_api_key
     )
+
+    # If post_processing is defined, then append output format instructions to prefix
+    output_format_instructions = ""
+    if post_processing:
+        output_format_instructions = post_processing.output_format_instructions
 
     prompt_suffix = base.generate_prompt_suffix(
         input_variables=task_request.input_variables
@@ -65,7 +73,9 @@ def prompt_generation_variants(
 
         for i in range(num_variants):
             new_prompt_prefix = responses[i].text.strip()
-            prompt_template = new_prompt_prefix + prompt_suffix
+            prompt_template = (
+                new_prompt_prefix + output_format_instructions + prompt_suffix
+            )
 
             # Check that prompt template has required input variables and is formatted correctly
             try:

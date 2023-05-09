@@ -22,7 +22,6 @@ class TaskRequest:
     def __init__(
         self,
         dataset_s3_key: str,
-        pydantic_model_s3_key: str = None,
         user_objective: str = None,
         allowed_models: list = None,
         synthetic_data_generation: bool = False,
@@ -32,7 +31,6 @@ class TaskRequest:
 
         Args:
             dataset_s3_key (str): s3 key for evaluation dataset.
-            pydantic_model_s3_key (str, optional): s3 key for pydantic model of output schema. Defaults to None.
             user_objective (str, optional): task objective. Defaults to None.
             allowed_models (list, optional): list of allowed models for this task. Defaults to None.
             synthetic_data_generation (bool, optional): whether this task request is to generate synthetic data. Defaults to False.
@@ -48,7 +46,6 @@ class TaskRequest:
         self.user_objective = user_objective
         self.input_variables = None
         self.evaluation_dataset = None
-        self.pydantic_object = None
         self.input_data_train = None
         self.ground_truth_data_train = None
         self.input_data_test = None
@@ -69,13 +66,6 @@ class TaskRequest:
 
         # Download the evaluation dataset from S3 and save it locally
         dataset_file_path = download_file_from_s3_and_save_locally(dataset_s3_key)
-
-        # Get Pydantic object for output schema if it exists
-        if pydantic_model_s3_key:
-            self.pydantic_object = output_schema.get_pydantic_object_from_s3(
-                pydantic_model_s3_key=pydantic_model_s3_key
-            )
-            print(self.pydantic_object.schema_json(indent=4))
 
         # TODO: if Pydantic object created, check ground_truth matches output schema
         # Check evaluation dataset meets requirements
