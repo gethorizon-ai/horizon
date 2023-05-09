@@ -2,57 +2,19 @@
     "title": "OutputSchema",
     "type": "object",
     "properties": {
-        "id": {
-            "title": "Id",
-            "description": "id of the post",
-            "type": "integer"
-        },
         "title": {
             "title": "Title",
-            "description": "title of the post",
+            "description": "title of the page",
             "type": "string"
         },
         "content": {
             "title": "Content",
-            "description": "content of the post",
+            "description": "content of the page",
             "type": "string"
-        },
-        "author": {
-            "title": "Author",
-            "description": "user who wrote the post",
-            "allOf": [
-                {
-                    "$ref": "#/definitions/User"
-                }
-            ]
         }
     },
     "required": [
-        "id",
         "title",
-        "content",
-        "author"
-    ],
-    "definitions": {
-        "User": {
-            "title": "User",
-            "type": "object",
-            "properties": {
-                "id": {
-                    "title": "Id",
-                    "description": "id of the individual",
-                    "type": "integer"
-                },
-                "name": {
-                    "title": "Name",
-                    "description": "name of the individual",
-                    "type": "string"
-                }
-            },
-            "required": [
-                "id",
-                "name"
-            ]
-        }
-    }
+        "content"
+    ]
 }
