@@ -80,7 +80,7 @@ class PostProcessing:
         cleaned_output = PostProcessing.escape_invalid_json_control_characters(
             text=original_output
         )
-        print(f"Cleaned output: {original_output}")
+        print(f"Cleaned output: {cleaned_output}")
 
         # If retry_with_error_output_parser is setup, then try parsing with it. Enables 1 retry currently
         if self.retry_with_error_output_parser:
