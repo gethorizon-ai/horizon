@@ -76,7 +76,7 @@ class TaskRequest:
 
         # Set evaluation dataset
         self.evaluation_dataset = data_check.get_evaluation_dataset(
-            dataset_file_path=dataset_file_path
+            dataset_file_path=dataset_file_path, escape_characters=True
         )
 
         # Delete dataset file from the local file system
@@ -89,7 +89,7 @@ class TaskRequest:
 
         # Set evaluation data length
         evaluation_data_length = data_length.get_evaluation_data_length(
-            evaluation_dataset=self.evaluation_dataset
+            evaluation_dataset=self.evaluation_dataset, unescape_characters=True
         )
         self.max_input_tokens = evaluation_data_length["max_input_tokens"]
         self.max_ground_truth_tokens = evaluation_data_length["max_ground_truth_tokens"]

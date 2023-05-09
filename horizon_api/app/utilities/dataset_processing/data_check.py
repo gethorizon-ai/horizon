@@ -141,7 +141,9 @@ def check_evaluation_dataset(
             seen_rows.add(row_csv)
 
 
-def get_evaluation_dataset(dataset_file_path: str) -> pd.DataFrame:
+def get_evaluation_dataset(
+    dataset_file_path: str, escape_characters: bool = True
+) -> pd.DataFrame:
     """Convert evaluation dataset csv into DataFrame.
 
     Assumes evaluation dataset has been checked appropriately. Escapes curly braces for use with format string method by adding extra
@@ -149,6 +151,8 @@ def get_evaluation_dataset(dataset_file_path: str) -> pd.DataFrame:
 
     Args:
         dataset_file_path (str): file path to evaluation dataset.
+        unescape_characters (bool, optional): whether to escape certain characters (e.g., curly braces) when getting data lengths.
+            Defaults to True.
 
     Returns:
         pd.DataFrame: processed evaluation dataset.
@@ -175,9 +179,10 @@ def get_evaluation_dataset(dataset_file_path: str) -> pd.DataFrame:
     evaluation_dataset["evaluation_data_id"] = evaluation_dataset.index
 
     # Escape curly braces
-    evaluation_dataset = evaluation_dataset.applymap(
-        lambda x: x.replace("{", "{{").replace("}", "}}")
-    )
+    if escape_characters:
+        evaluation_dataset = evaluation_dataset.applymap(
+            lambda x: x.replace("{", "{{").replace("}", "}}")
+        )
 
     # Return processed evaluation dataset
     return evaluation_dataset
