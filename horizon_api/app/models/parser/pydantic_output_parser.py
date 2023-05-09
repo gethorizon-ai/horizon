@@ -21,4 +21,6 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
         print(
             f"Standard output format instructions: {PydanticOutputParserOriginal.get_format_instructions(self)}"
         )
-        return "\n\n" + PydanticOutputParserOriginal.get_format_instructions(self)
+        return "\n\n" + PydanticOutputParserOriginal.get_format_instructions(
+            self
+        ).replace("{", "{{").replace("}", "}}")
