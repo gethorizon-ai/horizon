@@ -98,10 +98,14 @@ def deploy_prompt(
 
     # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
-        formatted_prompt = [HumanMessage(content=formatted_prompt)]
+        wrapped_formatted_prompt = [HumanMessage(content=formatted_prompt)]
 
     # Generate the output
-    output = model_instance.generate([formatted_prompt]).generations[0][0].text.strip()
+    output = (
+        model_instance.generate([wrapped_formatted_prompt])
+        .generations[0][0]
+        .text.strip()
+    )
 
     # Conduct post-processing of output, if applicable
     if task.pydantic_model:
