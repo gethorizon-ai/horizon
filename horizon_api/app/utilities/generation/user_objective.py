@@ -73,6 +73,7 @@ def prompt_generation_user_objective(
                 template=prompt_template,
                 input_variables=task_request.input_variables,
             )
+            print(generated_prompt.template)
         except:
             continue
 
