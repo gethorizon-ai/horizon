@@ -48,6 +48,7 @@ def get_pydantic_object_from_s3(pydantic_model_s3_key: str) -> BaseModel:
     # Delete module from system reference and remove temp file
     del sys.modules[pydantic_module_name]
     os.remove(pydantic_model_file_path)
+    print("Deleted module from system reference and remove temp file")
 
     # Return Pydantic object
     return pydantic_object

@@ -28,11 +28,16 @@ class PostProcessing:
         self.pydantic_object = output_schema.get_pydantic_object_from_s3(
             pydantic_model_s3_key=pydantic_model_s3_key
         )
+        print("Received pydantic object from s3")
         self.pydantic_output_parser = PydanticOutputParser(
             pydantic_object=self.pydantic_object
         )
+        print("Initialized output parser")
         self.output_format_instructions = (
             self.pydantic_output_parser.get_format_instructions()
+        )
+        print(
+            f"Generated output format instructions: {self.output_format_instructions}"
         )
 
         # Initialize RetryWithErrorOutputParser if llm object provided
