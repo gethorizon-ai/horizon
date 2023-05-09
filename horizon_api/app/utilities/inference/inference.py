@@ -96,6 +96,7 @@ def run_inference(
             except:
                 # If output fails to satisfy output schema requirements, then set output to empty value
                 output = ""
+                print("-----FAILED IN INFERENCE-----")
 
         end_time = time.time()
         inference_latency = end_time - start_time
