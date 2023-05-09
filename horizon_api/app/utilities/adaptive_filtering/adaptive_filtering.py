@@ -3,6 +3,7 @@
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.inference_evaluation_results import InferenceEvaluationResults
+from app.models.component.post_processing.post_processing import PostProcessing
 from app.utilities.inference import inference
 from app.utilities.evaluation import evaluation
 from app.utilities.shortlist import shortlist
