@@ -73,22 +73,25 @@ def run_inference(
         )
         print(row["prompt_object"])
 
-        formatted_prompt = row["prompt_object"].format(**input_values)
+        original_formatted_prompt = row["prompt_object"].format(**input_values)
+        formatted_prompt_for_llm = original_formatted_prompt
         model_object = row["model_object"]
         # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
         if type(model_object) == ChatOpenAI or type(model_object) == ChatAnthropic:
-            formatted_prompt = [HumanMessage(content=formatted_prompt)]
+            formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
 
         start_time = time.time()
         output = (
-            model_object.generate([formatted_prompt]).generations[0][0].text.strip()
+            model_object.generate([formatted_prompt_for_llm])
+            .generations[0][0]
+            .text.strip()
         )
 
         # Conduct post-processing if applicable
         if post_processing:
             try:
                 output = post_processing.parse_and_retry_if_needed(
-                    original_output=output, prompt_string=formatted_prompt
+                    original_output=output, prompt_string=original_formatted_prompt
                 )
             except:
                 # If output fails to satisfy output schema requirements, then set output to empty value

@@ -76,17 +76,6 @@ class PostProcessing:
             str: output string satisfying output schema requirements.
         """
         print(f"Original output: {original_output}")
-        # Clean output by escaping invalid JSON control characters (e.g., newlines)
-        cleaned_output = PostProcessing.escape_invalid_json_control_characters(
-            text=original_output
-        )
-        print(f"Cleaned output: {cleaned_output}")
-        json.loads(cleaned_output)
-        print("Successfully loaded cleaned output")
-        self.pydantic_output_parser.parse(
-            text=cleaned_output,
-        )
-        print("Successfully parsed cleaned output")
 
         # If retry_with_error_output_parser is setup, then try parsing with it. Enables 1 retry currently
         if self.retry_with_error_output_parser:
@@ -95,7 +84,7 @@ class PostProcessing:
                 prompt_value = StringPromptValue(text=prompt_string)
                 print("Converted to StringPromptValue")
                 parsed_output = self.retry_with_error_output_parser.parse_with_prompt(
-                    completion=cleaned_output,
+                    completion=original_output,
                     prompt_value=prompt_value,
                 )
                 return parsed_output.json()
@@ -105,28 +94,28 @@ class PostProcessing:
         else:
             try:
                 parsed_output = self.pydantic_output_parser.parse(
-                    text=cleaned_output,
+                    text=original_output,
                 )
                 return parsed_output.json()
             except:
                 raise ValueError(FINAL_ERROR_MESSAGE)
 
-    def escape_invalid_json_control_characters(text: str) -> str:
-        """Helper function that escapes invalid control characters from structured text from llm.
+    # def escape_invalid_json_control_characters(text: str) -> str:
+    #     """Helper function that escapes invalid control characters from llm output.
 
-        Args:
-            text (str): text from which to escape invalid control characters.
+    #     Args:
+    #         text (str): text from which to escape invalid control characters.
 
-        Returns:
-            str: updated text without invalid control characters.
-        """
-        # Greedy search for 1st json candidate.
-        match = re.search(
-            r"\{.*\}", text.strip(), re.MULTILINE | re.IGNORECASE | re.DOTALL
-        )
-        json_str = ""
-        if match:
-            json_str = match.group()
+    #     Returns:
+    #         str: updated text without invalid control characters.
+    #     """
+    #     # Greedy search for 1st json candidate.
+    #     match = re.search(
+    #         r"\{.*\}", text.strip(), re.MULTILINE | re.IGNORECASE | re.DOTALL
+    #     )
+    #     json_str = ""
+    #     if match:
+    #         json_str = match.group()
 
-        # First load json_str with strict=False, then use JSON dumps to convert back to string while escaping control characters
-        return json.dumps(json.loads(json_str, strict=False))
+    #     # First load json_str with strict=False, then use JSON dumps to convert back to string while escaping control characters
+    #     return json.dumps(json.loads(json_str, strict=False))

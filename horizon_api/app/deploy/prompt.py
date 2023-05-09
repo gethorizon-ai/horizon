@@ -94,15 +94,16 @@ def deploy_prompt(
         input_values["var_" + input_variable] = input_values.pop(input_variable)
 
     # Format the prompt
-    formatted_prompt = prompt_instance.format(**input_values)
+    original_formatted_prompt = prompt_instance.format(**input_values)
+    formatted_prompt_for_llm = original_formatted_prompt
 
     # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
-        wrapped_formatted_prompt = [HumanMessage(content=formatted_prompt)]
+        formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
 
     # Generate the output
     output = (
-        model_instance.generate([wrapped_formatted_prompt])
+        model_instance.generate([formatted_prompt_for_llm])
         .generations[0][0]
         .text.strip()
     )
@@ -113,7 +114,7 @@ def deploy_prompt(
             pydantic_model_s3_key=task.pydantic_model, llm=model_instance
         )
         output = post_processing.parse_and_retry_if_needed(
-            original_output=output, prompt_string=formatted_prompt
+            original_output=output, prompt_string=original_formatted_prompt
         )
 
     # Return the output

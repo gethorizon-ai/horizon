@@ -31,3 +31,33 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
             .replace("{", "{{")
             .replace("}", "}}")
         )
+
+    def parse(self, text: str) -> T:
+        """Attempts to parse given text according to Pydantic model stored inside.
+
+        Modified implementation of LangChain's parse functionality to handle llm output that may have invalid JSON control characters.
+
+        Args:
+            text (str): text to parse into instance of Pydantic class.
+
+        Raises:
+            OutputParserException: error in parsing text into Pydantic schema.
+
+        Returns:
+            T: instance of Pydantic model class.
+        """
+        try:
+            # Greedy search for 1st json candidate.
+            match = re.search(
+                r"\{.*\}", text.strip(), re.MULTILINE | re.IGNORECASE | re.DOTALL
+            )
+            json_str = ""
+            if match:
+                json_str = match.group()
+            json_object = json.loads(json_str, strict=False)  # Edited to strict=False
+            return self.pydantic_object.parse_obj(json_object)
+
+        except (json.JSONDecodeError, ValidationError) as e:
+            name = self.pydantic_object.__name__
+            msg = f"Failed to parse {name} from completion {text}. Got: {e}"
+            raise OutputParserException(msg)
