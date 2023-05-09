@@ -74,6 +74,7 @@ def prompt_generation_user_objective(
                 input_variables=task_request.input_variables,
             )
         except:
+            print("Failed")
             continue
 
         prompt_model_id_list.append(starting_prompt_model_id)
