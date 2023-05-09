@@ -60,7 +60,7 @@ class PostProcessing:
         llm_copy.set_temperature(temperature=0)
 
         # Add retry_with_error_output_parser
-        self.retry_with_error_output_parser = RetryWithErrorOutputParser(
+        self.retry_with_error_output_parser = RetryWithErrorOutputParser.from_llm(
             parser=self.pydantic_output_parser, llm=llm_copy
         )
 
