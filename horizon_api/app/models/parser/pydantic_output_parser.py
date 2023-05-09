@@ -17,6 +17,10 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
         Returns:
             str: output format instructions to append to prompt prefix.
         """
+        print("Got request to get output format instructions")
+        print(
+            f"Standard output format instructions: {super(PydanticOutputParserOriginal, self).get_format_instructions()}"
+        )
         return (
             "\n\n" + super(PydanticOutputParserOriginal, self).get_format_instructions()
         )
