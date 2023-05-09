@@ -43,7 +43,9 @@ def get_pydantic_object_from_s3(pydantic_model_s3_key: str) -> BaseModel:
 
     # Pydantic class / object assumed to be called "OutputSchema"
     pydantic_object = pydantic_module_object.OutputSchema
-    print("Imported pydantic object")
+    print(
+        f"Imported pydantic object with schema: {pydantic_object.schema_json(indent=4)}"
+    )
 
     # Delete module from system reference and remove temp file
     del sys.modules[pydantic_module_name]

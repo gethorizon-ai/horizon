@@ -28,7 +28,9 @@ class PostProcessing:
         self.pydantic_object = output_schema.get_pydantic_object_from_s3(
             pydantic_model_s3_key=pydantic_model_s3_key
         )
-        print("Received pydantic object from s3")
+        print(
+            f"Received pydantic object from s3 with schema: {self.pydantic_object.schema_json(indent=4)}"
+        )
         self.pydantic_output_parser = PydanticOutputParser(
             pydantic_object=self.pydantic_object
         )
