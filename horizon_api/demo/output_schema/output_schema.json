@@ -4,12 +4,12 @@
     "properties": {
         "title": {
             "title": "Title",
-            "description": "title of the page",
+            "description": "title of the email",
             "type": "string"
         },
         "content": {
             "title": "Content",
-            "description": "content of the page",
+            "description": "content of the email",
             "type": "string"
         }
     },
