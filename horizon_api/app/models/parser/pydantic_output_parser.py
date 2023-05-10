@@ -40,9 +40,9 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
         if "properties" in reduced_schema and isinstance(
             reduced_schema["properties"], dict
         ):
-            for key, value in reduced_schema["properties"]:
-                if isinstance(value, dict) and "title" in value:
-                    del value["title"]
+            for item, item_details in reduced_schema["properties"].items():
+                if isinstance(item_details, dict) and "title" in item_details:
+                    del item_details["title"]
 
         # Ensure json in context is well-formed with double quotes.
         schema_str = json.dumps(reduced_schema)
