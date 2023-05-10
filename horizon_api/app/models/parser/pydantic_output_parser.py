@@ -12,11 +12,7 @@ from pydantic import BaseModel, ValidationError
 
 T = TypeVar("T", bound=BaseModel)
 
-PYDANTIC_FORMAT_INSTRUCTIONS = """The output should be formatted as a JSON instance that conforms to the JSON schema below.
-
-As an example, for the schema {{"properties": {{"foo": {{"title": "Foo", "description": "a list of strings", "type": "array", "items": {{"type": "string"}}}}}}, "required": ["foo"]}}}}, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of the schema. The object {{"properties": {{"foo": ["bar", "baz"]}}}} is not well-formatted.
-
-Here is the output schema:
+PYDANTIC_FORMAT_INSTRUCTIONS = """Only respond with a valid JSON object that conforms to the following JSON schema:
 ```
 {schema}
 ```"""
@@ -41,12 +37,19 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
             del reduced_schema["title"]
         if "type" in reduced_schema:
             del reduced_schema["type"]
+        if "properties" in reduced_schema and isinstance(
+            reduced_schema["properties"], dict
+        ):
+            for key, value in reduced_schema["properties"]:
+                if isinstance(value, dict) and "title" in value:
+                    del value["title"]
+
         # Ensure json in context is well-formed with double quotes.
         schema_str = json.dumps(reduced_schema)
 
-        return "\n\n==\nOUTPUT FORMAT:\n\n" + PYDANTIC_FORMAT_INSTRUCTIONS.format(
-            schema=schema_str
-        ).replace("{", "{{").replace("}", "}}")
+        return "\n\n" + PYDANTIC_FORMAT_INSTRUCTIONS.format(schema=schema_str).replace(
+            "{", "{{"
+        ).replace("}", "}}")
 
     def parse(self, text: str) -> T:
         """Attempts to parse given text according to Pydantic model stored inside.
