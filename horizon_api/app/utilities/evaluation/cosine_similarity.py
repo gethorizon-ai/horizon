@@ -57,7 +57,7 @@ def get_semantic_cosine_similarity_openAI(
         ] = evaluation_latency
 
         print(
-            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']} | generation_id: {row['generation_id']}"
+            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']}"
         )
         print(f"Output: {row['output']}")
         print(f"Ground truth: {row['ground_truth']}")
