@@ -71,7 +71,6 @@ def run_inference(
         print(
             f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']} | generation_id: {row['generation_id']}"
         )
-        print(row["prompt_object"])
 
         original_formatted_prompt = row["prompt_object"].format(**input_values)
         formatted_prompt_for_llm = original_formatted_prompt

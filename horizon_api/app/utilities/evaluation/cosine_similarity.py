@@ -21,6 +21,8 @@ def get_semantic_cosine_similarity_openAI(
         inference_evaluation_results (InferenceEvaluationResults): data structure with inference results.
         openai_api_key (str): OpenAI API key to use.
     """
+    print("Starting evaluation")
+
     # Get ground truth data corresponding to each evaluation_data_id
     reference_table = inference_evaluation_results.join(
         task_request.evaluation_dataset[
@@ -53,3 +55,10 @@ def get_semantic_cosine_similarity_openAI(
         inference_evaluation_results.loc[
             index, "evaluation_latency"
         ] = evaluation_latency
+
+        print(
+            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']} | generation_id: {row['generation_id']}"
+        )
+        print(f"Output: {row['output']}")
+        print(f"Ground truth: {row['ground_truth']}")
+        print(f"Inference quality: {cosine_similarity}")
