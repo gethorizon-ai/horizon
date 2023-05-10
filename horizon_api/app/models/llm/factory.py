@@ -51,8 +51,8 @@ class LLMFactory:
         "input_output_multiplier": 1.25,  # multiplier for input and output data length as buffer
         "buffer_tokens": 250,
         "buffer_characters": 250 / 0.3,
-        "min_max_output_tokens": 100,  # min value for max output tokens
-        "min_max_output_characters": 100 / 0.3,
+        "min_max_output_tokens": 250,  # min value for max output tokens
+        "min_max_output_characters": 250 / 0.3,
         "max_few_shots": 10,  # max number of few shot examples allowed
     }
 
