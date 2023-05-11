@@ -20,9 +20,9 @@ export default function AccountDrawer() {
   const { pathname } = useLocation();
 
   const drawerItemsIconsHandlers = {
-    'Horizon API Key': {
+    'Getting started': {
       'icon': <KeyIcon />,
-      'path': "/account/api_key"
+      'path': "/account/welcome"
     }
   };
 
@@ -31,34 +31,36 @@ export default function AccountDrawer() {
   };
 
   return (
-      <Drawer
-        sx={{
+    <Drawer
+      sx={{
+        width: drawerWidth,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
           width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-          },
-        }}
-        variant="permanent"
-        anchor="left"
-      >
-        <Toolbar />
-        <Box sx={{ overflow: 'auto', pt:2 }}>
-          <List>
-            {Object.keys(drawerItemsIconsHandlers).map((item) => (
-              <MenuItem key={item}
-                onClick={ goToPage(item) }
-                selected = {pathname === drawerItemsIconsHandlers[item]['path']}
-                sx={{
-                  "&.Mui-selected": {
-                    backgroundColor: theme.palette.secondary.light }}}
-                >
-                  <ListItemText primary={item} sx={{pl: 1}} />
-              </MenuItem>
-            ))}
-          </List>
-        </Box>
-      </Drawer>
+          boxSizing: 'border-box',
+        },
+      }}
+      variant="permanent"
+      anchor="left"
+    >
+      <Toolbar />
+      <Box sx={{ overflow: 'auto', pt: 2 }}>
+        <List>
+          {Object.keys(drawerItemsIconsHandlers).map((item) => (
+            <MenuItem key={item}
+              onClick={goToPage(item)}
+              selected={pathname === drawerItemsIconsHandlers[item]['path']}
+              sx={{
+                "&.Mui-selected": {
+                  backgroundColor: theme.palette.secondary.light
+                }
+              }}
+            >
+              <ListItemText primary={item} sx={{ pl: 1 }} />
+            </MenuItem>
+          ))}
+        </List>
+      </Box>
+    </Drawer>
   );
 }

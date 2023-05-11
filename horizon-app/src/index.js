@@ -10,8 +10,8 @@ import "@aws-amplify/ui-react/styles.css";
 import awsExports from "./aws-exports";
 
 // Page imports
-import ApiKeyPage from "./pages/account/ApiKeyPage";
 import Login from './pages/Login';
+import WelcomePage from './pages/account/WelcomePage';
 import PageNotFound from './pages/PageNotFound';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
 import TermsAndConditionsPage from './pages/legal/TermsAndConditionsPage';
@@ -58,8 +58,8 @@ root.render(
 
         <Route path="/login" element={<Login />} />
 
-        <Route path="/account" element={<Navigate to="/account/api_key" />} />
-        <Route path="/account/api_key" element={<ApiKeyPage />} />
+        <Route path="/account" element={<Navigate to="/account/welcome" />} />
+        <Route path="/account/welcome" element={<WelcomePage />} />
 
         <Route path="/legal/privacy_policy" element={<PrivacyPolicyPage />} />
         <Route path="/legal/terms_and_conditions" element={<TermsAndConditionsPage />} />
