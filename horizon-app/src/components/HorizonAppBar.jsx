@@ -13,7 +13,7 @@ import Tooltip from '@mui/material/Tooltip';
 import MenuItem from '@mui/material/MenuItem';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-function HorizonAppBar({user = undefined, signOut = undefined}) {
+function HorizonAppBar({ user = undefined, signOut = undefined }) {
   const [anchorElNav, setAnchorElNav] = React.useState(null);
   const [anchorElUser, setAnchorElUser] = React.useState(null);
 
@@ -43,13 +43,13 @@ function HorizonAppBar({user = undefined, signOut = undefined}) {
     }
   };
 
-  const goToApiKeyPage = () => {
-    if (location === "/account/api_key") {
-      handleCloseUserMenu();
-    } else {
-      navigate("/account/api_key");
-    }
-  };
+  // const goToApiKeyPage = () => {
+  //   if (location === "/account/api_key") {
+  //     handleCloseUserMenu();
+  //   } else {
+  //     navigate("/account/api_key");
+  //   }
+  // };
 
   const goToDocumentationPage = () => {
     window.open("http://docs.gethorizon.ai", "_blank")
@@ -60,7 +60,7 @@ function HorizonAppBar({user = undefined, signOut = undefined}) {
   };
 
   const settingsAndHandlers = {
-    'View API Key': goToApiKeyPage,
+    // 'View API Key': goToApiKeyPage,
     'Logout': signOut
   };
 
@@ -68,42 +68,42 @@ function HorizonAppBar({user = undefined, signOut = undefined}) {
     if (user) {
       return (
         <div>
-            <Tooltip title="Open settings">
+          <Tooltip title="Open settings">
             <IconButton
-                size="large"
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={handleOpenUserMenu}
-                sx={{ p: 0 }}
-                color="inherit"
-              >
-                <AccountCircle />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: '45px' }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
+              size="large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleOpenUserMenu}
+              sx={{ p: 0 }}
+              color="inherit"
             >
-              {Object.keys(settingsAndHandlers).map((setting) => (
-                <MenuItem key={setting} onClick={settingsAndHandlers[setting]}>
-                  <Typography textAlign="center">{setting}</Typography>
-                </MenuItem>
-              ))}
-            </Menu>
-          </div>
+              <AccountCircle />
+            </IconButton>
+          </Tooltip>
+          <Menu
+            sx={{ mt: '45px' }}
+            id="menu-appbar"
+            anchorEl={anchorElUser}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            keepMounted
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            open={Boolean(anchorElUser)}
+            onClose={handleCloseUserMenu}
+          >
+            {Object.keys(settingsAndHandlers).map((setting) => (
+              <MenuItem key={setting} onClick={settingsAndHandlers[setting]}>
+                <Typography textAlign="center">{setting}</Typography>
+              </MenuItem>
+            ))}
+          </Menu>
+        </div>
       )
     } else {
       return (
@@ -125,8 +125,9 @@ function HorizonAppBar({user = undefined, signOut = undefined}) {
             sx={{
               mr: 2,
               display: { xs: 'none', md: 'flex' },
-              fontWeight: 700,
-              color: 'inherit',
+              flexGrow: 1,
+              fontWeight: 'bold',
+              color: '#1d44b8',
               textDecoration: 'none',
             }}
           >
@@ -170,23 +171,23 @@ function HorizonAppBar({user = undefined, signOut = undefined}) {
             </Menu>
           </Box>
 
-          <Box sx={{ flexGrow: 1}} >
-          <Typography
-            variant="h5"
-            noWrap
-            component="a"
-            href=""
-            sx={{
-              mr: 2,
-              display: { xs: 'flex', md: 'none' },
-              flexGrow: 1,
-              fontWeight: 700,
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
-          >
-            Horizon AI
-          </Typography>
+          <Box sx={{ flexGrow: 1 }} >
+            <Typography
+              variant="h5"
+              noWrap
+              component="a"
+              href=""
+              sx={{
+                mr: 2,
+                display: { xs: 'flex', md: 'none' },
+                flexGrow: 1,
+                fontWeight: 700,
+                color: 'inherit',
+                textDecoration: 'none',
+              }}
+            >
+              Horizon AI
+            </Typography>
           </Box>
 
           <Box sx={{ flexGrow: 0, display: { xs: 'none', md: 'flex' } }}>
@@ -197,7 +198,7 @@ function HorizonAppBar({user = undefined, signOut = undefined}) {
             ))}
           </Box>
           <Box sx={{ flexGrow: 0, pl: 2 }}>
-          {showAccountOptions()}
+            {showAccountOptions()}
           </Box>
         </Toolbar>
       </Container>

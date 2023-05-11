@@ -5,6 +5,9 @@ import { DefaultCopyField } from '@eisberg-labs/mui-copy-field';
 import { useEffect, useState } from "react";
 import { Auth } from "aws-amplify";
 import { Navigate } from "react-router-dom";
+import { Code, ThemeProvider, createTheme } from '@mui/material';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const drawerWidth = 240;
 
@@ -14,7 +17,7 @@ const initialState = {
     loading: true
 };
 
-function ApiKeyPage() {
+function WelcomePage() {
     const [state, setState] = useState(initialState);
     useEffect(() => {
         async function checkUser() {
@@ -70,15 +73,24 @@ function ApiKeyPage() {
             <Box component="main" sx={{ flexGrow: 1, mt: 3, ml: { sm: `${drawerWidth}px` } }}>
                 <Container maxWidth="xl">
                     <Typography variant="h4" align="left" sx={{ mb: 3, fontWeight: 700 }} >
-                        Horizon API Key
+                        Welcome!
                     </Typography>
                     <Typography variant="body1">
-                        Welcome! You have successfully created an account and logged in. Please proceed with creating a Horizon API key using the command line interface as described in the <a href="https://docs.gethorizon.ai/quickstart">documentation</a>. You can then create and deploy projects and tasks!
+                        First step - go to your command line to get your API key.<br /><br />
+
+                        Detailed guidance on how to use Horizon is provided <a href="https://docs.gethorizon.ai/quickstart#2-install-the-library-and-generate-your-horizon-api-key">here</a>.<br /><br />
                     </Typography>
+                    <SyntaxHighlighter language="bash">
+                        {`# Install Horizon library via pip
+pip install horizonai
+
+# Get your API key
+horizonai user api-key`}
+                    </SyntaxHighlighter>
                 </Container>
             </Box>
-        </Box>
+        </Box >
     );
 }
 
-export default ApiKeyPage
+export default WelcomePage
