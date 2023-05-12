@@ -1,7 +1,7 @@
 {
     "title": "OutputSchema",
     "type": "object",
-    "randomalsdkjfal;sjfs;al": {
+    "properties": {
         "title": {
             "title": "Title",
             "description": "title of the email",
