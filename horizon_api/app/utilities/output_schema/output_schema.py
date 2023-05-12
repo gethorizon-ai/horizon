@@ -178,6 +178,7 @@ def check_evaluation_dataset_aligns_with_pydantic_model(
     for element in ground_truth_list:
         # Try to load as JSON object
         try:
+            print(element)
             element_JSON = json.loads(element, strict=False)
         except Exception as e:
             raise ValueError(
