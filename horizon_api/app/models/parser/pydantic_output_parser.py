@@ -24,8 +24,6 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
     def get_format_instructions(self) -> str:
         """Returns output format instructions to append to prompt prefix.
 
-        Currently, adds two newlines and removes an unnecessary newline from LangChain's original response.
-
         Returns:
             str: output format instructions to append to prompt prefix.
         """
