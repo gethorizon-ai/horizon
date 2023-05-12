@@ -33,6 +33,10 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
 
         # Remove extraneous fields.
         reduced_schema = schema
+        if "title" in reduced_schema:
+            del reduced_schema["title"]
+        if "type" in reduced_schema:
+            del reduced_schema["type"]
         if "properties" in reduced_schema and isinstance(
             reduced_schema["properties"], dict
         ):
@@ -41,7 +45,7 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
                     del item_details["title"]
 
         # Ensure json in context is well-formed with double quotes.
-        schema_str = json.dumps(reduced_schema["properties"])
+        schema_str = json.dumps(reduced_schema)
 
         return "\n\n" + PYDANTIC_FORMAT_INSTRUCTIONS.format(schema=schema_str).replace(
             "{", "{{"
