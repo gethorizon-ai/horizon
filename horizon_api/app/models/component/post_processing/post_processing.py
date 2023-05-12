@@ -4,6 +4,7 @@ from app.models.llm.base import BaseLLM
 from app.models.parser.pydantic_output_parser import PydanticOutputParser
 from app.models.parser.retry_with_error_output_parser import RetryWithErrorOutputParser
 from app.utilities.output_schema import output_schema
+from langchain.prompts.base import StringPromptValue
 import copy
 
 
@@ -72,9 +73,10 @@ class PostProcessing:
         # If retry_with_error_output_parser is setup, then try parsing with it. Enables 1 retry currently
         if self.retry_with_error_output_parser:
             try:
+                prompt_value = StringPromptValue(text=prompt_string)
                 parsed_output = self.retry_with_error_output_parser.parse_with_prompt(
                     completion=original_output,
-                    prompt_string=prompt_string,
+                    prompt_value=prompt_value,
                 )
                 return parsed_output.json()
             except Exception as e:
