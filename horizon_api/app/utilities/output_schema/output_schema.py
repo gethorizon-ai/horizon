@@ -101,7 +101,7 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
     # Check that each JSON key is valid
     for key in output_schema.keys():
         if key not in VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA:
-            raise AssertionError(f"Invalid key in output schema: {key}")
+            raise AssertionError(f"Invalid key in output schema: '{key}'")
 
     # Check that "properties" key is part of JSON
     if "properties" not in output_schema or not isinstance(
@@ -119,16 +119,16 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
     for field in output_schema["properties"].keys():
         if not isinstance(output_schema["properties"][field], dict):
             raise AssertionError(
-                f"Invalid field in output schema (must be a dict): {field}"
+                f"Invalid field in output schema (must be a dict): '{field}'"
             )
         for key, value in output_schema["properties"][field].items():
             if key not in VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA:
                 raise AssertionError(
-                    f"Invalid field in output schema 'properties': {key}"
+                    f"Invalid field in output schema 'properties': '{key}'"
                 )
             if not isinstance(value, str):
                 raise AssertionError(
-                    f"Invalid value in output schema (must be str): {key}: {value}"
+                    f"Invalid value in output schema (must be str): '{key}': '{value}'"
                 )
 
     # Check that any required fields are listed in properties
@@ -138,7 +138,7 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
         for field in output_schema["required"]:
             if field not in output_schema["properties"]:
                 raise AssertionError(
-                    f"The following field is required but not defined in properties: {field}"
+                    f"The following field is required but not defined in properties: '{field}'"
                 )
 
     # Update output schema to use standard title
