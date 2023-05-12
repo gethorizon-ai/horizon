@@ -78,8 +78,7 @@ class PostProcessing:
                 )
                 return parsed_output.json()
             except Exception as e:
-                print(f"Error message: {str(e)}")
-                raise ValueError(FINAL_ERROR_MESSAGE)
+                raise ValueError(FINAL_ERROR_MESSAGE + "\n" + str(e))
         # If retry_with_error_output_parser is not setup, then try parsing output directly with no retry
         else:
             try:
@@ -88,5 +87,4 @@ class PostProcessing:
                 )
                 return parsed_output.json()
             except Exception as e:
-                print(f"Error message: {str(e)}")
-                raise ValueError(FINAL_ERROR_MESSAGE)
+                raise ValueError(FINAL_ERROR_MESSAGE + "\n" + str(e))
