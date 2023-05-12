@@ -13,6 +13,6 @@ class RetryWithErrorOutputParser(BaseParser, RetryWithErrorOutputParserOriginal)
     def parse_with_prompt(self, completion: str, prompt_string: str):
         prompt_value = StringPromptValue(text=prompt_string)
         return super(RetryWithErrorOutputParserOriginal, self).parse_with_prompt(
-            completion=completion,
-            prompt_value=prompt_value,
+            completion,
+            prompt_value,
         )
