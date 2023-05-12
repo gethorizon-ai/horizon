@@ -169,9 +169,9 @@ def list_tasks():
 # Create a new task
 def create_task(
     name: str,
-    task_type: str,
     project_id: int,
     allowed_models: list,
+    task_type: str = "text_generation",
 ):
     global api_key
     if api_key == None:

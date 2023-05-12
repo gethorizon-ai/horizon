@@ -272,7 +272,7 @@ def generate_task():
 
     # Get output schema, if applicable
     output_schema_file_path = None
-    if click.confirm("Add required JSON schema for LLM output?"):
+    if click.confirm("Add JSON schema for LLM output?"):
         output_schema_file_path = click.prompt(text="Output schema file path (.json)")
 
     click.echo("")
@@ -310,7 +310,7 @@ def generate_task():
     # Create task record
     try:
         task_creation_response = horizon_ai.create_task(
-            task_name, project_id, allowed_models
+            name=task_name, project_id=project_id, allowed_models=allowed_models
         )
         task_id = task_creation_response["task"]["id"]
     except Exception as e:
