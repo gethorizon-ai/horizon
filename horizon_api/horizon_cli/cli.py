@@ -378,7 +378,7 @@ def generate_task():
     click.echo(
         "* This is entirely the LLM provider cost and not a Horizon charge. Actual cost may vary."
     )
-    click.echo("=====")
+    click.echo("")
 
     # Cancel task creation if user does not give confirmation
     if not click.confirm("Proceed?"):
