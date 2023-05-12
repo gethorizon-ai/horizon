@@ -121,7 +121,7 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
             raise AssertionError(
                 f"Invalid field in output schema (must be a dict): {field}"
             )
-        for key, value in field.items():
+        for key, value in output_schema["properties"][field].items():
             if key not in VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA:
                 raise AssertionError(
                     f"Invalid field in output schema 'properties': {key}"
