@@ -664,14 +664,16 @@ class UploadOutputSchemasAPI(Resource):
                 "error": f"UploadOutputSchemasAPI: Ground truth data could not be parsed according to output schema - {str(e)}"
             }, 400
 
-        # Upload output schema and Pydantic model to s3 with given filename, while converting Pydantic model to Python extension
+        # Upload output schema to s3 with given filename and extension
         output_schema_s3_key = f"output_schemas/{task_id}/{output_schema.filename}"
-        pydantic_model_s3_key = f"pydantic_models/{task_id}/{os.path.splitext(output_schema.filename)[0]}.py"
         with open(output_schema_temp_file_path, "rb") as output_schema_temp_file:
             upload_file_to_s3(output_schema_temp_file, output_schema_s3_key)
+        os.remove(output_schema_temp_file_path)
+
+        # Upload Pydantic model to s3 with given filename converted to Python extension
+        pydantic_model_s3_key = f"pydantic_models/{task_id}/{os.path.splitext(output_schema.filename)[0]}.py"
         with open(pydantic_model_temp_file_path, "rb") as pydantic_model_temp_file:
             upload_file_to_s3(pydantic_model_temp_file, pydantic_model_s3_key)
-        os.remove(output_schema_temp_file_path)
         os.remove(pydantic_model_temp_file_path)
 
         # Set s3 keys in task object
