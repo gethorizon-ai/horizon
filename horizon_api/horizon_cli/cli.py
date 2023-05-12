@@ -248,62 +248,35 @@ def list_tasks(horizon_api_key):
 
 # Create Task record and generate prompt for it
 @click.command(name="generate")
-@click.option(
-    "--horizon_api_key",
-    default=os.environ.get("HORIZON_API_KEY"),
-    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
-    help="The Horizon API key for the user.",
-    hide_input=True,
-)
-@click.option("--name", prompt="Task name", help="The name of the task to create.")
-@click.option(
-    "--project_id",
-    prompt="Associated project ID",
-    help="The ID of the project that the task belongs to.",
-)
-# @click.option('--task_type', prompt='Task type', help='The type of the task to create.')
-@click.option(
-    "--task_type", default="text_generation", help="The type of the task to create."
-)
-@click.option(
-    "--objective",
-    prompt="Task objective",
-    help="The objective of the task to generate.",
-)
-@click.option(
-    "--file_path",
-    prompt="Evaluation data file path",
-    help="The path to the file containing the evaluation datasets to upload.",
-)
-# click.option(
-#     "--openai_api_key",
-#     default=os.environ.get("OPENAI_API_KEY"),
-#     prompt="OpenAI API Key (type 'skip' if you're not using OpenAI)"
-#     if not os.environ.get("OPENAI_API_KEY")
-#     else False,
-#     help="The OpenAI API key for the user.",
-# )
-# click.option(
-#     "--anthropic_api_key",
-#     default=os.environ.get("ANTHROPIC_API_KEY"),
-#     prompt="Anthropic API Key (type 'skip' if you're not using Anthropic)"
-#     if not os.environ.get("ANTHROPIC_API_KEY")
-#     else False,
-#     help="The Anthropic API key for the user.",
-# )
-def generate_task(
-    name,
-    project_id,
-    task_type,
-    objective,
-    file_path,
-    horizon_api_key,
-    # openai_api_key,
-    # anthropic_api_key,
-):
-    horizon_ai.api_key = horizon_api_key
-    # horizon_ai.openai_api_key = openai_api_key
-    # horizon_ai.anthropic_api_key = anthropic_api_key
+def generate_task():
+    click.echo("### Step 1 - Task Overview ###")
+    # Get Horizon API key
+    if os.environ.get("HORIZON_API_KEY"):
+        horizon_ai.api_key = os.environ.get("HORIZON_API_KEY")
+    else:
+        horizon_ai.api_key = click.prompt(
+            text="Horizon API key (text hidden)", hide_input=True
+        )
+
+    # Get project ID
+    project_id = click.prompt("Project ID")
+
+    # Get task name
+    task_name = click.prompt("Task name")
+
+    # Get objective
+    objective = click.prompt("Task objective")
+
+    # Get evaluation dataset
+    dataset_file_path = click.prompt("Evaluation dataset file path (.csv)")
+
+    # Get output schema, if applicable
+    output_schema_file_path = None
+    if click.confirm("Add required JSON schema for LLM output?"):
+        output_schema_file_path = click.prompt(text="Output schema file path (.json)")
+
+    click.echo("")
+    click.echo("### Step 2 - Model Selection ###")
 
     # Ask user which models they'd like to include
     allowed_models = []
@@ -334,12 +307,10 @@ def generate_task(
                 text="Anthropic API Key (text hidden)", hide_input=True
             )
 
-    click.echo(f"Evaluating the following models for task generation: {allowed_models}")
-
     # Create task record
     try:
         task_creation_response = horizon_ai.create_task(
-            name, task_type, project_id, allowed_models
+            task_name, project_id, allowed_models
         )
         task_id = task_creation_response["task"]["id"]
     except Exception as e:
@@ -350,7 +321,7 @@ def generate_task(
     # Upload evaluation dataset
     try:
         upload_dataset_response = horizon_ai.upload_evaluation_dataset(
-            task_id, file_path
+            task_id, dataset_file_path
         )
     except Exception as e:
         # If uploading evaluation dataset fails, then delete previously created task
@@ -359,11 +330,8 @@ def generate_task(
         click.echo(str(e))
         return
 
-    # Ask user if they want to add output schema
-    if click.confirm("Add JSON file with data schema for LLM output?"):
-        output_schema_file_path = click.prompt(
-            text="Path to JSON file with data schema for LLM output"
-        )
+    # Upload output schema, if applicable
+    if output_schema_file_path:
         try:
             upload_output_schema_response = horizon_ai.upload_output_schema(
                 task_id, output_schema_file_path
@@ -389,7 +357,8 @@ def generate_task(
         click.echo(str(e))
         return
 
-    click.echo("=====")
+    click.echo("")
+    click.echo("### Step 3 - Task confirmation ###")
     click.echo(
         "Please confirm the following parameters for your task creation request:"
     )
@@ -401,8 +370,10 @@ def generate_task(
         "* Inferred based on the headers of all but the right-most column in your evaluation dataset."
     )
     click.echo("")
+    click.echo(f"3) Models considered: {allowed_models}")
+    click.echo("")
     click.echo(
-        f"3) Estimated LLM provider cost: ${task_confirmation_details['cost_estimate']['total_cost']['low']}-{task_confirmation_details['cost_estimate']['total_cost']['high']}"
+        f"4) Estimated LLM provider cost: ${task_confirmation_details['cost_estimate']['total_cost']['low']}-{task_confirmation_details['cost_estimate']['total_cost']['high']}"
     )
     click.echo(
         "* This is entirely the LLM provider cost and not a Horizon charge. Actual cost may vary."
@@ -410,7 +381,7 @@ def generate_task(
     click.echo("=====")
 
     # Cancel task creation if user does not give confirmation
-    if not click.confirm("Proceed with task creation?"):
+    if not click.confirm("Proceed?"):
         # Delete task and evaluation dataset, and abort operation
         horizon_ai.delete_task(task_id)
         click.echo("Cancelled task creation.")
@@ -418,26 +389,16 @@ def generate_task(
 
     # Given user's confirmation, continue with task creation
     try:
-        click.echo("Proceeding with task creation...")
-        start_time = time.time()
+        click.echo("Proceeding with task generation...")
         generate_response = horizon_ai.generate_task(task_id, objective)
-        end_time = time.time()
-        generation_latency = end_time - start_time
-        click.echo(f"Generation latency: {generation_latency}")
+        formatted_output = json.dumps(generate_response, indent=4)
+        click.echo(formatted_output)
     except Exception as e:
         # If error with generating task, then clean up task record and evaluation dataset before raising exception
         horizon_ai.delete_task(task_id)
         click.echo("Failed in task generation")
         click.echo(str(e))
         return
-
-    # Print info about the newly created task object
-    click.echo("=====")
-    click.echo(
-        "Task creation completed successfully. Here are details about your task:"
-    )
-    formatted_output = json.dumps(generate_response, indent=4)
-    click.echo(formatted_output)
 
 
 # Get Task

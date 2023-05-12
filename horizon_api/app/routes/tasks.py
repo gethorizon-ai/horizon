@@ -8,12 +8,14 @@ from app.utilities.authentication.cognito_auth import get_user_email
 from app.utilities.run import generate_prompt
 from app.utilities.run import task_confirmation_details
 from app.utilities.dataset_processing import data_check
+from app.utilities.output_schema import output_schema as output_schema_util
 from app.utilities.email_notifications import email_notifications
 from app.deploy.prompt import deploy_prompt
 from app.models.llm.factory import LLMFactory
 from app.utilities.S3.s3_util import (
     upload_file_to_s3,
     download_file_from_s3,
+    download_file_from_s3_and_save_locally,
     delete_file_from_s3,
 )
 import os
@@ -484,7 +486,6 @@ class UploadEvaluationDatasetsAPI(Resource):
         if "evaluation_dataset" not in request.files:
             return {"error": f"No file provided\n{request.files}"}, 400
 
-        project_dir = os.getcwd()
         evaluation_dataset = request.files["evaluation_dataset"]
 
         if not allowed_evaluation_dataset_file(evaluation_dataset.filename):
@@ -602,6 +603,11 @@ class UploadOutputSchemasAPI(Resource):
         if "output_schema" not in request.files:
             return {"error": f"No file provided\n{request.files}"}, 400
 
+        if not task.evaluation_dataset:
+            return {
+                "error": "Evaluation dataset must be uploaded before output schema"
+            }, 404
+
         output_schema = request.files["output_schema"]
 
         if not allowed_output_schema_file(output_schema.filename):
@@ -613,7 +619,10 @@ class UploadOutputSchemasAPI(Resource):
             output_schema_temp_file_path = output_schema_temp_file.name
 
         try:
-            # TODO: implement check_output_schema
+            # Check and process output schema
+            output_schema_util.check_and_process_output_schema(
+                output_schema_file_path=output_schema_temp_file_path
+            )
 
             # Convert output schema into Python file with Pydantic model representation
             with tempfile.NamedTemporaryFile(
@@ -630,7 +639,29 @@ class UploadOutputSchemasAPI(Resource):
             logging.error(f"UploadOutputSchemasAPI: Invalid output schema - {str(e)}")
             os.remove(output_schema_temp_file_path)
             os.remove(pydantic_model_temp_file_path)
-            return {"error": str(e)}, 400
+            return {
+                "error": f"UploadOutputSchemasAPI: Invalid output schema - {str(e)}"
+            }, 400
+
+        # Check ground truth in evaluation dataset matches output schema
+        try:
+            dataset_file_path = download_file_from_s3_and_save_locally(
+                key=task.evaluation_dataset
+            )
+            output_schema_util.check_evaluation_dataset_aligns_with_pydantic_model(
+                dataset_file_path=dataset_file_path,
+                pydantic_model_file_path=pydantic_model_temp_file_path,
+            )
+            os.remove(path=dataset_file_path)
+        except Exception as e:
+            logging.error(
+                f"UploadOutputSchemasAPI: Ground truth data could not be parsed according to output schema - {str(e)}"
+            )
+            os.remove(output_schema_temp_file_path)
+            os.remove(pydantic_model_temp_file_path)
+            return {
+                "error": f"UploadOutputSchemasAPI: Ground truth data could not be parsed according to output schema - {str(e)}"
+            }, 400
 
         # Upload output schema and Pydantic model to s3 with given filename, while converting Pydantic model to Python extension
         output_schema_s3_key = f"output_schemas/{task_id}/{output_schema.filename}"

@@ -28,11 +28,13 @@ def check_evaluation_dataset_and_data_length(
     )
 
     # Get evaluation dataset
-    evaluation_dataset = get_evaluation_dataset(dataset_file_path=dataset_file_path)
+    evaluation_dataset = get_evaluation_dataset(
+        dataset_file_path=dataset_file_path, escape_curly_braces=True
+    )
 
     # Check that evaluation data lengths are appropriate
     evaluation_data_length = data_length.get_evaluation_data_length(
-        evaluation_dataset=evaluation_dataset
+        evaluation_dataset=evaluation_dataset, unescape_curly_braces=True
     )
     max_input_tokens = evaluation_data_length["max_input_tokens"]
     max_ground_truth_tokens = evaluation_data_length["max_ground_truth_tokens"]
@@ -85,13 +87,8 @@ def check_evaluation_dataset(
         AssertionError: duplicate rows of data.
     """
     # Check that evaluation data is at most 1 MB file size
-    try:
-        if os.path.getsize(dataset_file_path) > 1000000:
-            raise AssertionError("Evaluation dataset can be at most 1 MB large.")
-    except Exception as e:
-        raise AssertionError(
-            f"Got the following error when trying to acccess evaluation dataset: {str(e)}"
-        )
+    if os.path.getsize(dataset_file_path) > 1000000:
+        raise AssertionError("Evaluation dataset can be at most 1 MB large.")
 
     # Try to import evaluation dataset
     try:
@@ -142,17 +139,16 @@ def check_evaluation_dataset(
 
 
 def get_evaluation_dataset(
-    dataset_file_path: str, escape_characters: bool = True
+    dataset_file_path: str, escape_curly_braces: bool = True
 ) -> pd.DataFrame:
     """Convert evaluation dataset csv into DataFrame.
 
-    Assumes evaluation dataset has been checked appropriately. Escapes curly braces for use with format string method by adding extra
-    curly brace (e.g., converts '{'  to '{{').
+    Assumes evaluation dataset has been checked appropriately. Escapes curly braces for use with format strings by adding extra curly
+        brace (e.g., converts '{'  to '{{').
 
     Args:
         dataset_file_path (str): file path to evaluation dataset.
-        unescape_characters (bool, optional): whether to escape certain characters (e.g., curly braces) when getting data lengths.
-            Defaults to True.
+        escape_curly_braces (bool, optional): whether to escape curly braces when getting data lengths. Defaults to True.
 
     Returns:
         pd.DataFrame: processed evaluation dataset.
@@ -176,7 +172,7 @@ def get_evaluation_dataset(
     )
 
     # Escape curly braces
-    if escape_characters:
+    if escape_curly_braces:
         evaluation_dataset = evaluation_dataset.applymap(
             lambda x: x.replace("{", "{{").replace("}", "}}")
         )

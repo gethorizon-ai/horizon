@@ -1,0 +1,20 @@
+{
+    "title": "OutputSchema",
+    "type": "object",
+    "randomalsdkjfal;sjfs;al": {
+        "title": {
+            "title": "Title",
+            "description": "title of the email",
+            "type": "string"
+        },
+        "content": {
+            "title": "Content",
+            "description": "content of the email",
+            "type": "string"
+        }
+    },
+    "required": [
+        "random",
+        "content"
+    ]
+}

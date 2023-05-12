@@ -1,10 +1,22 @@
 """Helper functions to manage output schemas and associated Pydantic objects."""
 
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
+from app.utilities.dataset_processing import data_check
 from pydantic import BaseModel
+import json
 import os
 import importlib
 import sys
+
+
+ASSUMED_PYDANTIC_CLASS_NAME = "OutputSchema"
+VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA = [
+    "title",
+    "type",
+    "properties",
+    "description",
+    "required",
+]
 
 
 def get_pydantic_object_from_s3(pydantic_model_s3_key: str) -> BaseModel:
@@ -26,7 +38,30 @@ def get_pydantic_object_from_s3(pydantic_model_s3_key: str) -> BaseModel:
     os.rename(pydantic_model_file_path, new_pydantic_model_file_path)
     pydantic_model_file_path = new_pydantic_model_file_path
 
-    # Try to import Pydantic model
+    # Get Pydantic object from file path
+    pydantic_object = get_pydantic_object_from_file_path(
+        pydantic_model_file_path=pydantic_model_file_path
+    )
+
+    # Clean up temp file
+    os.remove(pydantic_model_file_path)
+
+    # Return Pydantic object
+    return pydantic_object
+
+
+def get_pydantic_object_from_file_path(pydantic_model_file_path: str) -> BaseModel:
+    """Given path to local Python file defining Pydantic model, imports it and creates corresponding Pydantic object.
+
+    Assumes that file path has .py extension.
+
+    Args:
+        pydantic_model_file_path (str): path to Python file defining Pydantic model.
+
+    Returns:
+        BaseModel: Pydantic object.
+    """
+    # Try to import Pydantic model from file path
     pydantic_module_name = os.path.basename(pydantic_model_file_path)[:-3]
     pydantic_module_spec = importlib.util.spec_from_file_location(
         pydantic_module_name, pydantic_model_file_path
@@ -36,11 +71,125 @@ def get_pydantic_object_from_s3(pydantic_model_s3_key: str) -> BaseModel:
     pydantic_module_spec.loader.exec_module(pydantic_module_object)
 
     # Pydantic class / object assumed to be called "OutputSchema"
-    pydantic_object = pydantic_module_object.OutputSchema
+    pydantic_object = getattr(pydantic_module_object, ASSUMED_PYDANTIC_CLASS_NAME)
 
     # Delete module from system reference and remove temp file
     del sys.modules[pydantic_module_name]
-    os.remove(pydantic_model_file_path)
 
-    # Return Pydantic object
     return pydantic_object
+
+
+def check_and_process_output_schema(output_schema_file_path: str) -> None:
+    """Checks contents of output schema for potential errors and standardizes Pydantic class / object name for later reference.
+
+    Currently restricts output schema to only use VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA.
+
+    Args:
+        output_schema_file_path (str): file path to output schema.
+    """
+    # Check that output schema is at most 5 KB in size
+    if os.path.getsize(output_schema_file_path) > 5000:
+        raise AssertionError("Output schema can be at most 5 KB large.")
+
+    # Read output schema from file path and check it is JSON object
+    with open(output_schema_file_path, "r") as file:
+        try:
+            output_schema = json.load(file)
+        except json.JSONDecodeError:
+            raise AssertionError("Output schema is not a valid JSON object.")
+
+    # Check that each JSON key is valid
+    for key in output_schema.keys():
+        if key not in VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA:
+            raise AssertionError(f"Invalid key in output schema: {key}")
+
+    # Check that "properties" key is part of JSON
+    if "properties" not in output_schema:
+        raise AssertionError('Output schema missing "properties" key.')
+
+    # Check that there at most 5 fields (to limit complexity)
+    if len(output_schema["properties"].keys()) > 5:
+        raise AssertionError(
+            'Cannot have more than 5 fields in "properties" (to limit complexity).'
+        )
+
+    # Check that each field in properties is only a single level dict
+    for field in output_schema["properties"]:
+        if not isinstance(field, dict):
+            raise AssertionError(
+                f"Invalid field in output schema (must be a dict): {field}"
+            )
+        for key, value in field.items():
+            if key not in VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA:
+                raise AssertionError(
+                    f"Invalid field in output schema 'properties': {key}"
+                )
+            if not isinstance(value, str):
+                raise AssertionError(
+                    f"Invalid value in output schema (must be str): {key}: {value}"
+                )
+
+    # Check that any required fields are listed in properties
+    if "required" in output_schema:
+        if not isinstance(output_schema["required"], list):
+            raise AssertionError(f"Required fields must be provided as a list")
+        for field in output_schema["required"]:
+            if field not in output_schema["properties"]:
+                raise AssertionError(
+                    f"The following field is required but not defined in properties: {field}"
+                )
+
+    # Update output schema to use standard title
+    output_schema["title"] = ASSUMED_PYDANTIC_CLASS_NAME
+
+    # Write the updated output schema back to the file
+    with open(output_schema_file_path, "w") as file:
+        json.dump(output_schema, file)
+
+
+def check_evaluation_dataset_aligns_with_pydantic_model(
+    dataset_file_path: str, pydantic_model_file_path: str
+) -> None:
+    """Checks that each ground truth element in evaluation dataset can be parsed as an instance of the Pydantic model for the given
+        output schema.
+
+    Args:
+        dataset_file_path (str): file path to evaluation dataset.
+        pydantic_model_file_path (str): file path to pydantic model.
+
+    Raises:
+        ValueError: ground truth element cannot be parsed as JSON object.
+        ValueError: ground truth element cannot be parsed as instance of the Pydantic model for the given output schema.
+    """
+    # Get evaluation dataset
+    evaluation_dataset = data_check.get_evaluation_dataset(
+        dataset_file_path=dataset_file_path, escape_curly_braces=False
+    )
+
+    # Get Pydantic object
+    pydantic_object = get_pydantic_object_from_file_path(
+        pydantic_model_file_path=pydantic_model_file_path
+    )
+
+    # Iterate across each ground_truth element
+    ground_truth_list = evaluation_dataset["ground_truth"].to_list()
+    for element in ground_truth_list:
+        # Try to load as JSON object
+        try:
+            element_JSON = json.loads(element, strict=False)
+        except Exception as e:
+            raise ValueError(
+                f"""Could not parse the following ground truth element as JSON object:
+Ground truth element: {element}
+Error: {str(e)}"""
+            )
+
+        # Try to parse element using Pydantic object
+        try:
+            pydantic_object.parse_obj(element_JSON)
+        except Exception as e:
+            raise ValueError(
+                f"""Could not parse the following ground truth element according to given output schema:
+Ground truth element: {element}
+Error: {str(e)}"""
+            )
