@@ -618,6 +618,11 @@ class UploadOutputSchemasAPI(Resource):
             output_schema_temp_file.write(output_schema.read())
             output_schema_temp_file_path = output_schema_temp_file.name
 
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=".py"
+        ) as pydantic_model_temp_file:
+            pydantic_model_temp_file_path = pydantic_model_temp_file.name
+
         try:
             # Check and process output schema
             output_schema_util.check_and_process_output_schema(
@@ -625,15 +630,11 @@ class UploadOutputSchemasAPI(Resource):
             )
 
             # Convert output schema into Python file with Pydantic model representation
-            with tempfile.NamedTemporaryFile(
-                delete=False, suffix=".py"
-            ) as pydantic_model_temp_file:
-                pydantic_model_temp_file_path = pydantic_model_temp_file.name
-                datamodel_code_generator.generate(
-                    input_=Path(output_schema_temp_file_path),
-                    input_file_type="jsonschema",
-                    output=Path(pydantic_model_temp_file_path),
-                )
+            datamodel_code_generator.generate(
+                input_=Path(output_schema_temp_file_path),
+                input_file_type="jsonschema",
+                output=Path(pydantic_model_temp_file_path),
+            )
 
         except Exception as e:
             logging.error(f"UploadOutputSchemasAPI: Invalid output schema - {str(e)}")

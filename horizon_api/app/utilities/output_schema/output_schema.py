@@ -104,7 +104,9 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
             raise AssertionError(f"Invalid key in output schema: {key}")
 
     # Check that "properties" key is part of JSON
-    if "properties" not in output_schema:
+    if "properties" not in output_schema or not isinstance(
+        output_schema["properties"], dict
+    ):
         raise AssertionError('Output schema missing "properties" key.')
 
     # Check that there at most 5 fields (to limit complexity)
@@ -114,8 +116,8 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
         )
 
     # Check that each field in properties is only a single level dict
-    for field in output_schema["properties"]:
-        if not isinstance(field, dict):
+    for field in output_schema["properties"].keys():
+        if not isinstance(output_schema["properties"][field], dict):
             raise AssertionError(
                 f"Invalid field in output schema (must be a dict): {field}"
             )
