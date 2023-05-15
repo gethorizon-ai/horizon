@@ -1,10 +1,17 @@
 from .base import BaseEmbeddings
 from langchain.embeddings import OpenAIEmbeddings as OpenAIEmbeddingsOriginal
 import openai
-from typing import Any
+from typing import (
+    Any,
+    Literal,
+    Set,
+    Union,
+)
 
 
 class OpenAIEmbeddings(OpenAIEmbeddingsOriginal):
+    disallowed_special: Union[Literal["all"], Set[str]] = "all"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
