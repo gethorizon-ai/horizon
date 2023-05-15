@@ -7,7 +7,7 @@ class Config:
     password = os.environ.get("DB_PASSWORD")
     hostname = os.environ.get("DB_HOSTNAME")
     port = os.environ.get("DB_PORT")
-    database_name = "horizon_aditya"  # TODO: os.environ.get("DB_NAME")
+    database_name = os.environ.get("DB_NAME")
     S3_BUCKET = "horizon-api-001"
 
     SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{username}:{password}@{hostname}:{port}/{database_name}"
@@ -31,7 +31,7 @@ class Config:
     aws_secret_key = safequote(os.environ.get("AWS_SECRET_KEY"))
     CELERY_BROKER_URL = f"sqs://{aws_access_key}:{aws_secret_key}@"
     CELERY_TASK_IGNORE_RESULT = True
-    # TODO: Revert
+    # : Revert
     # CELERY_BROKER_TRANSPORT_OPTIONS = {
     #     "region": AWS_REGION,
     #     "polling_interval": 15,
