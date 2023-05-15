@@ -5,6 +5,9 @@ from typing import Any
 
 
 class OpenAIEmbeddings(BaseEmbeddings, OpenAIEmbeddingsOriginal):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     # def embed_documents(self, *args: Any, **kwargs: Any) -> Any:
     #     # Reset OpenAI API key in case it was changed by other processes (e.g., llm inference calls)
     #     openai.api_key = self.openai_api_key
