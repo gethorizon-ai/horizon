@@ -26,6 +26,7 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
+import openai
 
 from langchain.embeddings.base import Embeddings
 from langchain.utils import get_from_dict_or_env
@@ -34,8 +35,6 @@ logger = logging.getLogger(__name__)
 
 
 def _create_retry_decorator(embeddings: OpenAIEmbeddings) -> Callable[[Any], Any]:
-    import openai
-
     min_seconds = 4
     max_seconds = 10
     # Wait 2^x * 1 second between each retry starting with
@@ -167,8 +166,6 @@ class OpenAIEmbeddings(BaseModel, Embeddings):
             default="",
         )
         try:
-            import openai
-
             openai.api_key = openai_api_key
             if openai_organization:
                 openai.organization = openai_organization
