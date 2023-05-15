@@ -1,6 +1,7 @@
 """Test creation of different prompt template types."""
 
 import pytest
+from app.models.embedding.open_ai import OpenAIEmbeddings
 from app.models.prompt.factory import PromptTemplateFactory as factory
 from app.models.prompt.chat import (
     ChatPromptTemplate,
@@ -18,7 +19,6 @@ from app.models.prompt.fewshot_with_templates import FewshotWithTemplatesPromptT
 from app.models.schema import HumanMessage, AIMessage, SystemMessage
 from config import Config
 from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelector
-from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 
 

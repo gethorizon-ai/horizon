@@ -1,7 +1,7 @@
 """Embeds input and output data, clusters them into num_clusters, and outputs selected data as list of dicts."""
 
 from app.models.component.task_request import TaskRequest
-from langchain.embeddings import OpenAIEmbeddings
+from app.models.embedding.open_ai import OpenAIEmbeddings
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import euclidean
 import numpy as np
