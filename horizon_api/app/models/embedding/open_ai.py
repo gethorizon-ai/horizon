@@ -1,8 +1,10 @@
 from .base import BaseEmbeddings
 from langchain.embeddings import OpenAIEmbeddings as OpenAIEmbeddingsOriginal
 import openai
+from pydantic import root_validator
 from typing import (
     Any,
+    Dict,
     Literal,
     Set,
     Union,
@@ -10,7 +12,10 @@ from typing import (
 
 
 class OpenAIEmbeddings(OpenAIEmbeddingsOriginal):
-    disallowed_special: Union[Literal["all"], Set[str]] = "all"
+    @root_validator()
+    def validate_environment(cls, values: Dict) -> Dict:
+        values = super().validate_environment(values)
+        return values
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
