@@ -4,7 +4,7 @@ import openai
 from typing import Any
 
 
-class OpenAIEmbeddings(BaseEmbeddings, OpenAIEmbeddingsOriginal):
+class OpenAIEmbeddings(OpenAIEmbeddingsOriginal):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
