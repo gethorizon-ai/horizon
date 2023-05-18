@@ -2,7 +2,7 @@
 
 from app.models.component.inference_evaluation_results import InferenceEvaluationResults
 from app.models.component.task_request import TaskRequest
-from langchain.embeddings import OpenAIEmbeddings
+from app.models.embedding.open_ai import OpenAIEmbeddings
 import time
 import numpy as np
 

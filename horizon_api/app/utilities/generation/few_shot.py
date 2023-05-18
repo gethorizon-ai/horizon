@@ -6,7 +6,6 @@ from app.models.component.post_processing.post_processing import PostProcessing
 from app.models.prompt.factory import PromptTemplateFactory
 from app.utilities.generation import base
 from app.utilities.generation import prompt_generation_metaprompts
-from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelector
 import copy

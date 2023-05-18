@@ -1,8 +1,8 @@
 from .base import BasePromptTemplate
 from app.models.prompt import prompt
+from app.models.embedding.open_ai import OpenAIEmbeddings
 from app.utilities.dataset_processing import data_check
 from langchain.prompts.few_shot import FewShotPromptTemplate as FewShotPromptOriginal
-from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelector
 
