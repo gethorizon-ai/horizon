@@ -3,6 +3,7 @@
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.post_processing.post_processing import PostProcessing
+from app.models.embedding.open_ai import OpenAIEmbeddings
 from app.models.prompt.factory import PromptTemplateFactory
 from app.utilities.generation import base
 from app.utilities.generation import prompt_generation_metaprompts

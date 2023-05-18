@@ -348,6 +348,14 @@ def process_generate_prompt_model_configuration(
             user_email=user_email, error_message=str(e)
         )
 
+        # Delete task if task generation fails
+        try:
+            db.session.delete(task)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 400
+
 
 class GenerateTaskAPI(Resource):
     @api_key_required

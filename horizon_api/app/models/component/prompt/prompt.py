@@ -83,6 +83,7 @@ class Prompt(db.Model):
             "template_data",
             "few_shot_example_selector",
             "model",
+            "model_name",
             "inference_statistics",
         ]
 
