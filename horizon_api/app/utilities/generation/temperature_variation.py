@@ -2,6 +2,7 @@
 
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.llm.open_ai import OpenAI, ChatOpenAI
+from app.models.llm.anthropic import ChatAnthropic
 import numpy as np
 import copy
 
@@ -41,10 +42,7 @@ def prompt_generation_temperature_variation(
 
             selected_model = row["model_object"]
             new_model = copy.deepcopy(selected_model)
-            if isinstance(selected_model, ChatOpenAI):
-                new_model.model_kwargs["temperature"] = temperature
-            elif isinstance(selected_model, OpenAI):
-                new_model.temperature = temperature
+            new_model.set_temperature(temperature=temperature)
             model_object_list.append(new_model)
 
     # Return new prompts with temperature variations

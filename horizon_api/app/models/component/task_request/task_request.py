@@ -10,10 +10,8 @@ from app.utilities.dataset_processing import llm_applicability
 from app.utilities.dataset_processing import segment_data
 from app.models.llm.factory import LLMFactory
 from app.models.schema import HumanMessage
-from typing import List
-import boto3
-from botocore.exceptions import ClientError
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
+from typing import List
 import os
 
 
@@ -25,13 +23,12 @@ class TaskRequest:
         dataset_s3_key: str,
         user_objective: str = None,
         allowed_models: list = None,
-        synthetic_data_generation: bool = False,
         num_test_data_input: int = None,
     ):
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
         Args:
-            dataset_file_path (str): path to evaluation dataset.
+            dataset_s3_key (str): s3 key for evaluation dataset.
             user_objective (str, optional): task objective. Defaults to None.
             allowed_models (list, optional): list of allowed models for this task. Defaults to None.
             synthetic_data_generation (bool, optional): whether this task request is to generate synthetic data. Defaults to False.
@@ -68,18 +65,12 @@ class TaskRequest:
         # Download the evaluation dataset from S3 and save it locally
         dataset_file_path = download_file_from_s3_and_save_locally(dataset_s3_key)
 
-        # Check evaluation dataset meets requirements
-        data_check.check_evaluation_dataset(
-            dataset_file_path=dataset_file_path,
-            synthetic_data_generation=synthetic_data_generation,
-        )
-
         # Set evaluation dataset
         self.evaluation_dataset = data_check.get_evaluation_dataset(
-            dataset_file_path=dataset_file_path
+            dataset_file_path=dataset_file_path, escape_curly_braces=True
         )
 
-        # Delete the file from the local file system
+        # Delete dataset file from the local file system
         os.remove(dataset_file_path)
 
         # Set input variables
@@ -89,7 +80,7 @@ class TaskRequest:
 
         # Set evaluation data length
         evaluation_data_length = data_length.get_evaluation_data_length(
-            evaluation_dataset=self.evaluation_dataset
+            evaluation_dataset=self.evaluation_dataset, unescape_curly_braces=True
         )
         self.max_input_tokens = evaluation_data_length["max_input_tokens"]
         self.max_ground_truth_tokens = evaluation_data_length["max_ground_truth_tokens"]

@@ -1,8 +1,9 @@
 """Provides function to deploy a Prompt object and return the generated output or completion."""
 
+from app import db
+from app.models.component.post_processing.post_processing import PostProcessing
 from app.models.component.prompt import Prompt
 from app.models.component.task import Task
-from app import db
 from app.models.llm.factory import LLMFactory
 from app.models.llm.open_ai import ChatOpenAI
 from app.models.llm.anthropic import ChatAnthropic
@@ -35,12 +36,14 @@ def deploy_prompt(
     Returns:
         str: The output or completion of the deployed prompt.
     """
-    # get the model_name from the prompt
+    # Get task
+    task_id = prompt.task_id
+    task = Task.query.get(task_id)
 
+    # Get the model_name from the prompt
     model_name = prompt.model_name
 
-    # get the model_params from the prompt
-
+    # Get the model_params from the prompt
     model_params = json.loads(prompt.model)
 
     # Add llm api key
@@ -58,10 +61,10 @@ def deploy_prompt(
     # Create the model instance
     model_instance = LLMFactory.create_llm(model_name, **model_params)
 
-    # get the template type from the prompt
+    # Get the template type from the prompt
     template_type = prompt.template_type
 
-    # get the template_data from the prompt
+    # Get the template_data from the prompt
     template_data = json.loads(prompt.template_data)
 
     # Create prompt instance based on if object is zero-shot or few-shot
@@ -71,8 +74,6 @@ def deploy_prompt(
         )
     elif template_type == "fewshot":
         # If few shot, get evaluation dataset from task
-        task_id = prompt.task_id
-        task = Task.query.get(task_id)
         dataset_s3_key = task.evaluation_dataset
 
         # Download the dataset from S3 and save it locally
@@ -92,15 +93,29 @@ def deploy_prompt(
     for input_variable in list(input_values.keys()):
         input_values["var_" + input_variable] = input_values.pop(input_variable)
 
-    # format the prompt
-    formatted_prompt = prompt_instance.format(**input_values)
+    # Format the prompt
+    original_formatted_prompt = prompt_instance.format(**input_values)
+    formatted_prompt_for_llm = original_formatted_prompt
 
     # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
-        formatted_prompt = [HumanMessage(content=formatted_prompt)]
+        formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
 
-    # generate the output
-    output = model_instance.generate([formatted_prompt]).generations[0][0].text.strip()
+    # Generate the output
+    output = (
+        model_instance.generate([formatted_prompt_for_llm])
+        .generations[0][0]
+        .text.strip()
+    )
 
-    # return the output
+    # Conduct post-processing of output, if applicable
+    if task.pydantic_model:
+        post_processing = PostProcessing(
+            pydantic_model_s3_key=task.pydantic_model, llm=model_instance
+        )
+        output = post_processing.parse_and_retry_if_needed(
+            original_output=output, prompt_string=original_formatted_prompt
+        )
+
+    # Return the output
     return output

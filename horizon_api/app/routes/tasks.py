@@ -8,26 +8,40 @@ from app.utilities.authentication.cognito_auth import get_user_email
 from app.utilities.run import generate_prompt
 from app.utilities.run import task_confirmation_details
 from app.utilities.dataset_processing import data_check
+from app.utilities.output_schema import output_schema as output_schema_util
 from app.utilities.email_notifications import email_notifications
 from app.deploy.prompt import deploy_prompt
 from app.models.llm.factory import LLMFactory
 from app.utilities.S3.s3_util import (
     upload_file_to_s3,
     download_file_from_s3,
+    download_file_from_s3_and_save_locally,
     delete_file_from_s3,
 )
 import os
-import csv
 import json
 import logging
+import datamodel_code_generator
+from pathlib import Path
 import tempfile
 
 
-ALLOWED_EXTENSIONS = {"csv"}
+ALLOWED_EVALUTION_DATASET_EXTENSIONS = {"csv"}
+ALLOWED_OUTPUT_SCHEMA_EXTENSIONS = {"json"}
 
 
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+def allowed_evaluation_dataset_file(filename):
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in ALLOWED_EVALUTION_DATASET_EXTENSIONS
+    )
+
+
+def allowed_output_schema_file(filename):
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in ALLOWED_OUTPUT_SCHEMA_EXTENSIONS
+    )
 
 
 class ListTasksAPI(Resource):
@@ -298,7 +312,7 @@ def process_generate_prompt_model_configuration(
     Emails results of algorithm to user upon completion.
 
     Args:
-        user_objective (str): objectuse of the use case.
+        user_objective (str): objective of the use case.
         task_id (int): id corresponding to task record.
         prompt_id (int): id corresponding to prompt record.
         openai_api_key (str, optional): OpenAI API key to use if wanting to consider OpenAI models. Defaults to None.
@@ -350,7 +364,7 @@ class GenerateTaskAPI(Resource):
             type=str,
             required=False,
             default=None,
-            help="OpenAI API needed to evaluate OpenAI models",
+            help="OpenAI API key needed to evaluate OpenAI models",
         )
         parser.add_argument(
             "anthropic_api_key",
@@ -472,10 +486,9 @@ class UploadEvaluationDatasetsAPI(Resource):
         if "evaluation_dataset" not in request.files:
             return {"error": f"No file provided\n{request.files}"}, 400
 
-        project_dir = os.getcwd()
         evaluation_dataset = request.files["evaluation_dataset"]
 
-        if not allowed_file(evaluation_dataset.filename):
+        if not allowed_evaluation_dataset_file(evaluation_dataset.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
 
         with tempfile.NamedTemporaryFile(mode="wb", delete=False) as temp_file:
@@ -574,11 +587,152 @@ class DeleteEvaluationDatasetsAPI(Resource):
         }, 200
 
 
+class UploadOutputSchemasAPI(Resource):
+    @api_key_required
+    def post(self, task_id):
+        logging.info("UploadOutputSchemaAPI: Start processing the request")
+
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
+        if not task:
+            return {"error": "Task not found or not associated with user"}, 404
+
+        if "output_schema" not in request.files:
+            return {"error": f"No file provided\n{request.files}"}, 400
+
+        if not task.evaluation_dataset:
+            return {
+                "error": "Evaluation dataset must be uploaded before output schema"
+            }, 404
+
+        output_schema = request.files["output_schema"]
+
+        if not allowed_output_schema_file(output_schema.filename):
+            return {"error": "Invalid file type. Only .json files are allowed."}, 400
+
+        # Store output schema in temp file
+        with tempfile.NamedTemporaryFile(delete=False) as output_schema_temp_file:
+            output_schema_temp_file.write(output_schema.read())
+            output_schema_temp_file_path = output_schema_temp_file.name
+
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=".py"
+        ) as pydantic_model_temp_file:
+            pydantic_model_temp_file_path = pydantic_model_temp_file.name
+
+        try:
+            # Check and process output schema
+            output_schema_util.check_and_process_output_schema(
+                output_schema_file_path=output_schema_temp_file_path
+            )
+
+            # Convert output schema into Python file with Pydantic model representation
+            datamodel_code_generator.generate(
+                input_=Path(output_schema_temp_file_path),
+                input_file_type="jsonschema",
+                output=Path(pydantic_model_temp_file_path),
+            )
+
+        except Exception as e:
+            logging.error(f"UploadOutputSchemasAPI: Invalid output schema - {str(e)}")
+            os.remove(output_schema_temp_file_path)
+            os.remove(pydantic_model_temp_file_path)
+            return {
+                "error": f"UploadOutputSchemasAPI: Invalid output schema - {str(e)}"
+            }, 400
+
+        # Check ground truth in evaluation dataset matches output schema
+        try:
+            dataset_file_path = download_file_from_s3_and_save_locally(
+                key=task.evaluation_dataset
+            )
+            output_schema_util.check_evaluation_dataset_aligns_with_pydantic_model(
+                dataset_file_path=dataset_file_path,
+                pydantic_model_file_path=pydantic_model_temp_file_path,
+            )
+            os.remove(path=dataset_file_path)
+        except Exception as e:
+            logging.error(
+                f"UploadOutputSchemasAPI: Ground truth data could not be parsed according to output schema - {str(e)}"
+            )
+            os.remove(output_schema_temp_file_path)
+            os.remove(pydantic_model_temp_file_path)
+            return {
+                "error": f"UploadOutputSchemasAPI: Ground truth data could not be parsed according to output schema - {str(e)}"
+            }, 400
+
+        # Upload output schema to s3 with given filename and extension
+        output_schema_s3_key = f"output_schemas/{task_id}/{output_schema.filename}"
+        with open(output_schema_temp_file_path, "rb") as output_schema_temp_file:
+            upload_file_to_s3(output_schema_temp_file, output_schema_s3_key)
+        os.remove(output_schema_temp_file_path)
+
+        # Upload Pydantic model to s3 with given filename converted to Python extension
+        pydantic_model_s3_key = f"pydantic_models/{task_id}/{os.path.splitext(output_schema.filename)[0]}.py"
+        with open(pydantic_model_temp_file_path, "rb") as pydantic_model_temp_file:
+            upload_file_to_s3(pydantic_model_temp_file, pydantic_model_s3_key)
+        os.remove(pydantic_model_temp_file_path)
+
+        # Set s3 keys in task object
+        task.output_schema = output_schema_s3_key
+        task.pydantic_model = pydantic_model_s3_key
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            logging.error(f"UploadOutputSchemasAPI: Error during commit - {str(e)}")
+            db.session.rollback()
+            return {"error": str(e)}, 400
+
+        logging.info("UploadOutputSchemasAPI: Finished processing the request")
+        return {
+            "message": "Output schemas uploaded successfully",
+            "task": task.to_dict_filtered(),
+        }, 200
+
+
+class DeleteOutputSchemasAPI(Resource):
+    @api_key_required
+    def delete(self, task_id):
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
+        if not task:
+            return {"error": "Task not found or not associated with user"}, 404
+
+        if not task.output_schema or not task.pydantic_model:
+            return {"error": "No output schema associated with this task"}, 404
+
+        output_schema_s3_key = task.output_schema
+        delete_file_from_s3(output_schema_s3_key)
+        task.output_schema = None
+
+        pydantic_model_s3_key = task.pydantic_model
+        delete_file_from_s3(pydantic_model_s3_key)
+        task.pydantic_model = None
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return {"error": str(e)}, 400
+
+        return {
+            "message": "Output schemas deleted successfully",
+            "task": task.to_dict_filtered(),
+        }, 200
+
+
 def register_routes(api):
     api.add_resource(ListTasksAPI, "/api/tasks")
     api.add_resource(CreateTaskAPI, "/api/tasks/create")
     api.add_resource(TaskAPI, "/api/tasks/<int:task_id>")
-    api.add_resource(GetCurrentPromptAPI, "/api/tasks/get_curr_prompt")
+    # api.add_resource(GetCurrentPromptAPI, "/api/tasks/get_curr_prompt")
     # api.add_resource(SetCurrentPromptAPI, "/api/tasks/set_curr_prompt")
     api.add_resource(
         GetTaskConfirmationDetailsAPI,
@@ -590,10 +744,18 @@ def register_routes(api):
         UploadEvaluationDatasetsAPI,
         "/api/tasks/<int:task_id>/upload_evaluation_dataset",
     )
+    # api.add_resource(
+    #     ViewEvaluationDatasetsAPI, "/api/tasks/<int:task_id>/view_evaluation_dataset"
+    # )
+    # api.add_resource(
+    #     DeleteEvaluationDatasetsAPI,
+    #     "/api/tasks/<int:task_id>/delete_evaluation_dataset",
+    # )
     api.add_resource(
-        ViewEvaluationDatasetsAPI, "/api/tasks/<int:task_id>/view_evaluation_dataset"
+        UploadOutputSchemasAPI,
+        "/api/tasks/<int:task_id>/upload_output_schema",
     )
-    api.add_resource(
-        DeleteEvaluationDatasetsAPI,
-        "/api/tasks/<int:task_id>/delete_evaluation_dataset",
-    )
+    # api.add_resource(
+    #     DeleteOutputSchemasAPI,
+    #     "/api/tasks/<int:task_id>/delete_output_schema",
+    # )

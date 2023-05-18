@@ -6,6 +6,7 @@ from app.models.schema import HumanMessage
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.inference_evaluation_results import InferenceEvaluationResults
+from app.models.component.post_processing.post_processing import PostProcessing
 import time
 from typing import List
 
@@ -16,6 +17,7 @@ def run_inference(
     train_or_test_dataset: str,
     stage_id: str,
     evaluation_data_id_list: List[int] = None,
+    post_processing: PostProcessing = None,
 ) -> InferenceEvaluationResults:
     """Run inference with given set of prompt candidates on either train or test input dataset.
 
@@ -25,6 +27,7 @@ def run_inference(
         train_or_test_dataset (str): indicates which dataset to use; must be either "train" or "test".
         stage_id (str): id for this inference stage.
         evaluation_data_id_list (List[int], optional): list of evaluation data ids to filter to for inference. Defaults to None.
+        post_processing (PostProcessing, optional): details on llm output post-processing operations. Defaults to None.
 
     Returns:
         InferenceEvaluationResults: data structure with inference results.
@@ -66,21 +69,36 @@ def run_inference(
 
         # Format prompt and generate inference
         print(
-            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']}"
+            f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']} | generation_id: {row['generation_id']}"
         )
-        print(row["generation_id"])
-        print(row["prompt_object"])
 
-        formatted_prompt = row["prompt_object"].format(**input_values)
+        original_formatted_prompt = row["prompt_object"].format(**input_values)
+        formatted_prompt_for_llm = original_formatted_prompt
         model_object = row["model_object"]
         # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
         if type(model_object) == ChatOpenAI or type(model_object) == ChatAnthropic:
-            formatted_prompt = [HumanMessage(content=formatted_prompt)]
+            formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
 
         start_time = time.time()
         output = (
-            model_object.generate([formatted_prompt]).generations[0][0].text.strip()
+            model_object.generate([formatted_prompt_for_llm])
+            .generations[0][0]
+            .text.strip()
         )
+
+        # Conduct post-processing if applicable
+        if post_processing:
+            try:
+                updated_output = post_processing.parse_and_retry_if_needed(
+                    original_output=output, prompt_string=original_formatted_prompt
+                )
+                output = updated_output
+            except:
+                # If output fails to satisfy output schema requirements, continue with original output
+                print("-----FAILED IN INFERENCE-----")
+                print(f"Original output: {output}")
+                print("-----FAILED IN INFERENCE-----")
+
         end_time = time.time()
         inference_latency = end_time - start_time
 

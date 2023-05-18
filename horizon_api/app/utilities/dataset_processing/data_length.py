@@ -7,6 +7,7 @@ import pandas as pd
 
 def get_evaluation_data_length(
     evaluation_dataset: pd.DataFrame,
+    unescape_curly_braces: bool = True,
 ) -> dict:
     """Determines max count of tokens and characters across input and ground truth data.
 
@@ -14,6 +15,7 @@ def get_evaluation_data_length(
 
     Args:
         evaluation_dataset (pd.DataFrame): checked and processed evaluation dataset.
+        unescape_curly_braces (bool, optional): whether to unescape curly braces when getting data lengths. Defaults to True.
 
     Raises:
         AssertionError: task_request must have evaluation dataset.
@@ -32,6 +34,8 @@ def get_evaluation_data_length(
     # count of tokens and characters. Use max value of different encodings to be conservative
     def count_tokens(row: dict):
         string = "\n".join([f"<{key}>: {value}" for key, value in row.items()])
+        if unescape_curly_braces:
+            string.replace("{{", "{").replace("}}", "}")
         token_count = max(
             OpenAI.get_data_length(string),
             ChatOpenAI.get_data_length(string),

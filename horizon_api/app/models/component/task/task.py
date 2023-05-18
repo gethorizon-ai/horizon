@@ -23,6 +23,8 @@ class Task(db.Model):
     objective = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
     evaluation_dataset = db.Column(db.Text, nullable=True)
+    output_schema = db.Column(db.Text, nullable=True)
+    pydantic_model = db.Column(db.Text, nullable=True)
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
     create_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
@@ -49,6 +51,12 @@ class Task(db.Model):
             "objective": self.objective,
             "task_type": self.task_type,
             "evaluation_dataset": self.evaluation_dataset,
+            "output_schema": os.path.basename(self.output_schema)
+            if (self.output_schema is not None)
+            else "Undefined",
+            "pydantic_model": os.path.basename(self.pydantic_model)
+            if (self.pydantic_model is not None)
+            else "Undefined",
             "status": self.status,
             "create_timestamp": datetime.isoformat(self.create_timestamp),
             "project_id": self.project_id,
@@ -68,6 +76,7 @@ class Task(db.Model):
             "id",
             "name",
             "objective",
+            "output_schema",
             "project_id",
             "allowed_models",
             "active_prompt_id",
@@ -93,6 +102,22 @@ def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
         except:
             pass
         target.evaluation_dataset = None
+
+    # Delete output schema from S3, if it exists
+    if target.output_schema is not None:
+        try:
+            delete_file_from_s3(target.output_schema)
+        except:
+            pass
+        target.output_schema = None
+
+    # Delete pydantic model from S3, if it exists
+    if target.pydantic_model is not None:
+        try:
+            delete_file_from_s3(target.pydantic_model)
+        except:
+            pass
+        target.pydantic_model = None
 
     # Set active_prompt_id to None
     if target.active_prompt_id is not None:

@@ -23,7 +23,7 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
         """
         # Get evaluation dataset and convert each row to dict
         evaluation_dataset = data_check.get_evaluation_dataset(
-            dataset_file_path=dataset_file_path
+            dataset_file_path=dataset_file_path, escape_curly_braces=True
         )
         evaluation_dataset = evaluation_dataset.drop("evaluation_data_id", axis=1)
         examples = evaluation_dataset.to_dict("records")

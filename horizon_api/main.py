@@ -5,7 +5,6 @@ import ssl
 
 app = create_app()
 
-
 if __name__ == "__main__":
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain(

@@ -31,3 +31,12 @@ class BaseLLM(ABC):
 
         Make sure to not store user's llm api key!"""
         pass
+
+    @abstractmethod
+    def set_temperature(self, temperature: float) -> None:
+        """Updates model temperature in llm object.
+
+        Args:
+            temperature (float): new temperature for llm.
+        """
+        pass

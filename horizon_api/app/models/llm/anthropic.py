@@ -21,6 +21,9 @@ class ChatAnthropic(BaseLLM, ChatAnthropicOriginal):
     def get_data_length(sample_str: str) -> int:
         return anthropic.count_tokens(sample_str)
 
+    def set_temperature(self, temperature: float) -> None:
+        self.temperature = temperature
+
     # Add retry functionality for Anthropic inference calls
     @retry(
         reraise=True,

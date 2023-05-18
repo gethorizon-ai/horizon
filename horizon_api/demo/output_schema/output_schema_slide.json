@@ -1,0 +1,20 @@
+{
+    "title": "OutputSchema",
+    "type": "object",
+    "properties": {
+        "title": {
+            "title": "Title",
+            "description": "title of the page",
+            "type": "string"
+        },
+        "content": {
+            "title": "Content",
+            "description": "content of the page",
+            "type": "string"
+        }
+    },
+    "required": [
+        "title",
+        "content"
+    ]
+}

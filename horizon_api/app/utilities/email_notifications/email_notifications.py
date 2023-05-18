@@ -19,6 +19,7 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
     objective = html.escape(str(task_details["objective"]))
     task_id = html.escape(str(task_details["id"]))
     project_id = html.escape(str(task_details["project_id"]))
+    output_schema = html.escape(str(task_details["output_schema"]))
     number_of_prompt_model_candidates = task_details["evaluation_statistics"][
         "number_of_prompt_model_candidates_considered"
     ]
@@ -71,6 +72,7 @@ Summary of Task below (access additional details via CLI):<br />
 <li><b>Objective:</b> {objective}</li>
 <li><b>Task ID:</b> {task_id}</li>
 <li><b>Project ID:</b> {project_id}</li>
+<li><b>Output schema:</b> {output_schema}</li>
 <li><b>Evaluation statistics:</b></li>
     <ul> 
     <li><b>Number of prompt-model candidates considered:</b> {number_of_prompt_model_candidates}</li>

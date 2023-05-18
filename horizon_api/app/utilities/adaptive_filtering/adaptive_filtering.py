@@ -3,6 +3,7 @@
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.inference_evaluation_results import InferenceEvaluationResults
+from app.models.component.post_processing.post_processing import PostProcessing
 from app.utilities.inference import inference
 from app.utilities.evaluation import evaluation
 from app.utilities.shortlist import shortlist
@@ -18,6 +19,7 @@ def adaptive_filtering(
     num_shortlist: int,
     num_iterations: int,
     openai_api_key: str,
+    post_processing: PostProcessing = None,
 ) -> Tuple[PromptModelCandidates, InferenceEvaluationResults]:
     """Runs inference, evaluation, and shortlist iterations to efficiently filter down prompt-model candidates.
 
@@ -30,6 +32,7 @@ def adaptive_filtering(
         num_shortlist (int): target number of shortlisted prompt-model candidates.
         num_iterations (int): number of iterations to run adaptive filtering.
         openai_api_key (str): OpenAI API key to use.
+        post_processing (PostProcessing, optional): details on llm output post-processing operations. Defaults to None.
 
     Raises:
         ValueError: checks that provided number of prompt-model candidates exceeds the target shortlist amount.
@@ -88,6 +91,7 @@ def adaptive_filtering(
             train_or_test_dataset="test",
             stage_id=stage_id,
             evaluation_data_id_list=evaluation_data_id_segments[i],
+            post_processing=post_processing,
         )
         print("Finished inference")
         evaluation.run_evaluation(
