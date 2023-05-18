@@ -57,8 +57,7 @@ class TaskLogger:
         else:
             logs = TaskDeploymentLog.query.all()
 
-        print(logs)
-        if logs == None:
+        if len(logs) == 0:
             return None
 
         df = pd.DataFrame([log.to_dict() for log in logs])

@@ -749,8 +749,8 @@ class ViewDeploymentLogsAPI(Resource):
         presigned_url = download_file_from_s3(s3_key)
 
         return {
-            "message": "Logs retrieved successfully",
-            "logs_url": presigned_url,
+            "message": "Logs retrieved successfully. Please download them using the url provided below (valid for 1 hour).",
+            "deployment_logs_url": presigned_url,
         }, 200
 
 
