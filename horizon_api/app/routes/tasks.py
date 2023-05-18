@@ -24,11 +24,7 @@ import logging
 import datamodel_code_generator
 from pathlib import Path
 import tempfile
-import time
-from app.utilities.logging import TaskLogger
-from app.models.component.task_deployment_log.task_deployment_log import (
-    TaskDeploymentLog,
-)
+from app.utilities.logging.task_logger import TaskLogger
 
 ALLOWED_EVALUTION_DATASET_EXTENSIONS = {"csv"}
 ALLOWED_OUTPUT_SCHEMA_EXTENSIONS = {"json"}
