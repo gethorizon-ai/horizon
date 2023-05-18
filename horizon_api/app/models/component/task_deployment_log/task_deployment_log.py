@@ -4,7 +4,9 @@ from datetime import datetime
 
 class TaskDeploymentLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.Integer, db.ForeignKey("task.id"), nullable=False)
+    task_id = db.Column(
+        db.Integer, db.ForeignKey("task.id", ondelete="CASCADE"), nullable=False
+    )
     prompt_id = db.Column(db.Integer, db.ForeignKey("prompt.id"), nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     model_name = db.Column(db.String(64), nullable=False)
