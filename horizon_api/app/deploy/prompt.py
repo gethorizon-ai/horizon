@@ -16,7 +16,6 @@ import os
 from app.utilities.logging.task_logger import TaskLogger
 from datetime import datetime
 import time
-from app.utilities import cost_calculation
 
 
 def deploy_prompt(
@@ -100,20 +99,20 @@ def deploy_prompt(
 
     # Format the prompt
     original_formatted_prompt = prompt_instance.format(**input_values)
-    formatted_prompt_for_llm = original_formatted_prompt
 
     # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
-        formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
+        formatted_prompt_for_llm = [HumanMessage(content=original_formatted_prompt)]
+        prompt_for_data_analysis = formatted_prompt_for_llm
+    else:
+        formatted_prompt_for_llm = original_formatted_prompt
+        prompt_for_data_analysis = [formatted_prompt_for_llm]
 
     inference_start_time = time.time()
 
     # Generate the output
-    output = (
-        model_instance.generate([formatted_prompt_for_llm])
-        .generations[0][0]
-        .text.strip()
-    )
+    llm_result = model_instance.generate([formatted_prompt_for_llm])
+    output = llm_result.generations[0][0].text.strip()
 
     # Conduct post-processing of output, if applicable
     if task.pydantic_model:
@@ -126,27 +125,36 @@ def deploy_prompt(
 
     inference_end_time = time.time()
 
-    # Log the deployment if logging is enabled
+    # Log deployment if logging is enabled
     if log_deployment:
-        logger = TaskLogger()
-
-        prompt_data_length = len(original_formatted_prompt)
-        output_data_length = len(output)
-        inference_cost = cost_calculation.calculate_cost(
-            model_name, prompt_data_length, output_data_length
+        prompt_data_length = model_instance.get_prompt_data_length(
+            prompt_messages=prompt_for_data_analysis, llm_result=llm_result
+        )
+        completion_data_length = model_instance.get_completion_data_length(
+            llm_result=llm_result
+        )
+        prompt_cost = model_instance.get_prompt_cost(
+            prompt_data_length=prompt_data_length
+        )
+        completion_cost = model_instance.get_completion_cost(
+            completion_data_length=completion_data_length
         )
 
+        logger = TaskLogger()
         logger.log_deployment(
             task_id=prompt.task_id,
             prompt_id=prompt.id,
             time_stamp=datetime.utcnow(),
-            input_values=input_values,
-            llm_output=output,
-            inference_latency=inference_end_time - inference_start_time,
-            prompt_data_length=prompt_data_length,
-            output_data_length=output_data_length,
             model_name=model_name,
-            inference_cost=inference_cost,
+            input_values=input_values,
+            llm_completion=output,
+            inference_latency=inference_end_time - inference_start_time,
+            data_unit=model_instance.get_data_unit(),
+            prompt_data_length=prompt_data_length,
+            completion_data_length=completion_data_length,
+            prompt_cost=prompt_cost,
+            completion_cost=completion_cost,
+            total_inference_cost=prompt_cost + completion_cost,
         )
 
     return output

@@ -1,4 +1,5 @@
 from app import db
+from sqlalchemy.exc import IntegrityError
 from app.models.component.task_deployment_log.task_deployment_log import (
     TaskDeploymentLog,
 )
@@ -17,13 +18,16 @@ class TaskLogger:
         task_id: str,
         prompt_id: int,
         timestamp: datetime,
-        input_values: dict,
-        llm_output: str,
-        inference_latency: float,
-        prompt_data_length: int,
-        output_data_length: int,
         model_name: str,
-        inference_cost: float,
+        input_values: dict,
+        llm_completion: str,
+        inference_latency: float,
+        data_unit: str,
+        prompt_data_length: int,
+        completion_data_length: int,
+        prompt_cost: float,
+        completion_cost: float,
+        total_inference_cost: float,
     ):
         # Prepare log entry
         log_entry = TaskDeploymentLog()
@@ -31,14 +35,16 @@ class TaskLogger:
         log_entry.task_id = task_id
         log_entry.prompt_id = prompt_id
         log_entry.timestamp = timestamp
-        log_entry.input_values = str(input_values)
-        log_entry.llm_output = llm_output
-        log_entry.inference_latency = inference_latency
-        log_entry.inference_data_metric = "seconds"
-        log_entry.inference_cost = inference_cost
-        log_entry.prompt_data_length = prompt_data_length
-        log_entry.output_data_length = output_data_length
         log_entry.model_name = model_name
+        log_entry.input_values = str(input_values)
+        log_entry.llm_completion = llm_completion
+        log_entry.inference_latency = inference_latency
+        log_entry.data_unit = data_unit
+        log_entry.prompt_data_length = prompt_data_length
+        log_entry.completion_data_length = completion_data_length
+        log_entry.prompt_cost = prompt_cost
+        log_entry.completion_cost = completion_cost
+        log_entry.total_inference_cost = total_inference_cost
 
         db.session.add(log_entry)
         db.session.commit()
@@ -60,7 +66,7 @@ class TaskLogger:
         if task_id:
             log_file_name = f"deployment_logs/{task_id}/{datetime.datetime.now().strftime('%Y/%m/%d/%H%M%SZ')}/deployment_logs_{task_id}.csv"
         else:
-            log_file_name = f"deployment_logs/all/{datetime.datetime.now().strftime('%Y/%m/%d/%H%M%SZ')}/deployment_logs.csv"
+            log_file_name = f"deployment_logs/all_tasks/{datetime.datetime.now().strftime('%Y/%m/%d/%H%M%SZ')}/deployment_logs.csv"
 
         upload_file_to_s3(file=csv_buffer, key=log_file_name)
 
