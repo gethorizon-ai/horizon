@@ -662,7 +662,7 @@ def view_evaluation_dataset(task_id, horizon_api_key):
 
 
 # download logs
-@click.command(name="view_logs")
+@click.command(name="view-logs")
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
