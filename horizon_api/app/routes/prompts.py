@@ -241,6 +241,13 @@ class DeployPromptAPI(Resource):
             default=None,
             help="Provide Anthropic API key to deploy Anthropic models",
         )
+        parser.add_argument(
+            "log_deployment",
+            type=bool,
+            required=False,
+            default=False,
+            help="Set to true to log the deployment. Defaults to false.",
+        )
         args = parser.parse_args()
 
         # Fetch prompt and check it is associated with user
@@ -260,6 +267,7 @@ class DeployPromptAPI(Resource):
                 input_values=args["inputs"],
                 openai_api_key=args["openai_api_key"],
                 anthropic_api_key=args["anthropic_api_key"],
+                log_deployment=args["log_deployment"],
             )
         except Exception as e:
             return {"error": str(e)}, 400

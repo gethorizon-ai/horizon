@@ -1,4 +1,4 @@
-from flask import request, send_file, make_response, g
+from flask import request, send_file, make_response, g, send_from_directory
 from flask_restful import Resource, reqparse
 from celery import shared_task
 from app.models.component import User, Task, Prompt, Project
@@ -24,7 +24,11 @@ import logging
 import datamodel_code_generator
 from pathlib import Path
 import tempfile
-
+import time
+from app.utilities.logging import TaskLogger
+from app.models.component.task_deployment_log.task_deployment_log import (
+    TaskDeploymentLog,
+)
 
 ALLOWED_EVALUTION_DATASET_EXTENSIONS = {"csv"}
 ALLOWED_OUTPUT_SCHEMA_EXTENSIONS = {"json"}
@@ -436,6 +440,13 @@ class DeployTaskAPI(Resource):
             default=None,
             help="Provide Anthropic API key to deploy Anthropic models",
         )
+        parser.add_argument(
+            "log_deployment",
+            type=bool,
+            required=False,
+            default=False,
+            help="Set to true to log the deployment. Defaults to false.",
+        )
         args = parser.parse_args()
 
         # Fetch task and check it is associated with user
@@ -461,6 +472,7 @@ class DeployTaskAPI(Resource):
                 input_values=args["inputs"],
                 openai_api_key=args["openai_api_key"],
                 anthropic_api_key=args["anthropic_api_key"],
+                log_deployment=args["log_deployment"],
             )
             return {
                 "message": "Task deployed successfully",
@@ -728,6 +740,24 @@ class DeleteOutputSchemasAPI(Resource):
         }, 200
 
 
+class ViewDeploymentLogsAPI(Resource):
+    @api_key_required
+    def get(self, task_id):
+        task_logger = TaskLogger()
+        log_file_name = task_logger.get_logs(task_id)
+
+        if not log_file_name:
+            return {"error": "Logs not found for this task"}, 404
+
+        s3_key = log_file_name
+        presigned_url = download_file_from_s3(s3_key)
+
+        return {
+            "message": "Logs retrieved successfully",
+            "logs_url": presigned_url,
+        }, 200
+
+
 def register_routes(api):
     api.add_resource(ListTasksAPI, "/api/tasks")
     api.add_resource(CreateTaskAPI, "/api/tasks/create")
@@ -759,3 +789,4 @@ def register_routes(api):
     #     DeleteOutputSchemasAPI,
     #     "/api/tasks/<int:task_id>/delete_output_schema",
     # )
+    api.add_resource(ViewDeploymentLogsAPI, "/api/tasks/<int:task_id>/view_logs")

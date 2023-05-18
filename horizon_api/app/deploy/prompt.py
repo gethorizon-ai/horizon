@@ -13,6 +13,10 @@ from config import Config
 import json
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 import os
+from app.utilities.logging.task_logger import TaskLogger
+from datetime import datetime
+import time
+from app.utilities.cost_calculation import calculate_cost
 
 
 def deploy_prompt(
@@ -20,6 +24,7 @@ def deploy_prompt(
     input_values: dict,
     openai_api_key: str = None,
     anthropic_api_key: str = None,
+    log_deployment: bool = False,
 ) -> str:
     """Deploy a prompt with the given prompt_id and input_values.
 
@@ -101,6 +106,8 @@ def deploy_prompt(
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
         formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
 
+    inference_start_time = time.time()
+
     # Generate the output
     output = (
         model_instance.generate([formatted_prompt_for_llm])
@@ -117,5 +124,29 @@ def deploy_prompt(
             original_output=output, prompt_string=original_formatted_prompt
         )
 
-    # Return the output
+    inference_end_time = time.time()
+
+    # Log the deployment if logging is enabled
+    if log_deployment:
+        logger = TaskLogger()
+
+        prompt_data_length = len(original_formatted_prompt)
+        output_data_length = len(output)
+        inference_cost = calculate_cost(
+            model_name, prompt_data_length, output_data_length
+        )
+
+        logger.log_deployment(
+            task_id=prompt.task_id,
+            prompt_id=prompt.id,
+            time_stamp=datetime.utcnow(),
+            input_values=input_values,
+            llm_output=output,
+            inference_latency=inference_end_time - inference_start_time,
+            prompt_data_length=prompt_data_length,
+            output_data_length=output_data_length,
+            model_name=model_name,
+            inference_cost=inference_cost,
+        )
+
     return output
