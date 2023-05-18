@@ -144,7 +144,7 @@ def deploy_prompt(
         logger.log_deployment(
             task_id=prompt.task_id,
             prompt_id=prompt.id,
-            time_stamp=datetime.utcnow(),
+            timestamp=datetime.utcnow(),
             model_name=model_name,
             input_values=input_values,
             llm_completion=output,
