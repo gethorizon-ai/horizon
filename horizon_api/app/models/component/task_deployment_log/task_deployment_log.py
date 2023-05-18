@@ -7,7 +7,9 @@ class TaskDeploymentLog(db.Model):
     task_id = db.Column(
         db.Integer, db.ForeignKey("task.id", ondelete="CASCADE"), nullable=False
     )
-    prompt_id = db.Column(db.Integer, db.ForeignKey("prompt.id"), nullable=False)
+    prompt_id = db.Column(
+        db.Integer, db.ForeignKey("prompt.id", ondelete="CASCADE"), nullable=False
+    )
     timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     model_name = db.Column(db.String(64), nullable=False)
     input_values = db.Column(db.Text, nullable=False)
