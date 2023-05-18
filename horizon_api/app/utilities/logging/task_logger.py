@@ -57,6 +57,7 @@ class TaskLogger:
         else:
             logs = TaskDeploymentLog.query.all()
 
+        print(logs)
         if logs == None:
             return None
 
