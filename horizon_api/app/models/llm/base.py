@@ -14,15 +14,6 @@ class BaseLLM(ABC):
         pass
 
     @abstractmethod
-    def get_data_unit(self) -> str:
-        """Get data unit for model pricing (e.g., token, character).
-
-        Returns:
-            str: data unit for model pricing.
-        """
-        pass
-
-    @abstractmethod
     def get_data_length(sample_str: str) -> int:
         """Evaluates data length of the given string based on the model's data unit (e.g., tokens, characters) and encoder (if
         applicable).
@@ -59,30 +50,6 @@ class BaseLLM(ABC):
 
         Returns:
             int: completion data length.
-        """
-        pass
-
-    @abstractmethod
-    def get_prompt_cost(self, prompt_data_length: int) -> float:
-        """Get llm provider cost for prompt data.
-
-        Args:
-            prompt_data_length (int): prompt data length (e.g., number of tokens, characters).
-
-        Returns:
-            float: prompt cost.
-        """
-        pass
-
-    @abstractmethod
-    def get_completion_cost(self, completion_data_length: int) -> float:
-        """Get llm provider cost for completion data.
-
-        Args:
-            completion_data_length (int): completion data length (e.g., number of tokens, characters).
-
-        Returns:
-            float: completion cost.
         """
         pass
 

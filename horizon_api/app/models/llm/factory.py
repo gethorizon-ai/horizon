@@ -83,3 +83,21 @@ class LLMFactory:
             }
 
         return model_params
+
+    @staticmethod
+    def get_data_unit(model_name: str) -> str:
+        return LLMFactory.llm_classes[model_name]["data_unit"]
+
+    @staticmethod
+    def get_prompt_cost(model_name: str, prompt_data_length: int) -> float:
+        return (
+            prompt_data_length
+            * LLMFactory.llm_classes[model_name]["price_per_data_unit_prompt"]
+        )
+
+    @staticmethod
+    def get_completion_cost(model_name: str, completion_data_length: int) -> float:
+        return (
+            completion_data_length
+            * LLMFactory.llm_classes[model_name]["price_per_data_unit_completion"]
+        )

@@ -133,11 +133,11 @@ def deploy_prompt(
         completion_data_length = model_instance.get_completion_data_length(
             llm_result=llm_result
         )
-        prompt_cost = model_instance.get_prompt_cost(
-            prompt_data_length=prompt_data_length
+        prompt_cost = LLMFactory.get_prompt_cost(
+            model_name=model_name, prompt_data_length=prompt_data_length
         )
-        completion_cost = model_instance.get_completion_cost(
-            completion_data_length=completion_data_length
+        completion_cost = LLMFactory.get_completion_cost(
+            model_name=model_name, completion_data_length=completion_data_length
         )
 
         logger = TaskLogger()
@@ -149,7 +149,7 @@ def deploy_prompt(
             input_values=input_values,
             llm_completion=output,
             inference_latency=inference_end_time - inference_start_time,
-            data_unit=model_instance.get_data_unit(),
+            data_unit=LLMFactory.get_data_unit(model_name=model_name),
             prompt_data_length=prompt_data_length,
             completion_data_length=completion_data_length,
             prompt_cost=prompt_cost,

@@ -18,9 +18,6 @@ class OpenAI(BaseLLM, OpenAIOriginal):
     def get_model_name(self) -> str:
         return self.model_name
 
-    def get_data_unit(self) -> str:
-        return LLMFactory.llm_classes[self.get_model_name()]["data_unit"]
-
     @staticmethod
     def get_data_length(sample_str: str) -> int:
         encoding_davinci = tiktoken.encoding_for_model("text-davinci-003")
@@ -33,24 +30,6 @@ class OpenAI(BaseLLM, OpenAIOriginal):
 
     def get_completion_data_length(self, llm_result: LLMResult) -> int:
         return llm_result.llm_output["token_usage"]["completion_tokens"]
-
-    def get_prompt_cost(self, prompt_data_length: int) -> float:
-        prompt_cost = (
-            prompt_data_length
-            * LLMFactory.llm_classes[self.get_model_name()][
-                "price_per_data_unit_prompt"
-            ]
-        )
-        return prompt_cost
-
-    def get_completion_cost(self, completion_data_length: int) -> float:
-        completion_cost = (
-            completion_data_length
-            * LLMFactory.llm_classes[self.get_model_name()][
-                "price_per_data_unit_completion"
-            ]
-        )
-        return completion_cost
 
     def get_model_params_to_store(self) -> dict:
         return {
@@ -86,9 +65,6 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
     def get_model_name(self) -> str:
         return self.model_name
 
-    def get_data_unit(self) -> str:
-        return LLMFactory.llm_classes[self.get_model_name()]["data_unit"]
-
     @staticmethod
     def get_data_length(sample_str: str) -> int:
         encoding_turbo = tiktoken.encoding_for_model("gpt-3.5-turbo")
@@ -101,24 +77,6 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
 
     def get_completion_data_length(self, llm_result: LLMResult) -> int:
         return llm_result.llm_output["token_usage"]["completion_tokens"]
-
-    def get_prompt_cost(self, prompt_data_length: int) -> float:
-        prompt_cost = (
-            prompt_data_length
-            * LLMFactory.llm_classes[self.get_model_name()][
-                "price_per_data_unit_prompt"
-            ]
-        )
-        return prompt_cost
-
-    def get_completion_cost(self, completion_data_length: int) -> float:
-        completion_cost = (
-            completion_data_length
-            * LLMFactory.llm_classes[self.get_model_name()][
-                "price_per_data_unit_completion"
-            ]
-        )
-        return completion_cost
 
     def get_model_params_to_store(self) -> dict:
         return {

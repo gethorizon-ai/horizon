@@ -12,9 +12,6 @@ class ChatAnthropic(BaseLLM, ChatAnthropicOriginal):
     def get_model_name(self) -> str:
         return self.model
 
-    def get_data_unit(self) -> str:
-        return LLMFactory.llm_classes[self.get_model_name()]["data_unit"]
-
     @staticmethod
     def get_data_length(sample_str: str) -> int:
         return anthropic.count_tokens(sample_str)
@@ -28,24 +25,6 @@ class ChatAnthropic(BaseLLM, ChatAnthropicOriginal):
     def get_completion_data_length(self, llm_result: LLMResult) -> int:
         completion_string = llm_result.generations[0][0].text
         return anthropic.count_tokens(completion_string)
-
-    def get_prompt_cost(self, prompt_data_length: int) -> float:
-        prompt_cost = (
-            prompt_data_length
-            * LLMFactory.llm_classes[self.get_model_name()][
-                "price_per_data_unit_prompt"
-            ]
-        )
-        return prompt_cost
-
-    def get_completion_cost(self, completion_data_length: int) -> float:
-        completion_cost = (
-            completion_data_length
-            * LLMFactory.llm_classes[self.get_model_name()][
-                "price_per_data_unit_completion"
-            ]
-        )
-        return completion_cost
 
     def get_model_params_to_store(self) -> dict:
         return {
