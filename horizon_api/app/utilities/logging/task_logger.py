@@ -57,6 +57,9 @@ class TaskLogger:
         else:
             logs = TaskDeploymentLog.query.all()
 
+        if logs == None:
+            return None
+
         df = pd.DataFrame([log.to_dict() for log in logs])
         csv_buffer = BytesIO()
         df.to_csv(csv_buffer, index=False)
