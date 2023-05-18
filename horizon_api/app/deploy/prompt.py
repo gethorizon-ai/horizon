@@ -16,7 +16,7 @@ import os
 from app.utilities.logging.task_logger import TaskLogger
 from datetime import datetime
 import time
-from app.utilities.cost_calculation import calculate_cost
+from app.utilities import cost_calculation
 
 
 def deploy_prompt(
@@ -132,7 +132,7 @@ def deploy_prompt(
 
         prompt_data_length = len(original_formatted_prompt)
         output_data_length = len(output)
-        inference_cost = calculate_cost(
+        inference_cost = cost_calculation.calculate_cost(
             model_name, prompt_data_length, output_data_length
         )
 

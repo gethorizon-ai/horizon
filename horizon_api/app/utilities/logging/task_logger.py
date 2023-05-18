@@ -2,14 +2,9 @@ from app import db
 from app.models.component.task_deployment_log.task_deployment_log import (
     TaskDeploymentLog,
 )
-from datetime import datetime
-from app.utilities.cost_calculation import cost_calculation
-from app.models.llm.factory import LLMFactory
-import csv
-import os
-import shutil
-import pandas as pd
 from app.utilities.S3.s3_util import upload_file_to_s3
+from datetime import datetime
+import pandas as pd
 from io import BytesIO
 
 
@@ -61,14 +56,16 @@ class TaskLogger:
         df.to_csv(csv_buffer, index=False)
         csv_buffer.seek(0)
 
-        # Prepare a unique log file name: logs_{task_id}.csv
-        log_file_name = "logs.csv" if task_id is None else f"logs_{task_id}.csv"
+        # Prepare a unique log file name
+        if task_id:
+            log_file_name = f"deployment_logs/{task_id}/{datetime.datetime.now().strftime('%Y/%m/%d/%H%M%SZ')}/deployment_logs_{task_id}.csv"
+        else:
+            log_file_name = f"deployment_logs/all/{datetime.datetime.now().strftime('%Y/%m/%d/%H%M%SZ')}/deployment_logs.csv"
 
-        # upload the file to S3
-        upload_file_to_s3(csv_buffer, log_file_name)
+        upload_file_to_s3(file=csv_buffer, key=log_file_name)
 
         return log_file_name
 
-    def clear_logs(self):
+    def clear_logs():
         TaskDeploymentLog.query.delete()
         db.session.commit()
