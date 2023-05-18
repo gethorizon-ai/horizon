@@ -1,6 +1,9 @@
 import json
 from app import db
 from app.utilities.dataset_processing import input_variable_naming
+from app.models.component.task_deployment_log.task_deployment_log import (
+    TaskDeploymentLog,
+)
 from typing import TYPE_CHECKING
 import json
 
@@ -29,6 +32,14 @@ class Prompt(db.Model):
     evaluation_job_name = db.Column(db.String(100), nullable=True)
     model_name = db.Column(db.String(100), nullable=True)
     inference_statistics = db.Column(db.String(1000), nullable=True)
+    deployment_logs = db.relationship(
+        "TaskDeploymentLog",
+        backref="prompt",
+        lazy="dynamic",
+        cascade="all, delete, delete-orphan",
+        foreign_keys=[TaskDeploymentLog.prompt_id],
+        passive_deletes=True,
+    )
 
     def __init__(self, name, task_id, prompt_template: "BasePromptTemplate" = None):
         self.name = name
