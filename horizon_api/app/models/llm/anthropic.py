@@ -1,5 +1,4 @@
 from .base import BaseLLM
-from app.models.llm.factory import LLMFactory
 from langchain.chat_models import ChatAnthropic as ChatAnthropicOriginal
 from langchain.schema import LLMResult
 import anthropic

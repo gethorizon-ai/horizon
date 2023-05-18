@@ -1,4 +1,3 @@
-from app.models.llm.factory import LLMFactory
 from langchain.llms import OpenAI as OpenAIOriginal
 from langchain.chat_models import ChatOpenAI as ChatOpenAIOriginal
 from langchain.schema import LLMResult
