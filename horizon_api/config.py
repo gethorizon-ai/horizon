@@ -31,20 +31,10 @@ class Config:
     aws_secret_key = safequote(os.environ.get("AWS_SECRET_KEY"))
     CELERY_BROKER_URL = f"sqs://{aws_access_key}:{aws_secret_key}@"
     CELERY_TASK_IGNORE_RESULT = True
-    # : Revert
-    # CELERY_BROKER_TRANSPORT_OPTIONS = {
-    #     "region": AWS_REGION,
-    #     "polling_interval": 15,
-    #     "wait_time_seconds": 15,
-    # }
     CELERY_BROKER_TRANSPORT_OPTIONS = {
-        "predefined_queues": {
-            "celery": {
-                "url": "https://sqs.us-west-2.amazonaws.com/520495742003/celery_dev",
-                "access_key_id": aws_access_key,
-                "secret_access_key": aws_secret_key,
-            }
-        }
+        "region": AWS_REGION,
+        "polling_interval": 15,
+        "wait_time_seconds": 15,
     }
     CELERY = {
         "broker_url": CELERY_BROKER_URL,

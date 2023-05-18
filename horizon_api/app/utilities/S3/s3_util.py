@@ -1,8 +1,8 @@
 import boto3
-import os
 from config import Config
 import tempfile
 import requests
+import datetime
 
 s3 = boto3.client("s3")
 S3_BUCKET = Config.S3_BUCKET

@@ -13,6 +13,9 @@ from config import Config
 import json
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 import os
+from app.utilities.logging.task_logger import TaskLogger
+from datetime import datetime
+import time
 
 
 def deploy_prompt(
@@ -20,6 +23,7 @@ def deploy_prompt(
     input_values: dict,
     openai_api_key: str = None,
     anthropic_api_key: str = None,
+    log_deployment: bool = False,
 ) -> str:
     """Deploy a prompt with the given prompt_id and input_values.
 
@@ -95,18 +99,20 @@ def deploy_prompt(
 
     # Format the prompt
     original_formatted_prompt = prompt_instance.format(**input_values)
-    formatted_prompt_for_llm = original_formatted_prompt
 
     # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
-        formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
+        formatted_prompt_for_llm = [HumanMessage(content=original_formatted_prompt)]
+        prompt_for_data_analysis = formatted_prompt_for_llm
+    else:
+        formatted_prompt_for_llm = original_formatted_prompt
+        prompt_for_data_analysis = [formatted_prompt_for_llm]
+
+    inference_start_time = time.time()
 
     # Generate the output
-    output = (
-        model_instance.generate([formatted_prompt_for_llm])
-        .generations[0][0]
-        .text.strip()
-    )
+    llm_result = model_instance.generate([formatted_prompt_for_llm])
+    output = llm_result.generations[0][0].text.strip()
 
     # Conduct post-processing of output, if applicable
     if task.pydantic_model:
@@ -117,5 +123,38 @@ def deploy_prompt(
             original_output=output, prompt_string=original_formatted_prompt
         )
 
-    # Return the output
+    inference_end_time = time.time()
+
+    # Log deployment if logging is enabled
+    if log_deployment:
+        prompt_data_length = model_instance.get_prompt_data_length(
+            prompt_messages=prompt_for_data_analysis, llm_result=llm_result
+        )
+        completion_data_length = model_instance.get_completion_data_length(
+            llm_result=llm_result
+        )
+        prompt_cost = LLMFactory.get_prompt_cost(
+            model_name=model_name, prompt_data_length=prompt_data_length
+        )
+        completion_cost = LLMFactory.get_completion_cost(
+            model_name=model_name, completion_data_length=completion_data_length
+        )
+
+        logger = TaskLogger()
+        logger.log_deployment(
+            task_id=prompt.task_id,
+            prompt_id=prompt.id,
+            timestamp=datetime.utcnow(),
+            model_name=model_name,
+            input_values=input_values,
+            llm_completion=output,
+            inference_latency=inference_end_time - inference_start_time,
+            data_unit=LLMFactory.get_data_unit(model_name=model_name),
+            prompt_data_length=prompt_data_length,
+            completion_data_length=completion_data_length,
+            prompt_cost=prompt_cost,
+            completion_cost=completion_cost,
+            total_inference_cost=prompt_cost + completion_cost,
+        )
+
     return output

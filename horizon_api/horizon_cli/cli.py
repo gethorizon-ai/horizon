@@ -571,6 +571,12 @@ def delete_task(task_id, horizon_api_key):
     "--inputs", prompt="Inputs", help="The inputs to the task in JSON format."
 )
 @click.option(
+    "--log_deployment",
+    prompt="Do you want to log this deployment? (yes/no)",
+    help="Log the deployment if 'yes'.",
+    default="no",
+)
+@click.option(
     "--openai_api_key",
     default=os.environ.get("OPENAI_API_KEY"),
     prompt="OpenAI API Key (text hidden; type 'skip' if you're not using OpenAI)"
@@ -588,13 +594,16 @@ def delete_task(task_id, horizon_api_key):
     help="The Anthropic API key for the user.",
     hide_input=True,
 )
-def deploy_task(task_id, inputs, horizon_api_key, openai_api_key, anthropic_api_key):
+def deploy_task(
+    task_id, inputs, horizon_api_key, openai_api_key, anthropic_api_key, log_deployment
+):
     horizon_ai.api_key = horizon_api_key
     horizon_ai.openai_api_key = openai_api_key
     horizon_ai.anthropic_api_key = anthropic_api_key
+    log_deployment = True if log_deployment.lower() == "yes" else False
     try:
         inputs_dict = json.loads(inputs)
-        result = horizon_ai.deploy_task(task_id, inputs_dict)
+        result = horizon_ai.deploy_task(task_id, inputs_dict, log_deployment)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:
@@ -646,6 +655,30 @@ def view_evaluation_dataset(task_id, horizon_api_key):
     horizon_ai.api_key = horizon_api_key
     try:
         result = horizon_ai.view_evaluation_dataset(task_id)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
+
+
+# download logs
+@click.command(name="view-logs")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option(
+    "--task_id",
+    prompt="Task ID",
+    help="The ID of the task to view logs for.",
+)
+def view_logs(task_id, horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.view_deployment_logs(task_id)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:
@@ -817,6 +850,7 @@ task.add_command(delete_task)
 # task.add_command(set_task_curr_prompt)
 # task.add_command(generate_task)
 task.add_command(deploy_task)
+task.add_command(view_logs)
 
 # Evaluation Dataset-related commands
 # evaluation_dataset.add_command(upload_evaluation_dataset)

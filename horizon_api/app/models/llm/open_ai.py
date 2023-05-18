@@ -1,5 +1,6 @@
 from langchain.llms import OpenAI as OpenAIOriginal
 from langchain.chat_models import ChatOpenAI as ChatOpenAIOriginal
+from langchain.schema import LLMResult
 from .base import BaseLLM
 import tiktoken
 from tenacity import (
@@ -20,6 +21,14 @@ class OpenAI(BaseLLM, OpenAIOriginal):
     def get_data_length(sample_str: str) -> int:
         encoding_davinci = tiktoken.encoding_for_model("text-davinci-003")
         return len(encoding_davinci.encode(sample_str))
+
+    def get_prompt_data_length(
+        self, prompt_messages: list, llm_result: LLMResult
+    ) -> int:
+        return llm_result.llm_output["token_usage"]["prompt_tokens"]
+
+    def get_completion_data_length(self, llm_result: LLMResult) -> int:
+        return llm_result.llm_output["token_usage"]["completion_tokens"]
 
     def get_model_params_to_store(self) -> dict:
         return {
@@ -59,6 +68,14 @@ class ChatOpenAI(BaseLLM, ChatOpenAIOriginal):
     def get_data_length(sample_str: str) -> int:
         encoding_turbo = tiktoken.encoding_for_model("gpt-3.5-turbo")
         return len(encoding_turbo.encode(sample_str))
+
+    def get_prompt_data_length(
+        self, prompt_messages: list, llm_result: LLMResult
+    ) -> int:
+        return llm_result.llm_output["token_usage"]["prompt_tokens"]
+
+    def get_completion_data_length(self, llm_result: LLMResult) -> int:
+        return llm_result.llm_output["token_usage"]["completion_tokens"]
 
     def get_model_params_to_store(self) -> dict:
         return {

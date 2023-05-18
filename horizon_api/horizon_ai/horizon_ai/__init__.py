@@ -291,7 +291,7 @@ def generate_task(task_id, objective):
 
 
 # Deploy a task using the current prompt
-def deploy_task(task_id, inputs):
+def deploy_task(task_id, inputs, log_deployment=False):
     global api_key, openai_api_key, anthropic_api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
@@ -301,6 +301,7 @@ def deploy_task(task_id, inputs):
         "inputs": inputs,
         "openai_api_key": openai_api_key,
         "anthropic_api_key": anthropic_api_key,
+        "log_deployment": log_deployment,
     }
     response = _post(endpoint="/api/tasks/deploy", json=payload, headers=headers)
     return response
@@ -332,6 +333,17 @@ def upload_output_schema(task_id, file_path):
             headers=headers,
         )
         return response
+
+
+def view_deployment_logs(task_id):
+    global api_key
+    if api_key == None:
+        raise Exception("Must set Horizon API key.")
+    headers = {"X-Api-Key": api_key}
+    response = _get(
+        endpoint=f"/api/tasks/{task_id}/view_deployment_logs", headers=headers
+    )
+    return response
 
 
 # def view_evaluation_dataset(task_id):

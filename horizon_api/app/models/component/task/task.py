@@ -4,6 +4,9 @@ from enum import Enum
 import json
 import os
 from app.models.component.prompt import Prompt
+from app.models.component.task_deployment_log.task_deployment_log import (
+    TaskDeploymentLog,
+)
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import event
 from app.utilities.S3.s3_util import delete_file_from_s3
@@ -29,6 +32,20 @@ class Task(db.Model):
     create_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
     allowed_models = db.Column(db.String(200), nullable=False)
+    active_prompt_id = db.Column(
+        db.Integer,
+        db.ForeignKey("prompt.id", use_alter=True, ondelete="SET NULL"),
+        nullable=True,
+    )
+    evaluation_statistics = db.Column(db.String(1000), nullable=True)
+    deployment_logs = db.relationship(
+        "TaskDeploymentLog",
+        backref="task",
+        lazy="dynamic",
+        cascade="all, delete, delete-orphan",
+        foreign_keys=[TaskDeploymentLog.task_id],
+        passive_deletes=True,
+    )
     prompts = db.relationship(
         "Prompt",
         backref="task",
@@ -37,12 +54,6 @@ class Task(db.Model):
         foreign_keys=[Prompt.task_id],
         passive_deletes=True,
     )
-    active_prompt_id = db.Column(
-        db.Integer,
-        db.ForeignKey("prompt.id", use_alter=True, ondelete="SET NULL"),
-        nullable=True,
-    )
-    evaluation_statistics = db.Column(db.String(1000), nullable=True)
 
     def to_dict(self):
         return {
@@ -94,7 +105,7 @@ class Task(db.Model):
 
 
 @event.listens_for(Task, "before_delete")
-def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
+def _clean_up_and_remove_dependencies(mapper, connection, target):
     # Delete evaluation dataset from S3, if it exists
     if target.evaluation_dataset is not None:
         try:
@@ -129,6 +140,8 @@ def _remove_evaluation_dataset_and_active_prompt_id(mapper, connection, target):
         .where(target.__table__.c.id == target.id)
         .values(
             evaluation_dataset=target.evaluation_dataset,
+            output_schema=target.output_schema,
+            pydantic_model=target.pydantic_model,
             active_prompt_id=target.active_prompt_id,
         )
     )

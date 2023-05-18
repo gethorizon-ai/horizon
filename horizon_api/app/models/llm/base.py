@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any, List
+from langchain.schema import LLMResult
 
 
 class BaseLLM(ABC):
@@ -22,6 +23,33 @@ class BaseLLM(ABC):
 
         Returns:
             int: length of data in string.
+        """
+        pass
+
+    @abstractmethod
+    def get_prompt_data_length(
+        self, prompt_messages: list, llm_result: LLMResult
+    ) -> int:
+        """Get prompt data length (e.g., number of tokens, characters).
+
+        Args:
+            prompt_messages (list): prompt messages passed into llm.
+            llm_result (LLMResult): generation result from the llm object.
+
+        Returns:
+            int: prompt data length.
+        """
+        pass
+
+    @abstractmethod
+    def get_completion_data_length(self, llm_result: LLMResult) -> int:
+        """Get completion data length (e.g., number of tokens, characters).
+
+        Args:
+            llm_result (LLMResult): generation result from the llm object.
+
+        Returns:
+            int: completion data length.
         """
         pass
 
