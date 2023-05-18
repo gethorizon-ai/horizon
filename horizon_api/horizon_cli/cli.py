@@ -678,7 +678,7 @@ def view_evaluation_dataset(task_id, horizon_api_key):
 def view_logs(task_id, horizon_api_key):
     horizon_ai.api_key = horizon_api_key
     try:
-        result = horizon_ai.view_logs(task_id)
+        result = horizon_ai.view_deployment_logs(task_id)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:
