@@ -103,3 +103,4 @@ wrapt
 yarl
 tiktoken
 # enum==0.4.6
+datamodel-code-generator
