@@ -64,9 +64,9 @@ class TaskLogger:
 
         # Prepare a unique log file name
         if task_id:
-            log_file_name = f"deployment_logs/{task_id}/{datetime.datetime.now().strftime('%Y/%m/%d/%H%M%SZ')}/deployment_logs_{task_id}.csv"
+            log_file_name = f"deployment_logs/{task_id}/{datetime.now().strftime('%Y/%m/%d/%H%M%SZ')}/deployment_logs_{task_id}.csv"
         else:
-            log_file_name = f"deployment_logs/all_tasks/{datetime.datetime.now().strftime('%Y/%m/%d/%H%M%SZ')}/deployment_logs.csv"
+            log_file_name = f"deployment_logs/all_tasks/{datetime.now().strftime('%Y/%m/%d/%H%M%SZ')}/deployment_logs.csv"
 
         upload_file_to_s3(file=csv_buffer, key=log_file_name)
 
