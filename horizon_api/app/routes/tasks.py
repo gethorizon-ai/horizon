@@ -789,4 +789,6 @@ def register_routes(api):
     #     DeleteOutputSchemasAPI,
     #     "/api/tasks/<int:task_id>/delete_output_schema",
     # )
-    api.add_resource(ViewDeploymentLogsAPI, "/api/tasks/<int:task_id>/view_logs")
+    api.add_resource(
+        ViewDeploymentLogsAPI, "/api/tasks/<int:task_id>/view_deployment_logs"
+    )

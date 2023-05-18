@@ -335,12 +335,14 @@ def upload_output_schema(task_id, file_path):
         return response
 
 
-def view_logs(task_id):
+def view_deployment_logs(task_id):
     global api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
     headers = {"X-Api-Key": api_key}
-    response = _get(endpoint=f"/api/tasks/{task_id}/view_logs", headers=headers)
+    response = _get(
+        endpoint=f"/api/tasks/{task_id}/view_deployment_logs", headers=headers
+    )
     return response
 
 
