@@ -14,6 +14,6 @@ PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
     "stage_3": {
         "num_prompts_temperature_variation": 5,
         "num_shortlist": 1,
-        "num_iterations": 1,  # 3,
+        "num_iterations": 3,
     },
 }

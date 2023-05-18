@@ -1,7 +1,7 @@
 """Shortlists given prompt-model candidates by clustering prompt prefixes and picking prompt prefix closest to cluster centroids."""
 
 from app.models.component.prompt_model_candidates import PromptModelCandidates
-from langchain.embeddings import OpenAIEmbeddings
+from app.models.embedding.open_ai import OpenAIEmbeddings
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import euclidean
 import numpy as np
