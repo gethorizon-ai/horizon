@@ -4,7 +4,8 @@ from enum import Enum
 import json
 import os
 from app.models.component.prompt import Prompt
-from app.models.component.task_deployment_log.task_deployment_log import TaskDeploymentLog
+from app.models.component.task_deployment_log.task_deployment_log import (
+    TaskDeploymentLog,
 )
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import event
