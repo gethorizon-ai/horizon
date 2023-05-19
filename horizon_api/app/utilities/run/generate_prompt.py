@@ -418,7 +418,7 @@ def generate_prompt_model_configuration(
 
     # Store evaluation statistics with task object
     evaluation_statistics = {
-        "number_of_prompt_model_candidates_considered": starting_prompt_model_id,
+        "number_of_prompt_model_candidates_considered": starting_prompt_model_id - 1,
         "number_of_inferences_and_evaluations_done": len(
             aggregated_inference_evaluation_results
         ),
