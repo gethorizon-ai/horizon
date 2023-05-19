@@ -81,9 +81,6 @@ def generate_prompt_model_configuration(
     # Initiate objects to store selected prompt-model candidates and aggregated inference and evaluation results
     prompt_model_candidates_selected = PromptModelCandidates()
     aggregated_inference_evaluation_results = InferenceEvaluationResults()
-    print(
-        f"Number of inferences and evaluations: {len(aggregated_inference_evaluation_results)}"
-    )
 
     # If task has Pydantic model, than initialize post-processing data structure
     post_processing = None
@@ -268,9 +265,6 @@ def generate_prompt_model_configuration(
             axis=0,
         ).reset_index(drop=True)
         print("finished adaptive_filtering for stage_1")
-        print(
-            f"Number of inferences and evaluations: {len(aggregated_inference_evaluation_results)}"
-        )
 
         # STAGE 2 - Few shots
         # Generate few shot-based prompts
@@ -306,9 +300,6 @@ def generate_prompt_model_configuration(
             ],
             axis=0,
         ).reset_index(drop=True)
-        print(
-            f"Number of inferences and evaluations: {len(aggregated_inference_evaluation_results)}"
-        )
 
         # Shortlist from stage 1 prompts and few-shot versions in stage 2
         prompt_model_candidates_stage_1_and_2 = pd.concat(
@@ -368,9 +359,6 @@ def generate_prompt_model_configuration(
             axis=0,
         ).reset_index(drop=True)
         print("finished adaptive_filtering for stage_3")
-        print(
-            f"Number of inferences and evaluations: {len(aggregated_inference_evaluation_results)}"
-        )
 
         # Store best prompt-model candidate for this llm
         prompt_model_candidates_selected = pd.concat(
@@ -435,9 +423,6 @@ def generate_prompt_model_configuration(
             aggregated_inference_evaluation_results
         ),
     }
-    print(
-        f"Number of inferences and evaluations: {len(aggregated_inference_evaluation_results)}"
-    )
     task.evaluation_statistics = json.dumps(evaluation_statistics)
 
     # Set newly created prompt as the active prompt for the task if it is not already so
