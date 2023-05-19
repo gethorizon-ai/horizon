@@ -747,6 +747,15 @@ class DeleteOutputSchemasAPI(Resource):
 class ViewDeploymentLogsAPI(Resource):
     @api_key_required
     def get(self, task_id):
+        # Fetch task and check it is associated with user
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
+        if not task:
+            return {"error": "Task not found or not associated with user"}, 404
+
         task_logger = TaskLogger()
         log_file_name = task_logger.get_logs(task_id)
 
