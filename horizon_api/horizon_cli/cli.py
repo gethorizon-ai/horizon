@@ -830,7 +830,7 @@ def view_logs(task_id, horizon_api_key):
 
 
 # Generate synthetic data
-@click.command(name="generate-synthetic-data")
+@click.command(name="synthetic-data")
 @click.option(
     "--horizon_api_key",
     default=os.environ.get("HORIZON_API_KEY"),
