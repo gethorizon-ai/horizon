@@ -70,6 +70,7 @@ class GenerateSyntheticDataAPI(Resource):
         logging.info("GenerateSyntheticDataAPI: Parsed args")
 
         print(args)
+        print(request.data)
 
         original_dataset = request.files["original_dataset"]
         print(type(original_dataset))
