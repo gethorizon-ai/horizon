@@ -62,7 +62,7 @@ class GenerateSyntheticDataAPI(Resource):
         #     help="OpenAI API key is required",
         # )
         parser.add_argument("json_data", type=str, location="form")
-        parser.add_argument("file", type=str, location="files")
+        parser.add_argument("original_dataset", type=str, location="files")
         # parser.add_argument(
         #     "original_dataset",
         #     type=werkzeug.datastructures.FileStorage,
