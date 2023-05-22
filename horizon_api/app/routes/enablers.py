@@ -42,22 +42,20 @@ class GenerateSyntheticDataAPI(Resource):
         parser.add_argument(
             "objective", type=str, required=True, help="Objective is required"
         )
-        logging.info("GenerateSyntheticDataAPI: Processed objective")
         parser.add_argument(
             "num_synthetic_data",
             type=int,
             required=True,
             help="Number of synthetic data points to generate is required",
         )
-        logging.info("GenerateSyntheticDataAPI: Processed num_synthetic_data")
         parser.add_argument(
             "openai_api_key",
             type=str,
             required=True,
             help="OpenAI API key is required",
         )
-        logging.info("GenerateSyntheticDataAPI: Processed openai_api_key")
         args = parser.parse_args()
+        logging.info("GenerateSyntheticDataAPI: Parsed args")
 
         if "original_dataset" not in request.files:
             return {"error": f"No file provided\n{request.files}"}, 400
