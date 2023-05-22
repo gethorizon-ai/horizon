@@ -45,7 +45,7 @@ class GenerateSyntheticDataAPI(Resource):
             "json_data",
             type=dict,
             required=True,
-            location="form",
+            location="files",
             help="Objective, number of synthetic data, and OpenAI API key are required",
         )
         parser.add_argument(
