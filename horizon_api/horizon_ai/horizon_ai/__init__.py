@@ -509,12 +509,14 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
         "openai_api_key": openai_api_key,
     }
     with open(file_path, "rb") as f:
-        payload = {"json_data": json.dumps(payload)}
-        files = {"original_dataset": f}
+        # Create the multipart form data
+        multipart_data = {
+            "json_data": (None, json.dumps(payload), "application/json"),
+            "file": (file_path, f, "application/octet-stream"),
+        }
         response = _post(
             endpoint="/api/enablers/generate_synthetic_data",
-            files=files,
-            data=payload,
+            files=multipart_data,
             headers=headers,
         )
         return response
