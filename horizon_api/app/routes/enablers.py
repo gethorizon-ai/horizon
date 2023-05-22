@@ -75,6 +75,7 @@ class GenerateSyntheticDataAPI(Resource):
         print(args["original_dataset"])
 
         original_dataset = args["original_dataset"]
+        print(type(original_dataset))
 
         if not allowed_evaluation_dataset_file(original_dataset.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
