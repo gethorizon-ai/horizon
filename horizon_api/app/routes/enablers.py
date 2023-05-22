@@ -45,21 +45,18 @@ class GenerateSyntheticDataAPI(Resource):
             type=str,
             required=True,
             help="Objective is required",
-            location="json",
         )
         parser.add_argument(
             "num_synthetic_data",
             type=int,
             required=True,
             help="Number of synthetic data points to generate is required",
-            location="json",
         )
         parser.add_argument(
             "openai_api_key",
             type=str,
             required=True,
             help="OpenAI API key is required",
-            location="json",
         )
         parser.add_argument(
             "original_dataset",
