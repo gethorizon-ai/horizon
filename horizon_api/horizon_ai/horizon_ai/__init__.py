@@ -509,14 +509,12 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
         "openai_api_key": openai_api_key,
     }
     with open(file_path, "rb") as f:
+        payload = {"json_data": json.dumps(payload)}
+        files = {"original_dataset": f}
         response = _post(
             endpoint="/api/enablers/generate_synthetic_data",
-            files={"evaluation_dataset": f},
-            data={
-                "objective": objective,
-                "num_synthetic_data": num_synthetic_data,
-                "openai_api_key": openai_api_key,
-            },
+            files=files,
+            data=payload,
             headers=headers,
         )
         return response
