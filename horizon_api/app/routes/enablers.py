@@ -16,6 +16,7 @@ from datetime import datetime
 import logging
 import tempfile
 import os
+import werkzeug
 
 ALLOWED_EVALUTION_DATASET_EXTENSIONS = {"csv"}
 
@@ -56,7 +57,7 @@ class GenerateSyntheticDataAPI(Resource):
         )
         parser.add_argument(
             "original_dataset",
-            type=inputs.File(required=True),
+            type=werkzeug.datastructures.FileStorage,
             location="files",
             help="Original dataset file is required",
         )
