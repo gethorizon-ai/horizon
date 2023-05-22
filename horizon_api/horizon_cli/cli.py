@@ -926,6 +926,7 @@ task.add_command(view_logs)
 # prompt.add_command(deploy_prompt)
 
 # Enabler-related commands
+enabler.add_command(generate_synthetic_data)
 
 # Enable auto-completion
 try:
