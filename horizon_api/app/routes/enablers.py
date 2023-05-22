@@ -74,7 +74,7 @@ class GenerateSyntheticDataAPI(Resource):
         print(args["json_data"])
         print(args["original_dataset"])
 
-        original_dataset = args["original_dataset"]
+        original_dataset = request.files["original_dataset"]
         print(type(original_dataset))
 
         if not allowed_evaluation_dataset_file(original_dataset.filename):
