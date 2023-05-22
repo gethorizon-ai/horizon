@@ -65,7 +65,7 @@ class GenerateSyntheticDataAPI(Resource):
             "original_dataset",
             type=werkzeug.datastructures.FileStorage,
             required=True,
-            location=["json", "files"],
+            location="files",
             help="Original dataset file is required",
         )
         args = parser.parse_args()
