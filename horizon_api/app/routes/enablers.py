@@ -16,7 +16,7 @@ from datetime import datetime
 import logging
 import tempfile
 import os
-import werkzeug
+import json
 
 ALLOWED_EVALUTION_DATASET_EXTENSIONS = {"csv"}
 
@@ -40,24 +40,27 @@ class GenerateSyntheticDataAPI(Resource):
         logging.info("GenerateSyntheticDataAPI: Start processing the request")
 
         parser = reqparse.RequestParser()
-        # parser.add_argument(
-        #     "objective",
-        #     type=str,
-        #     required=True,
-        #     help="Objective is required",
-        # )
-        # parser.add_argument(
-        #     "num_synthetic_data",
-        #     type=int,
-        #     required=True,
-        #     help="Number of synthetic data points to generate is required",
-        # )
-        # parser.add_argument(
-        #     "openai_api_key",
-        #     type=str,
-        #     required=True,
-        #     help="OpenAI API key is required",
-        # )
+        parser.add_argument(
+            "objective",
+            type=str,
+            required=True,
+            location="form",
+            help="Objective is required",
+        )
+        parser.add_argument(
+            "num_synthetic_data",
+            type=int,
+            required=True,
+            location="form",
+            help="Number of synthetic data points to generate is required",
+        )
+        parser.add_argument(
+            "openai_api_key",
+            type=str,
+            required=True,
+            location="form",
+            help="OpenAI API key is required",
+        )
         # parser.add_argument(
         #     "original_dataset",
         #     type=werkzeug.datastructures.FileStorage,
@@ -73,7 +76,8 @@ class GenerateSyntheticDataAPI(Resource):
             help="Objective, number of synthetic data, and OpenAI API key are required",
         )
         args = parser.parse_args()
-        json_data = args["json_data"]
+        print(args)
+        json_data = json.loads(args["json_data"])
         if "objective" not in json_data:
             return {"error": "Objective statement is required"}, 400
         if "num_synthetic_data" not in json_data:
@@ -81,6 +85,8 @@ class GenerateSyntheticDataAPI(Resource):
         if "openai_api_key" not in json_data:
             return {"error": "openai_api_key is required"}, 400
         logging.info("GenerateSyntheticDataAPI: Parsed args")
+
+        return
 
         original_dataset = request.files["original_dataset"]
         if not allowed_evaluation_dataset_file(original_dataset.filename):
