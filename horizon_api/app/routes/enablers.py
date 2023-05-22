@@ -16,6 +16,7 @@ from datetime import datetime
 import logging
 import tempfile
 import os
+import werkzeug
 import json
 
 ALLOWED_EVALUTION_DATASET_EXTENSIONS = {"csv"}
@@ -61,20 +62,20 @@ class GenerateSyntheticDataAPI(Resource):
             location="form",
             help="OpenAI API key is required",
         )
-        # parser.add_argument(
-        #     "original_dataset",
-        #     type=werkzeug.datastructures.FileStorage,
-        #     required=True,
-        #     location="files",
-        #     help="Original dataset file is required",
-        # )
         parser.add_argument(
-            "json_data",
-            type=str,
+            "original_dataset",
+            type=werkzeug.datastructures.FileStorage,
             required=True,
-            location="form",
-            help="Objective, number of synthetic data, and OpenAI API key are required",
+            location="files",
+            help="Original dataset file is required",
         )
+        # parser.add_argument(
+        #     "json_data",
+        #     type=str,
+        #     required=True,
+        #     location="form",
+        #     help="Objective, number of synthetic data, and OpenAI API key are required",
+        # )
         args = parser.parse_args()
         print(args)
         json_data = json.loads(args["json_data"])
