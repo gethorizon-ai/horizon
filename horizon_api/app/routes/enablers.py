@@ -65,20 +65,19 @@ class GenerateSyntheticDataAPI(Resource):
         #     location="files",
         #     help="Original dataset file is required",
         # )
-        parser.add_argument("json_data", type=str, location="form")
+        parser.add_argument(
+            "json_data",
+            type=str,
+            required=True,
+            location="form",
+            help="Objective, number of synthetic data, and OpenAI API key are required",
+        )
         args = parser.parse_args()
         logging.info("GenerateSyntheticDataAPI: Parsed args")
 
-        print(args)
-        print(request.data)
-
         original_dataset = request.files["original_dataset"]
-        print(type(original_dataset))
-
         if not allowed_evaluation_dataset_file(original_dataset.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
-
-        return
 
         with tempfile.NamedTemporaryFile(mode="wb", delete=False) as temp_file:
             temp_file_path = temp_file.name
