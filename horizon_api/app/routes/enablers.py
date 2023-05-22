@@ -40,38 +40,38 @@ class GenerateSyntheticDataAPI(Resource):
         logging.info("GenerateSyntheticDataAPI: Start processing the request")
 
         parser = reqparse.RequestParser()
-        parser.add_argument(
-            "objective",
-            type=str,
-            required=True,
-            location="json",
-            help="Objective is required",
-        )
-        parser.add_argument(
-            "num_synthetic_data",
-            type=int,
-            required=True,
-            location="json",
-            help="Number of synthetic data points to generate is required",
-        )
-        parser.add_argument(
-            "openai_api_key",
-            type=str,
-            required=True,
-            location="json",
-            help="OpenAI API key is required",
-        )
         # parser.add_argument(
-        #     "original_dataset",
-        #     type=werkzeug.datastructures.FileStorage,
+        #     "objective",
+        #     type=str,
         #     required=True,
-        #     location=["json", "files"],
-        #     help="Original dataset file is required",
+        #     location="json",
+        #     help="Objective is required",
         # )
+        # parser.add_argument(
+        #     "num_synthetic_data",
+        #     type=int,
+        #     required=True,
+        #     location="json",
+        #     help="Number of synthetic data points to generate is required",
+        # )
+        # parser.add_argument(
+        #     "openai_api_key",
+        #     type=str,
+        #     required=True,
+        #     location="json",
+        #     help="OpenAI API key is required",
+        # )
+        parser.add_argument(
+            "original_dataset",
+            type=werkzeug.datastructures.FileStorage,
+            required=True,
+            location="files",
+            help="Original dataset file is required",
+        )
         args = parser.parse_args()
         logging.info("GenerateSyntheticDataAPI: Parsed args")
 
-        original_dataset = request.files["original_dataset"]
+        original_dataset = args["original_dataset"]
 
         if not allowed_evaluation_dataset_file(original_dataset.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
