@@ -502,7 +502,7 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
     if openai_api_key == None:
         raise Exception("Must set OpenAI API key.")
 
-    headers = {"Content-Type": "multipart/form-data", "X-Api-Key": api_key}
+    headers = {"X-Api-Key": api_key}
     payload = {
         "objective": objective,
         "num_synthetic_data": num_synthetic_data,
