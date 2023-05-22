@@ -13,7 +13,6 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
         user_email (str): user email address.
         task_details (dict): data to share with the user regarding their new task.
     """
-
     # Parse task details. Escape certain characters (e.g., angle brackets) for use with html
     name = html.escape(str(task_details["name"]))
     objective = html.escape(str(task_details["objective"]))
@@ -131,6 +130,86 @@ def email_task_creation_error(user_email: str, error_message: str) -> None:
     subject = "Error with your Horizon task request"
     error_message = html.escape(str(error_message))
     text_body = f"""Hello! Unfortunately, your Horizon task request had the following error. Please email us at team@gethorizon.ai if you need help troubleshooting.
+
+{error_message}"""
+
+    # Send email
+    response = client.send_email(
+        FromEmailAddress="noreply@gethorizon.ai",
+        Destination={
+            "ToAddresses": [
+                user_email,
+            ],
+        },
+        Content={
+            "Simple": {
+                "Subject": {"Data": subject, "Charset": "UTF-8"},
+                "Body": {
+                    "Text": {"Data": text_body, "Charset": "UTF-8"},
+                    # "Html": {
+                    #     "Data": html_body,
+                    #     "Charset": "UTF-8",
+                    # },
+                },
+            },
+        },
+    )
+
+
+def email_synthetic_data_generation_success(
+    user_email: str, synthetic_dataset_url: str
+) -> None:
+    """Emails user to inform them that their synthetic data generation request is completed.
+
+    Args:
+        user_email (str): user email address.
+        synthetic_dataset_url: presigned s3 url to download synthetic dataset.
+    """
+    # Configure email parameters
+    subject = "Your Horizon synthetic dataset is ready!"
+    html_body = f"""
+<html>
+<body>
+Hi,<br />
+Success - your Horizon synthetic dataset has been generated. You can download it <a href={synthetic_dataset_url}>here</a> (link is valid for 1 hour). Please email us at team@gethorizon.ai if you need any help.<br /><br />
+<b>Horizon AI</b>
+</body>
+</html>"""
+
+    # Send email
+    response = client.send_email(
+        FromEmailAddress="noreply@gethorizon.ai",
+        Destination={
+            "ToAddresses": [
+                user_email,
+            ],
+        },
+        Content={
+            "Simple": {
+                "Subject": {"Data": subject, "Charset": "UTF-8"},
+                "Body": {
+                    # "Text": {"Data": text_body, "Charset": "UTF-8"},
+                    "Html": {
+                        "Data": html_body,
+                        "Charset": "UTF-8",
+                    },
+                },
+            },
+        },
+    )
+
+
+def email_synthetic_data_generation_error(user_email: str, error_message: str) -> None:
+    """Emails user to inform them that their synthetic data generation request failed.
+
+    Args:
+        user_email (str): user email address.
+        error_message (str): data to share with the user regarding the error with task creation.
+    """
+    # Configure email parameters
+    subject = "Error with your Horizon synthetic data generation request"
+    error_message = html.escape(str(error_message))
+    text_body = f"""Hello! Unfortunately, your Horizon synthetic data generation request had the following error. Please email us at team@gethorizon.ai if you need help troubleshooting.
 
 {error_message}"""
 
