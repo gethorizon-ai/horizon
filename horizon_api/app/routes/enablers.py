@@ -1,5 +1,5 @@
 from flask import request, g
-from flask_restful import Resource, reqparse
+from flask_restful import Resource, reqparse, inputs
 from celery import shared_task
 from app import db, api
 from app.utilities.authentication.api_key_auth import api_key_required
@@ -54,13 +54,16 @@ class GenerateSyntheticDataAPI(Resource):
             required=True,
             help="OpenAI API key is required",
         )
+        parser.add_argument(
+            "original_dataset",
+            type=inputs.File(required=True),
+            location="files",
+            help="Original dataset file is required",
+        )
         args = parser.parse_args()
         logging.info("GenerateSyntheticDataAPI: Parsed args")
 
-        if "original_dataset" not in request.files:
-            return {"error": f"No file provided\n{request.files}"}, 400
-
-        original_dataset = request.files["original_dataset"]
+        original_dataset = args["original_dataset"]
 
         if not allowed_evaluation_dataset_file(original_dataset.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
