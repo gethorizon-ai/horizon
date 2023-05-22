@@ -71,7 +71,7 @@ class GenerateSyntheticDataAPI(Resource):
         args = parser.parse_args()
         logging.info("GenerateSyntheticDataAPI: Parsed args")
 
-        original_dataset = args["original_dataset"]
+        original_dataset = request.files["original_dataset"]
 
         if not allowed_evaluation_dataset_file(original_dataset.filename):
             return {"error": "Invalid file type. Only CSV files are allowed."}, 400
