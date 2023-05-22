@@ -73,11 +73,12 @@ class GenerateSyntheticDataAPI(Resource):
             help="Objective, number of synthetic data, and OpenAI API key are required",
         )
         args = parser.parse_args()
-        if "objective" not in args["json_data"]:
+        json_data = args["json_data"]
+        if "objective" not in json_data:
             return {"error": "Objective statement is required"}, 400
-        if "num_synthetic_data" not in args["json_data"]:
+        if "num_synthetic_data" not in json_data:
             return {"error": "num_synthetic_data is required"}, 400
-        if "openai_api_key" not in args["json_data"]:
+        if "openai_api_key" not in json_data:
             return {"error": "openai_api_key is required"}, 400
         logging.info("GenerateSyntheticDataAPI: Parsed args")
 
@@ -110,10 +111,10 @@ class GenerateSyntheticDataAPI(Resource):
         try:
             result_id = process_generate_synthetic_data.delay(
                 user_id=g.user.id,
-                user_objective=args["objective"],
+                user_objective=json_data["objective"],
                 dataset_s3_key=dataset_s3_key,
-                num_synthetic_data=args["num_synthetic_data"],
-                openai_api_key=args["openai_api_key"],
+                num_synthetic_data=json_data["num_synthetic_data"],
+                openai_api_key=json_data["openai_api_key"],
             )
         except Exception as e:
             return {"error": str(e)}, 400
