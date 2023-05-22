@@ -42,25 +42,11 @@ class GenerateSyntheticDataAPI(Resource):
 
         parser = reqparse.RequestParser()
         parser.add_argument(
-            "objective",
-            type=str,
+            "json_data",
+            type=dict,
             required=True,
-            location="files",
-            help="Objective is required",
-        )
-        parser.add_argument(
-            "num_synthetic_data",
-            type=int,
-            required=True,
-            location="files",
-            help="Number of synthetic data points to generate is required",
-        )
-        parser.add_argument(
-            "openai_api_key",
-            type=str,
-            required=True,
-            location="files",
-            help="OpenAI API key is required",
+            location="form",
+            help="Objective, number of synthetic data, and OpenAI API key are required",
         )
         parser.add_argument(
             "original_dataset",
@@ -69,16 +55,10 @@ class GenerateSyntheticDataAPI(Resource):
             location="files",
             help="Original dataset file is required",
         )
-        # parser.add_argument(
-        #     "json_data",
-        #     type=str,
-        #     required=True,
-        #     location="form",
-        #     help="Objective, number of synthetic data, and OpenAI API key are required",
-        # )
         args = parser.parse_args()
         print(args)
-        json_data = json.loads(args["json_data"])
+        json_data = args["json_data"]
+        original_dataset = request.files["original_dataset"]
         if "objective" not in json_data:
             return {"error": "Objective statement is required"}, 400
         if "num_synthetic_data" not in json_data:
