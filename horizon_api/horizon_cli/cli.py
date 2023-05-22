@@ -41,6 +41,11 @@ def prompt():
     pass
 
 
+@click.group()
+def enabler():
+    pass
+
+
 # User-related methods
 
 
@@ -821,12 +826,65 @@ def view_logs(task_id, horizon_api_key):
 #     result = client.deploy_prompt(prompt_id, inputs, api_key)
 #     click.echo(result)
 
+# Enabler-related methods
+
+
+# Generate synthetic data
+@click.command(name="generate-synthetic-data")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+    hide_input=True,
+)
+@click.option(
+    "--objective",
+    prompt="Objective / instruction",
+    help="Objective or instruction statement of how to generate outputs given the inputs.",
+)
+@click.option(
+    "--file_path",
+    prompt="File Path",
+    help="The path to the file containing the original dataset.",
+)
+@click.option(
+    "--num_synthetic_data",
+    prompt="Number of synthetic data points to generate",
+    help="Number of synthetic data points to generate.",
+)
+@click.option(
+    "--openai_api_key",
+    default=os.environ.get("OPENAI_API_KEY"),
+    prompt="OpenAI API Key (text hidden; type 'skip' if you're not using OpenAI)"
+    if not os.environ.get("OPENAI_API_KEY")
+    else False,
+    help="The OpenAI API key for the user.",
+    hide_input=True,
+)
+def generate_synthetic_data(
+    objective, file_path, num_synthetic_data, horizon_api_key, openai_api_key
+):
+    horizon_ai.api_key = horizon_api_key
+    horizon_ai.openai_api_key = openai_api_key
+    try:
+        result = horizon_ai.generate_synthetic_data(
+            objective, num_synthetic_data, file_path
+        )
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
+    pass
+
+
 # Add CLI commands to their respective groups
 cli.add_command(user)
 cli.add_command(project)
 cli.add_command(task)
 # cli.add_command(evaluation_dataset)
 # cli.add_command(prompt)
+cli.add_command(enabler)
 
 # User-related commands
 # user.add_command(register_user)
@@ -866,6 +924,8 @@ task.add_command(view_logs)
 # prompt.add_command(delete_prompt)
 # prompt.add_command(generate_prompt)
 # prompt.add_command(deploy_prompt)
+
+# Enabler-related commands
 
 # Enable auto-completion
 try:

@@ -490,3 +490,27 @@ def view_deployment_logs(task_id):
 #     payload = {"prompt_id": prompt_id, "inputs": inputs}
 #     response = _post(endpoint="/api/prompts/deploy", json=payload, headers=headers)
 #     return response
+
+
+# Enabler-related methods
+def generate_synthetic_data(objective, num_synthetic_data, file_path):
+    global api_key, openai_api_key
+    if api_key == None:
+        raise Exception("Must set Horizon API key.")
+    if openai_api_key == None:
+        raise Exception("Must set OpenAI API key.")
+
+    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+    payload = {
+        "objective": objective,
+        "num_synthetic_data": num_synthetic_data,
+        "openai_api_key": openai_api_key,
+    }
+    with open(file_path, "rb") as f:
+        response = _post(
+            endpoint="/api/enablers/generate_synthetic_data",
+            files={"original_dataset": f},
+            json=payload,
+            headers=headers,
+        )
+        return response
