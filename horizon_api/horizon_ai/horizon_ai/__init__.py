@@ -511,9 +511,9 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
         # Create the multipart form data
         multipart_data = {
             # "json_data": (None, json.dumps(payload), "application/json"),
-            "objective": objective,
-            "num_synthetic_data": num_synthetic_data,
-            "openai_api_key": openai_api_key,
+            "objective": (None, objective, "application/json"),
+            "num_synthetic_data": (None, num_synthetic_data, "application/json"),
+            "openai_api_key": (None, openai_api_key, "application/json"),
             "original_dataset": (file_path, f, "application/octet-stream"),
         }
         response = _post(
