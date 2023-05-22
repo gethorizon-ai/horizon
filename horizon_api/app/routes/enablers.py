@@ -61,13 +61,15 @@ class GenerateSyntheticDataAPI(Resource):
         #     location="json",
         #     help="OpenAI API key is required",
         # )
-        parser.add_argument(
-            "original_dataset",
-            type=werkzeug.datastructures.FileStorage,
-            required=True,
-            location="files",
-            help="Original dataset file is required",
-        )
+        parser.add_argument("json_data", type=str, location="form")
+        parser.add_argument("file", type=str, location="files")
+        # parser.add_argument(
+        #     "original_dataset",
+        #     type=werkzeug.datastructures.FileStorage,
+        #     required=True,
+        #     location="files",
+        #     help="Original dataset file is required",
+        # )
         args = parser.parse_args()
         logging.info("GenerateSyntheticDataAPI: Parsed args")
 

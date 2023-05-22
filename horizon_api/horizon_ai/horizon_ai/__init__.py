@@ -2,6 +2,7 @@
 
 import requests
 import os
+import json
 from urllib.parse import urljoin
 
 # Base url for API calls
@@ -500,16 +501,25 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
     if openai_api_key == None:
         raise Exception("Must set OpenAI API key.")
 
-    headers = {"X-Api-Key": api_key}
+    headers = {"Content-Type": "multipart/form-data", "X-Api-Key": api_key}
     payload = {
         "objective": objective,
         "num_synthetic_data": num_synthetic_data,
         "openai_api_key": openai_api_key,
     }
     with open(file_path, "rb") as f:
+        # Create the multipart form data
+        multipart_data = {
+            "json_data": (None, json.dumps(payload), "application/json"),
+            "original_dataset": (
+                file_path,
+                open(file_path, "rb"),
+                "application/octet-stream",
+            ),
+        }
         response = _post(
             endpoint="/api/enablers/generate_synthetic_data",
-            files={"original_dataset": f},
+            files=multipart_data,
             # json=payload,
             headers=headers,
         )
