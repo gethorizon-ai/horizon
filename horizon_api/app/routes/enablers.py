@@ -65,13 +65,11 @@ class GenerateSyntheticDataAPI(Resource):
         #     location="files",
         #     help="Original dataset file is required",
         # )
-        parser.add_argument("objective", type=str)
-        # parser.add_argument("original_dataset", type=str, location="files")
+        parser.add_argument("json_data", type=str, location="form")
         args = parser.parse_args()
         logging.info("GenerateSyntheticDataAPI: Parsed args")
 
         print(args)
-        print(request.data)
 
         original_dataset = request.files["original_dataset"]
         print(type(original_dataset))
