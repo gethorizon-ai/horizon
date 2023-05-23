@@ -179,8 +179,8 @@ def generate_synthetic_data(
     new_columns = [
         input_variable[4:] for input_variable in synthetic_data.columns[:-1]
     ] + synthetic_data.columns[-1:]
-    print(f"Length of old columns: {len(synthetic_data.columns)}")
-    print(f"Length of new columns: {len(new_columns)}")
+    print(f"Old columns: {synthetic_data.columns}")
+    print(f"New columns: {new_columns}")
     synthetic_data.columns = new_columns
     print("HI THERE")
 
