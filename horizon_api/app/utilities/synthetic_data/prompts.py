@@ -20,7 +20,7 @@ BEGIN:
 """
 
     for input_var in task_request.input_variables:
-        prompt_string_category += f"<{input_var}>: {{input_var}}\n"
+        prompt_string_category += f"<{input_var}>: {{{input_var}}}\n"
     prompt_string_category += "<OUTPUT>: {ground_truth}"
     prompt_string_category += "<CATEGORY LABEL>:"
 
@@ -91,7 +91,7 @@ def get_synthetic_data_generation_example_prompt(
     prompt_string_synthetic_data_generation_example = "<category>: {category}\n"
     for input_var in task_request.input_variables:
         prompt_string_synthetic_data_generation_example += (
-            f"<{input_var}>: {{input_var}}\n"
+            f"<{input_var}>: {{{input_var}}}\n"
         )
     prompt_string_synthetic_data_generation_example += "<OUTPUT>: {ground_truth}\n\n"
 
