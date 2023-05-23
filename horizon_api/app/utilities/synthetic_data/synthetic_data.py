@@ -123,7 +123,7 @@ def generate_synthetic_data(
         prompts.get_synthetic_data_generation_example_prompt(task_request=task_request)
     )
     prompt_suffix_synthetic_data_generation = (
-        prompts.get_synthetic_data_generation_prompt_suffix()
+        prompts.get_synthetic_data_generation_prompt_suffix(task_request=task_request)
     )
     llm_synthetic_data_generation = models.get_synthetic_data_generation_model(
         task_request=task_request, openai_api_key=openai_api_key
