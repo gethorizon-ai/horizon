@@ -134,6 +134,7 @@ def generate_synthetic_data(
     num_few_shots = min(
         len(task_request.evaluation_dataset),
         task_request.applicable_llms["text-davinci-003"]["max_few_shots"],
+        5,
     )
     synthetic_data_generations = []
     for i in range(num_synthetic_data):
@@ -172,11 +173,13 @@ def generate_synthetic_data(
 
     # Convert synthetic data examples to DataFrame
     synthetic_data = pd.DataFrame(synthetic_data_generations)
+    print("HELLO")
 
     # Remove "var_" prepending each input variable name
     synthetic_data.columns = [
         input_variable[4:] for input_variable in synthetic_data.columns[:-1]
     ] + synthetic_data.columns[-1:]
+    print("HI THERE")
 
     # Upload synthetic data to s3 as csv
     csv_buffer = BytesIO()
