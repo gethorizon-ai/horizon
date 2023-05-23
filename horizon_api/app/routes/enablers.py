@@ -66,9 +66,9 @@ class GenerateSyntheticDataAPI(Resource):
         # print(args)
         print(request.files)
         print("original_dataset" in request.files)
-        return
-        json_data = json.loads(args["json_data"])
+        json_data = json.loads(request.files["json_data"])
         original_dataset = request.files["original_dataset"]
+        print(json_data)
         if "objective" not in json_data:
             return {"error": "Objective statement is required"}, 400
         if "num_synthetic_data" not in json_data:
