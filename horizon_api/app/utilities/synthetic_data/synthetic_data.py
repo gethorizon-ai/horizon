@@ -1,10 +1,6 @@
 """Generates synthetic data for the user to curate and edit to enlarge their dataset."""
 
 from app.models.component.task_request import TaskRequest
-from app.models.prompt.factory import PromptTemplateFactory
-from app.models.prompt.prompt import PromptTemplate
-from app.models.llm.factory import LLMFactory
-from app.models.llm.base import BaseLLM
 from app.utilities.synthetic_data import prompts
 from app.utilities.synthetic_data import models
 from app.utilities.S3.s3_util import upload_file_to_s3

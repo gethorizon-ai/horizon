@@ -24,7 +24,7 @@ BEGIN:
     prompt_string_category += "<OUTPUT>: {ground_truth}"
     prompt_string_category += "<CATEGORY LABEL>:"
 
-    prompt_category = PromptTemplateFactory(
+    prompt_category = PromptTemplateFactory.create_prompt_template(
         template_type="prompt",
         template=prompt_string_category,
         input_variables=task_request.input_variables + ["ground_truth"],
@@ -43,7 +43,7 @@ def get_category_generation_prompt() -> PromptTemplate:
 {category_labels}
 <NEXT CATEGORY LABELS>:"""
 
-    prompt_category_generation = PromptTemplateFactory(
+    prompt_category_generation = PromptTemplateFactory.create_prompt_template(
         template_type="prompt",
         template=prompt_string_category_generation,
         input_variables=["num_synthetic_data", "category_labels"],
@@ -67,10 +67,12 @@ EXAMPLES:
 
 """
 
-    prompt_prefix_synthetic_data_generation = PromptTemplateFactory(
-        template_type="prompt",
-        template=prompt_string_synthetic_data_prefix,
-        input_variables=["user_objective"],
+    prompt_prefix_synthetic_data_generation = (
+        PromptTemplateFactory.create_prompt_template(
+            template_type="prompt",
+            template=prompt_string_synthetic_data_prefix,
+            input_variables=["user_objective"],
+        )
     )
     return prompt_prefix_synthetic_data_generation
 
@@ -93,10 +95,14 @@ def get_synthetic_data_generation_example_prompt(
         )
     prompt_string_synthetic_data_generation_example += "<OUTPUT>: {ground_truth}\n\n"
 
-    prompt_template_synthetic_data_generation_example = PromptTemplateFactory(
-        template_type="prompt",
-        template=prompt_string_synthetic_data_generation_example,
-        input_variables=["category"] + task_request.input_variables + ["ground_truth"],
+    prompt_template_synthetic_data_generation_example = (
+        PromptTemplateFactory.create_prompt_template(
+            template_type="prompt",
+            template=prompt_string_synthetic_data_generation_example,
+            input_variables=["category"]
+            + task_request.input_variables
+            + ["ground_truth"],
+        )
     )
     return prompt_template_synthetic_data_generation_example
 
@@ -126,9 +132,11 @@ Here is the output schema:
     prompt_string_synthetic_data_generation_suffix += output_schema
     prompt_string_synthetic_data_generation_suffix += """\n\nJSON OUTPUT:"""
 
-    prompt_suffix_synthetic_data_generation = PromptTemplateFactory(
-        template_type="prompt",
-        template=prompt_string_synthetic_data_generation_suffix,
-        input_variables=["new_category"],
+    prompt_suffix_synthetic_data_generation = (
+        PromptTemplateFactory.create_prompt_template(
+            template_type="prompt",
+            template=prompt_string_synthetic_data_generation_suffix,
+            input_variables=["new_category"],
+        )
     )
     return prompt_suffix_synthetic_data_generation
