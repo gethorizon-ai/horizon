@@ -164,8 +164,8 @@ def generate_synthetic_data(
                 .text.strip()
             )
             try:
-                print(response)
-                synthetic_data_generations.append(json.loads(response))
+                print(json.loads(response, strict=False))
+                synthetic_data_generations.append(json.loads(response, strict=False))
                 break
             except:
                 continue
