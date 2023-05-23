@@ -157,6 +157,8 @@ def generate_synthetic_data(
                 )
             )
 
+            print(prompt_synthetic_data_formatted)
+
             response = (
                 llm_synthetic_data_generation.generate(
                     [prompt_synthetic_data_formatted]
