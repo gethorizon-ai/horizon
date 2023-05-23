@@ -55,15 +55,15 @@ class GenerateSyntheticDataAPI(Resource):
         #     location="files",
         #     help="Objective, number of synthetic data, and OpenAI API key are required",
         # )
-        parser.add_argument(
-            "original_dataset",
-            type=werkzeug.datastructures.FileStorage,
-            required=True,
-            location="files",
-            help="Original dataset file is required",
-        )
-        args = parser.parse_args()
-        print(args)
+        # parser.add_argument(
+        #     "original_dataset",
+        #     type=werkzeug.datastructures.FileStorage,
+        #     required=True,
+        #     location="files",
+        #     help="Original dataset file is required",
+        # )
+        # args = parser.parse_args()
+        # print(args)
         print(request.files)
         return
         json_data = json.loads(args["json_data"])
