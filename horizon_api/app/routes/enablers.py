@@ -65,8 +65,9 @@ class GenerateSyntheticDataAPI(Resource):
         # args = parser.parse_args()
         # print(args)
         print(request.files)
+        print(request.form)
         print("original_dataset" in request.files)
-        json_data = json.loads(request.files["json_data"])
+        json_data = request.form.to_dict()
         original_dataset = request.files["original_dataset"]
         print(json_data)
         if "objective" not in json_data:
