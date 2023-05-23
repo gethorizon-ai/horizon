@@ -41,13 +41,13 @@ class GenerateSyntheticDataAPI(Resource):
         logging.info("GenerateSyntheticDataAPI: Start processing the request")
 
         parser = reqparse.RequestParser()
-        parser.add_argument(
-            "objective",
-            type=str,
-            required=True,
-            location="files",
-            help="Objective, number of synthetic data, and OpenAI API key are required",
-        )
+        # parser.add_argument(
+        #     "objective",
+        #     type=str,
+        #     required=True,
+        #     location="files",
+        #     help="Objective, number of synthetic data, and OpenAI API key are required",
+        # )
         # parser.add_argument(
         #     "json_data",
         #     type=str,
