@@ -64,12 +64,8 @@ class GenerateSyntheticDataAPI(Resource):
         # )
         # args = parser.parse_args()
         # print(args)
-        print(request.files)
-        print(request.form)
-        print("original_dataset" in request.files)
         json_data = request.form.to_dict()
         original_dataset = request.files["original_dataset"]
-        print(json_data)
         if "objective" not in json_data:
             return {"error": "Objective statement is required"}, 400
         if "num_synthetic_data" not in json_data:
@@ -77,8 +73,6 @@ class GenerateSyntheticDataAPI(Resource):
         if "openai_api_key" not in json_data:
             return {"error": "openai_api_key is required"}, 400
         logging.info("GenerateSyntheticDataAPI: Parsed args")
-
-        return
 
         original_dataset = request.files["original_dataset"]
         if not allowed_evaluation_dataset_file(original_dataset.filename):
