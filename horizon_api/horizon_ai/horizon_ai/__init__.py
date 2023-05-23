@@ -20,11 +20,12 @@ def _get(endpoint, headers=None):
     return _handle_response(response)
 
 
-def _post(endpoint, json=None, headers=None, files=None):
+def _post(endpoint, json=None, data=None, headers=None, files=None):
     global base_url
     response = requests.post(
         urljoin(base_url, endpoint),
         json=json,
+        data=data,
         headers=headers,
         files=files,
     )
@@ -515,7 +516,7 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
         }
         response = _post(
             endpoint="/api/enablers/generate_synthetic_data",
-            json=payload,
+            data=payload,
             files={"original_dataset": f},
             headers=headers,
         )
