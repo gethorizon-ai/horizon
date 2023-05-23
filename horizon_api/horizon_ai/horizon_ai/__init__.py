@@ -510,12 +510,12 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
     with open(file_path, "rb") as f:
         # Create the multipart form data
         multipart_form_data = {
-            "json": (None, json.dumps(payload), "application/json"),
-            "file": (None, f, "application/octet-stream"),
+            "json_data": (None, json.dumps(payload), "application/json"),
+            "original_dataset": (None, f, "application/octet-stream"),
         }
         response = _post(
             endpoint="/api/enablers/generate_synthetic_data",
-            files=multipart_form_data,
+            files={"original_dataset": f},
             headers=headers,
         )
         return response

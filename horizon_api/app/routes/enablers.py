@@ -65,7 +65,7 @@ class GenerateSyntheticDataAPI(Resource):
         # args = parser.parse_args()
         # print(args)
         print(request.files)
-        print("file" in request.files)
+        print("original_dataset" in request.files)
         return
         json_data = json.loads(args["json_data"])
         original_dataset = request.files["original_dataset"]
