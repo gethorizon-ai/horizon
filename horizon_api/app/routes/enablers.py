@@ -43,7 +43,7 @@ class GenerateSyntheticDataAPI(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument(
             "json_data",
-            type=str,
+            type=dict,
             required=True,
             location="files",
             help="Objective, number of synthetic data, and OpenAI API key are required",
