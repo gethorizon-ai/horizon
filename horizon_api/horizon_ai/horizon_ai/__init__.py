@@ -511,7 +511,7 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
         # Create the multipart form data
         multipart_data = {
             # "json_data": (None, json.dumps(payload), "application/json"),
-            "json_data": payload,
+            "json_data": json.dumps(payload),
             "original_dataset": f,
         }
         response = _post(
