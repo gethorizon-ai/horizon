@@ -501,7 +501,7 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
     if openai_api_key == None:
         raise Exception("Must set OpenAI API key.")
 
-    headers = {"Content-type": "multipart/form-data", "X-Api-Key": api_key}
+    headers = {"X-Api-Key": api_key}
     payload = {
         "objective": objective,
         "num_synthetic_data": num_synthetic_data,
@@ -511,12 +511,11 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
         # Create the multipart form data
         multipart_form_data = {
             "json_data": (None, json.dumps(payload), "application/json"),
-            "original_dataset": (None, f, "application/octet-stream"),
+            "original_dataset": ("original_dataset", f, "application/octet"),
         }
         response = _post(
             endpoint="/api/enablers/generate_synthetic_data",
-            json=payload,
-            files={"original_dataset": f},
+            files=multipart_form_data,
             headers=headers,
         )
         return response
