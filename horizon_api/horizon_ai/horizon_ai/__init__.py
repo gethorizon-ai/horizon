@@ -515,7 +515,7 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
         }
         response = _post(
             endpoint="/api/enablers/generate_synthetic_data",
-            json=payload
+            json=payload,
             files={"original_dataset": f},
             headers=headers,
         )
