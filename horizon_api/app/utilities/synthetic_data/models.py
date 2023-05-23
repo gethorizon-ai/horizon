@@ -23,7 +23,7 @@ def get_categorization_llm(openai_api_key: str) -> BaseLLM:
     }
 
     # Create the model instance
-    model = LLMFactory.create_llm("openai", **model_params)
+    model = LLMFactory.create_llm("text-davinci-003", **model_params)
 
     return model
 
@@ -46,7 +46,7 @@ def get_category_generation_llm(openai_api_key: str) -> BaseLLM:
     }
 
     # Create the model instance
-    model = LLMFactory.create_llm("openai", **model_params)
+    model = LLMFactory.create_llm("text-davinci-003", **model_params)
 
     return model
 
@@ -74,6 +74,6 @@ def get_synthetic_data_generation_model(
     }
 
     # Create the model instance
-    model = LLMFactory.create_llm("openai", **model_params)
+    model = LLMFactory.create_llm("text-davinci-003", **model_params)
 
     return model
