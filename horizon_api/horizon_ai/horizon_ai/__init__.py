@@ -20,12 +20,11 @@ def _get(endpoint, headers=None):
     return _handle_response(response)
 
 
-def _post(endpoint, json=None, data=None, headers=None, files=None):
+def _post(endpoint, json=None, headers=None, files=None):
     global base_url
     response = requests.post(
         urljoin(base_url, endpoint),
         json=json,
-        data=data,
         headers=headers,
         files=files,
     )
@@ -502,7 +501,7 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
     if openai_api_key == None:
         raise Exception("Must set OpenAI API key.")
 
-    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+    headers = {"X-Api-Key": api_key}
     payload = {
         "objective": objective,
         "num_synthetic_data": num_synthetic_data,
@@ -512,12 +511,11 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
         # Create the multipart form data
         multipart_form_data = {
             "json_data": (None, json.dumps(payload), "application/json"),
-            "original_dataset": (f),
+            "original_dataset": (None, f, "application/octet-stream"),
         }
         response = _post(
             endpoint="/api/enablers/generate_synthetic_data",
-            data=payload,
-            files={"original_dataset": f},
+            files=multipart_form_data,
             headers=headers,
         )
         return response
