@@ -105,7 +105,7 @@ class GenerateSyntheticDataAPI(Resource):
                 user_id=g.user.id,
                 user_objective=json_data["objective"],
                 dataset_s3_key=dataset_s3_key,
-                num_synthetic_data=json_data["num_synthetic_data"],
+                num_synthetic_data=int(json_data["num_synthetic_data"]),
                 openai_api_key=json_data["openai_api_key"],
             )
         except Exception as e:
