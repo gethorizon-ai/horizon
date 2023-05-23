@@ -135,7 +135,11 @@ def process_generate_synthetic_data(
             num_synthetic_data=num_synthetic_data,
             openai_api_key=openai_api_key,
         )
-        synthetic_dataset_url = download_file_from_s3(synthetic_dataset_s3_key)
+
+        # Get presigned s3 url which expires in 1 day
+        synthetic_dataset_url = download_file_from_s3(
+            synthetic_dataset_s3_key, expiration_seconds=86400
+        )
 
         # If successful, email job results to user
         email_notifications.email_synthetic_data_generation_success(

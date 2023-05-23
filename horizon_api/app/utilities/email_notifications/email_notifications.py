@@ -171,7 +171,7 @@ def email_synthetic_data_generation_success(
 <html>
 <body>
 Hi,<br />
-Success - your Horizon synthetic dataset has been generated. You can download it <a href={synthetic_dataset_url}>here</a> (link is valid for 1 hour). Please email us at team@gethorizon.ai if you need any help.<br /><br />
+Success - your Horizon synthetic dataset has been generated. You can download it <a href={synthetic_dataset_url}>here</a> (link is valid for 1 day). Please email us at team@gethorizon.ai if you need any help.<br /><br />
 <b>Horizon AI</b>
 </body>
 </html>"""

@@ -12,11 +12,11 @@ def upload_file_to_s3(file, key):
     s3.upload_fileobj(file, S3_BUCKET, key)
 
 
-def download_file_from_s3(key):
+def download_file_from_s3(key, expiration_seconds=3600):
     return s3.generate_presigned_url(
         "get_object",
         Params={"Bucket": S3_BUCKET, "Key": key},
-        ExpiresIn=3600,
+        ExpiresIn=expiration_seconds,
     )
 
 

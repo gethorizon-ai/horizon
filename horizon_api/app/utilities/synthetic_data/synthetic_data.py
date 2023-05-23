@@ -165,8 +165,13 @@ def generate_synthetic_data(
                 .text.strip()
             )
             try:
-                print(json.loads(response, strict=False))
-                synthetic_data_generations.append(json.loads(response, strict=False))
+                # Check that response matches schema of evaluation dataset
+                result = json.loads(response, strict=False)
+                assert check_dict_keys(
+                    dictionary=result,
+                    key_list=task_request.input_variables + ["OUTPUT"],
+                )
+                synthetic_data_generations.append(result)
                 break
             except:
                 continue
@@ -188,3 +193,19 @@ def generate_synthetic_data(
 
     # Return s3 key
     return synthetic_dataset_s3_key
+
+
+def check_dict_keys(dictionary: dict, key_list: list) -> bool:
+    """Checks that the keys of dict exactly matches an expected list of keys.
+
+    Args:
+        dictionary (dict): dictionary to check keys.
+        key_list (list): expected list of keys.
+
+    Returns:
+        bool: whether keys of dict exactly matches expected list of keys.
+    """
+    dict_keys = list(dictionary.keys())
+    dict_keys.sort()  # Sort the dictionary keys for comparison
+    key_list.sort()  # Sort the list of keys for comparison
+    return dict_keys == key_list
