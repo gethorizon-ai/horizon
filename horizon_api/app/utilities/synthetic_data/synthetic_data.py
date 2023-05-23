@@ -171,6 +171,7 @@ def generate_synthetic_data(
                     dictionary=result,
                     key_list=task_request.input_variables + ["OUTPUT"],
                 )
+                print(f"Synthetic data generated: {str(result)}")
                 synthetic_data_generations.append(result)
                 break
             except:
