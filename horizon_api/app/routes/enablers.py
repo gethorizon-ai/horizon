@@ -16,8 +16,6 @@ from datetime import datetime
 import logging
 import tempfile
 import os
-import werkzeug
-import json
 
 ALLOWED_EVALUTION_DATASET_EXTENSIONS = {"csv"}
 
@@ -40,30 +38,6 @@ class GenerateSyntheticDataAPI(Resource):
     def post(self):
         logging.info("GenerateSyntheticDataAPI: Start processing the request")
 
-        parser = reqparse.RequestParser()
-        # parser.add_argument(
-        #     "objective",
-        #     type=str,
-        #     required=True,
-        #     location="files",
-        #     help="Objective, number of synthetic data, and OpenAI API key are required",
-        # )
-        # parser.add_argument(
-        #     "json_data",
-        #     type=str,
-        #     required=True,
-        #     location="files",
-        #     help="Objective, number of synthetic data, and OpenAI API key are required",
-        # )
-        # parser.add_argument(
-        #     "original_dataset",
-        #     type=werkzeug.datastructures.FileStorage,
-        #     required=True,
-        #     location="files",
-        #     help="Original dataset file is required",
-        # )
-        # args = parser.parse_args()
-        # print(args)
         json_data = request.form.to_dict()
         original_dataset = request.files["original_dataset"]
         if "objective" not in json_data:
@@ -72,6 +46,7 @@ class GenerateSyntheticDataAPI(Resource):
             return {"error": "num_synthetic_data is required"}, 400
         if "openai_api_key" not in json_data:
             return {"error": "openai_api_key is required"}, 400
+
         logging.info("GenerateSyntheticDataAPI: Parsed args")
 
         original_dataset = request.files["original_dataset"]
