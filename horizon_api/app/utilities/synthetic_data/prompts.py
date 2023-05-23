@@ -57,7 +57,7 @@ def get_synthetic_data_generation_prompt_prefix() -> PromptTemplate:
     Returns:
         PromptTemplate: prompt to use.
     """
-    prompt_string_synthetic_data_prefix = """You are an intelligent professor. I am creating a test for my students. First, I created an instruction for my students to use for every question in the test. Then, I determined the category for each question. Finally, I came up with each question by developing the input values and desired output that best satisfies my overall test instruction and category for each question. Using the following examples, generate an exceptional, realistic question and desired output that I can use with my students. Generate fresh new content for the new question that aligns with its category.
+    prompt_string_synthetic_data_prefix = """You are an intelligent professor. I am creating a test for my students. First, I created an instruction for my students to use for every question in the test. Then, I determined the category for each question. Finally, I came up with each question by developing the input values and desired output that best satisfies my overall test instruction and category for each question. Using the following examples, generate an exceptional, realistic question and desired output that I can use with my students. Generate fresh new content for each input and output value for the new question that aligns with its category.
 
 ==
 INSTRUCTION: {user_objective}
