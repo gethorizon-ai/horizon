@@ -178,7 +178,7 @@ def generate_synthetic_data(
     # Remove "var_" prepending each input variable name
     synthetic_data.columns = [
         input_variable[4:] for input_variable in synthetic_data.columns[:-1]
-    ] + synthetic_data.columns[-1:]
+    ] + synthetic_data.columns[-1]
     print("HI THERE")
 
     # Upload synthetic data to s3 as csv
