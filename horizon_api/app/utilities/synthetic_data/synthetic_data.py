@@ -173,15 +173,11 @@ def generate_synthetic_data(
 
     # Convert synthetic data examples to DataFrame
     synthetic_data = pd.DataFrame(synthetic_data_generations)
-    print(synthetic_data)
 
     # Remove "var_" prepending each input variable name
     new_columns = [input_variable[4:] for input_variable in synthetic_data.columns[:-1]]
     new_columns.extend(synthetic_data.columns[-1:])
-    print(f"Old columns: {synthetic_data.columns}")
-    print(f"New columns: {new_columns}")
     synthetic_data.columns = new_columns
-    print("HI THERE")
 
     # Upload synthetic data to s3 as csv
     csv_buffer = BytesIO()
