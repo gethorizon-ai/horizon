@@ -82,6 +82,7 @@ def generate_synthetic_data(
         )
         category_labels.append(category)
     assert len(category_labels) == len(evaluation_data_dict)
+    print(f"Category labels: {category_labels}")
 
     # Generate category labels for synthetic data
     max_tries = 3
@@ -109,6 +110,7 @@ def generate_synthetic_data(
 
     if len(new_categories) == 0:
         raise ValueError("Couldn't generate new category labels.")
+    print(f"New categories: {new_categories}")
 
     # Generate synthetic data
     prompt_prefix_synthetic_data_generation = (

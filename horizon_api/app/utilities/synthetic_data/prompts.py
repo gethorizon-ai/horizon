@@ -127,7 +127,7 @@ Here is the output schema:
 """
     output_schema = "{{"
     for input_var in task_request.input_variables:
-        output_schema += f""""{input_var}": {{"type": "string"}},\n"""
+        output_schema += f""""{input_var}": {{{{"type": "string"}}}},\n"""
     output_schema += """"OUTPUT": {{"type": "string"}}}}"""
     prompt_string_synthetic_data_generation_suffix += output_schema
     prompt_string_synthetic_data_generation_suffix += """\n\nJSON OUTPUT:"""
