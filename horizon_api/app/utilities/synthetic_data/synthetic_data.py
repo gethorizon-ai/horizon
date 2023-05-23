@@ -176,9 +176,12 @@ def generate_synthetic_data(
     print(synthetic_data)
 
     # Remove "var_" prepending each input variable name
-    synthetic_data.columns = [
+    new_columns = [
         input_variable[4:] for input_variable in synthetic_data.columns[:-1]
     ] + synthetic_data.columns[-1:]
+    print(f"Length of old columns: {len(synthetic_data.columns)}")
+    print(f"Length of new columns: {len(new_columns)}")
+    synthetic_data.columns = new_columns
     print("HI THERE")
 
     # Upload synthetic data to s3 as csv
