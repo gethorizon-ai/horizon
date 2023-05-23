@@ -176,8 +176,9 @@ def generate_synthetic_data(
     print(synthetic_data)
 
     # Remove "var_" prepending each input variable name
-    new_columns = [input_variable[4:] for input_variable in synthetic_data.columns[:-1]]
-    new_columns += synthetic_data.columns[-1:]
+    new_columns = [
+        input_variable[4:] for input_variable in synthetic_data.columns[:-1]
+    ].extend(synthetic_data.columns[-1:])
     print(f"Old columns: {synthetic_data.columns}")
     print(f"New columns: {new_columns}")
     synthetic_data.columns = new_columns
