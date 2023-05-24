@@ -9,6 +9,7 @@ import json
 import os
 from io import BytesIO
 from datetime import datetime
+import random
 
 
 # Assume only usage of text-davinci-003 for synthetic data generation
@@ -93,7 +94,9 @@ def generate_synthetic_data(
     new_category_labels = []
     for i in range(num_synthetic_data):
         prompt_category_generation_formatted = prompt_category_generation.format(
-            category_labels="\n".join(category_labels),
+            category_labels="\n".join(
+                random.shuffle(category_labels + new_category_labels)
+            ),
         )
         next_category = (
             llm_category_generation.generate([prompt_category_generation_formatted])
