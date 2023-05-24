@@ -3,16 +3,14 @@
 Class organizes information around Task request, including objective, input variables, and evaluation dataset.
 """
 
-from app.utilities.dataset_processing import data_check
+from app.models.llm.factory import LLMFactory
+from app.models.schema import HumanMessage
 from app.utilities.dataset_processing import input_variable_naming
 from app.utilities.dataset_processing import data_length
 from app.utilities.dataset_processing import llm_applicability
 from app.utilities.dataset_processing import segment_data
-from app.models.llm.factory import LLMFactory
-from app.models.schema import HumanMessage
-from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
+from app.utilities.vector_db import vector_db
 from typing import List
-import os
 
 
 class TaskRequest:
@@ -20,7 +18,8 @@ class TaskRequest:
 
     def __init__(
         self,
-        dataset_s3_key: str,
+        raw_dataset_s3_key: str = None,
+        vector_db_s3_key: str = None,
         user_objective: str = None,
         allowed_models: list = None,
         num_test_data_input: int = None,
@@ -28,6 +27,7 @@ class TaskRequest:
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
         Args:
+            TODO: update docstring
             dataset_s3_key (str): s3 key for evaluation dataset.
             user_objective (str, optional): task objective. Defaults to None.
             allowed_models (list, optional): list of allowed models for this task. Defaults to None.
@@ -43,11 +43,13 @@ class TaskRequest:
         """
         self.user_objective = user_objective
         self.input_variables = None
-        self.evaluation_dataset = None
-        self.input_data_train = None
-        self.ground_truth_data_train = None
-        self.input_data_test = None
-        self.ground_truth_data_test = None
+        self.evaluation_dataset_vector_db = None
+        # self.input_data_train = None
+        # self.ground_truth_data_train = None
+        # self.input_data_test = None
+        # self.ground_truth_data_test = None
+        # self.train_dataset = None
+        # self.test_dataset = None
         self.num_train_data = None
         self.num_test_data = num_test_data_input
         self.max_input_tokens = None
@@ -62,25 +64,34 @@ class TaskRequest:
                 "User objective can be at most 500 characters to manage token limits."
             )
 
-        # Download the evaluation dataset from S3 and save it locally
-        dataset_file_path = download_file_from_s3_and_save_locally(dataset_s3_key)
+        if raw_dataset_s3_key == None and vector_db_s3_key == None:
+            raise ValueError("Must provide raw dataset or vector db.")
 
-        # Set evaluation dataset
-        self.evaluation_dataset = data_check.get_evaluation_dataset(
-            dataset_file_path=dataset_file_path, escape_curly_braces=True
-        )
+        # Load evaluation dataset as vector db if provided
+        if vector_db_s3_key:
+            self.evaluation_dataset_vector_db = vector_db.load_vector_db(
+                vector_db_s3_key=vector_db_s3_key, openai_api_key="TODO:"
+            )
 
-        # Delete dataset file from the local file system
-        os.remove(dataset_file_path)
+        # Load raw dataset and setup evaluation dataset as vector db
+        else:
+            self.evaluation_dataset_vector_db = (
+                vector_db.get_vector_db_from_raw_dataset(
+                    raw_dataset_s3_key=raw_dataset_s3_key,
+                    openai_api_key="TODO:",
+                    columns_to_chunk="TODO:",
+                )
+            )
 
         # Set input variables
-        self.input_variables = input_variable_naming.get_input_variables(
-            evaluation_dataset=self.evaluation_dataset
+        self.input_variables = (
+            self.evaluation_dataset_vector_db.get_input_variables_from_collection_metadata()
         )
 
         # Set evaluation data length
         evaluation_data_length = data_length.get_evaluation_data_length(
-            evaluation_dataset=self.evaluation_dataset, unescape_curly_braces=True
+            evaluation_dataset=self.evaluation_dataset_vector_db.get_metadatas_as_dataframe(),
+            unescape_curly_braces=True,
         )
         self.max_input_tokens = evaluation_data_length["max_input_tokens"]
         self.max_ground_truth_tokens = evaluation_data_length["max_ground_truth_tokens"]
@@ -109,21 +120,21 @@ class TaskRequest:
                 "Input and output data length exceed context length of available LLMs needed for prompt generation."
             )
 
-        # Segment evaluation dataset into input and ground_truth datasets
+        # Get number of test and train data points, which will be used to index data points
         evaluation_dataset_segments = segment_data.segment_evaluation_dataset(
-            evaluation_dataset=self.evaluation_dataset,
+            num_unique_data=self.evaluation_dataset_vector_db.get_num_unique_data_from_collection_metadata(),
             num_test_data_input=self.num_test_data,
         )
         self.num_train_data = evaluation_dataset_segments["num_train_data"]
         self.num_test_data = evaluation_dataset_segments["num_test_data"]
-        self.input_data_train = evaluation_dataset_segments["input_data_train"]
-        self.ground_truth_data_train = evaluation_dataset_segments[
-            "ground_truth_data_train"
-        ]
-        self.input_data_test = evaluation_dataset_segments["input_data_test"]
-        self.ground_truth_data_test = evaluation_dataset_segments[
-            "ground_truth_data_test"
-        ]
+        # self.input_data_train = evaluation_dataset_segments["input_data_train"]
+        # self.ground_truth_data_train = evaluation_dataset_segments[
+        #     "ground_truth_data_train"
+        # ]
+        # self.input_data_test = evaluation_dataset_segments["input_data_test"]
+        # self.ground_truth_data_test = evaluation_dataset_segments[
+        #     "ground_truth_data_test"
+        # ]
 
     def get_normalized_input_variables(self) -> List[str]:
         """Get input variables from evaluation dataset without "var_" prepended to them.

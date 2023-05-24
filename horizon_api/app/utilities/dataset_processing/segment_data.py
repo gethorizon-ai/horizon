@@ -5,9 +5,10 @@ import scipy
 
 
 def segment_evaluation_dataset(
-    evaluation_dataset: pd.DataFrame, num_test_data_input: int = None
+    num_unique_data: int, num_test_data_input: int = None
 ) -> dict:
     """Segment evaluation data into training and test data.
+    TODO: update docstring.
 
     Args:
         num_test_data (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
@@ -19,16 +20,16 @@ def segment_evaluation_dataset(
     Returns:
         dict: number of training and test data points, along with segmented training and test datasets.
     """
-    if not isinstance(evaluation_dataset, pd.DataFrame):
-        raise AssertionError(
-            "Must add evalution dataset first before computing data lengths in evaluation dataset."
-        )
+    # if not isinstance(evaluation_dataset, pd.DataFrame):
+    #     raise AssertionError(
+    #         "Must add evalution dataset first before computing data lengths in evaluation dataset."
+    #     )
 
     # Determine ideal sample size based on https://www.calculator.net/sample-size-calculator.html
     confidence_interval = 0.95
     z_score = scipy.stats.norm.ppf((1 + confidence_interval) / 2)
     margin_of_error = 0.1
-    population_size = len(evaluation_dataset)
+    population_size = num_unique_data
     population_proportion = 0.5
     ideal_sample_size = int(
         (
@@ -55,47 +56,47 @@ def segment_evaluation_dataset(
         min(
             ideal_sample_size,
             max(
-                0.2 * len(evaluation_dataset),
-                len(evaluation_dataset) - ideal_sample_size,
+                0.2 * num_unique_data,
+                num_unique_data - ideal_sample_size,
             ),
         ),
     )
 
     # Determine size of test dataset. Allocate at most ideal_sample_size or what's left after allocating num_train_data
-    num_test_data = min(ideal_sample_size, len(evaluation_dataset) - num_train_data)
+    num_test_data = min(ideal_sample_size, num_unique_data - num_train_data)
 
     # Use num_test_data input value if provided
     if num_test_data_input is not None:
         num_test_data = min(num_test_data_input, num_test_data)
 
-    # Assign input and ground truth data. Keep evaluation_data_id column in all.
-    input_data_train = (
-        evaluation_dataset.iloc[:num_train_data, :]
-        .drop("ground_truth", axis=1)
-        .reset_index(drop=True)
-    )
-    ground_truth_data_train = evaluation_dataset.iloc[:num_train_data, :][
-        ["evaluation_data_id", "ground_truth"]
-    ].reset_index(drop=True)
-    input_data_test = (
-        evaluation_dataset.iloc[
-            num_train_data : num_train_data + num_test_data,
-            :,
-        ]
-        .drop("ground_truth", axis=1)
-        .reset_index(drop=True)
-    )
-    ground_truth_data_test = evaluation_dataset.iloc[
-        num_train_data : num_train_data + num_test_data,
-        :,
-    ][["evaluation_data_id", "ground_truth"]].reset_index(drop=True)
+    # # Assign input and ground truth data. Keep evaluation_data_id column in all.
+    # input_data_train = (
+    #     evaluation_dataset.iloc[:num_train_data, :]
+    #     .drop("ground_truth", axis=1)
+    #     .reset_index(drop=True)
+    # )
+    # ground_truth_data_train = evaluation_dataset.iloc[:num_train_data, :][
+    #     ["evaluation_data_id", "ground_truth"]
+    # ].reset_index(drop=True)
+    # input_data_test = (
+    #     evaluation_dataset.iloc[
+    #         num_train_data : num_train_data + num_test_data,
+    #         :,
+    #     ]
+    #     .drop("ground_truth", axis=1)
+    #     .reset_index(drop=True)
+    # )
+    # ground_truth_data_test = evaluation_dataset.iloc[
+    #     num_train_data : num_train_data + num_test_data,
+    #     :,
+    # ][["evaluation_data_id", "ground_truth"]].reset_index(drop=True)
 
     # Return outputs
     return {
         "num_train_data": num_train_data,
         "num_test_data": num_test_data,
-        "input_data_train": input_data_train,
-        "ground_truth_data_train": ground_truth_data_train,
-        "input_data_test": input_data_test,
-        "ground_truth_data_test": ground_truth_data_test,
+        # "input_data_train": input_data_train,
+        # "ground_truth_data_train": ground_truth_data_train,
+        # "input_data_test": input_data_test,
+        # "ground_truth_data_test": ground_truth_data_test,
     }
