@@ -38,7 +38,7 @@ def get_category_generation_prompt() -> PromptTemplate:
     Returns:
         PromptTemplate: prompt to use.
     """
-    prompt_string_category_generation = """You are an intelligent professor. I generated a set of category labels for my files. Each category label is no more than 3 words. Based on the examples below, generate the next category label.
+    prompt_string_category_generation = """You are an intelligent professor. I generated a set of category labels for my files. Each category label is no more than 3 words. Based on the examples below, generate the next category label. Ensure your category label is fresh and different from the existing labels.
 
 {category_labels}
 <NEXT CATEGORY LABEL>:"""
