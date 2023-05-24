@@ -86,29 +86,24 @@ def generate_synthetic_data(
 
     # Generate category labels for synthetic data
     max_tries = 3
-    new_categories = []
     prompt_category_generation = prompts.get_category_generation_prompt()
-    prompt_category_generation_formatted = prompt_category_generation.format(
-        num_synthetic_data=num_synthetic_data,
-        category_labels="\n".join(category_labels),
-    )
     llm_category_generation = models.get_category_generation_llm(
         openai_api_key=openai_api_key
     )
-    for i in range(max_tries):
-        try:
-            new_categories = (
-                llm_category_generation.generate([prompt_category_generation_formatted])
-                .generations[0][0]
-                .text.strip()
-                .split("\n")
-            )
-            assert len(new_categories) == num_synthetic_data
-            break
-        except:
-            continue
+    new_category_labels = []
+    for i in range(num_synthetic_data):
+        prompt_category_generation_formatted = prompt_category_generation.format(
+            num_synthetic_data=num_synthetic_data,
+            category_labels="\n".join(category_labels + new_category_labels),
+        )
+        next_category = (
+            llm_category_generation.generate([prompt_category_generation_formatted])
+            .generations[0][0]
+            .text.strip()
+        )
+        new_category_labels.append(next_category)
 
-    if len(new_categories) != num_synthetic_data:
+    if len(new_category_labels) != num_synthetic_data:
         raise ValueError("Couldn't generate new category labels.")
     print("Finished generating category labels")
 
@@ -153,7 +148,7 @@ def generate_synthetic_data(
                 )
             prompt_synthetic_data_formatted += (
                 prompt_suffix_synthetic_data_generation.format(
-                    new_category=new_categories[i]
+                    new_category=new_category_labels[i]
                 )
             )
 

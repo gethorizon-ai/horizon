@@ -38,15 +38,15 @@ def get_category_generation_prompt() -> PromptTemplate:
     Returns:
         PromptTemplate: prompt to use.
     """
-    prompt_string_category_generation = """You are an intelligent professor. I generated a set of category labels for my files. Each category label is no more than 3 words. Based on the examples below, generate the next {num_synthetic_data} category labels. Ensure each is different. Separate each label by a single newline.
-    
+    prompt_string_category_generation = """You are an intelligent professor. I generated a set of category labels for my files. Each category label is no more than 3 words. Based on the examples below, generate the next category label.
+
 {category_labels}
-<NEXT CATEGORY LABELS>:"""
+<NEXT CATEGORY LABEL>:"""
 
     prompt_category_generation = PromptTemplateFactory.create_prompt_template(
         template_type="prompt",
         template=prompt_string_category_generation,
-        input_variables=["num_synthetic_data", "category_labels"],
+        input_variables=["category_labels"],
     )
     return prompt_category_generation
 
