@@ -82,6 +82,7 @@ def generate_synthetic_data(
         )
         category_labels.append(category)
     assert len(category_labels) == len(evaluation_data_dict)
+    print("Finished categorizing evaluation data")
 
     # Generate category labels for synthetic data
     max_tries = 3
@@ -107,8 +108,9 @@ def generate_synthetic_data(
         except:
             continue
 
-    if len(new_categories) == 0:
+    if len(new_categories) != num_synthetic_data:
         raise ValueError("Couldn't generate new category labels.")
+    print("Finished generating category labels")
 
     # Generate synthetic data
     prompt_prefix_synthetic_data_generation = (
@@ -173,6 +175,7 @@ def generate_synthetic_data(
                 break
             except:
                 continue
+    print("Finished generating synthetic data")
 
     # Convert synthetic data examples to DataFrame
     synthetic_data = pd.DataFrame(synthetic_data_generations)
