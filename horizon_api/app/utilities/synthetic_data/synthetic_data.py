@@ -93,10 +93,10 @@ def generate_synthetic_data(
     )
     new_category_labels = []
     for i in range(num_synthetic_data):
+        shuffled_labels = category_labels + new_category_labels
+        random.shuffle(shuffled_labels)
         prompt_category_generation_formatted = prompt_category_generation.format(
-            category_labels="\n".join(
-                random.shuffle(category_labels + new_category_labels)
-            ),
+            category_labels="\n".join(shuffled_labels),
         )
         next_category = (
             llm_category_generation.generate([prompt_category_generation_formatted])
