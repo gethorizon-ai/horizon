@@ -875,7 +875,6 @@ def generate_synthetic_data(
         click.echo(formatted_output)
     except Exception as e:
         click.echo(str(e))
-    pass
 
 
 # Add CLI commands to their respective groups

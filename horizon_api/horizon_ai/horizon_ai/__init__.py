@@ -1,8 +1,6 @@
 # horizon_ai/__init__.py
 
 import requests
-import os
-import json
 from urllib.parse import urljoin
 
 # Base url for API calls
@@ -509,11 +507,6 @@ def generate_synthetic_data(objective, num_synthetic_data, file_path):
         "openai_api_key": openai_api_key,
     }
     with open(file_path, "rb") as f:
-        # Create the multipart form data
-        multipart_form_data = {
-            "json_data": (None, json.dumps(payload), "application/json"),
-            "original_dataset": ("original_dataset", f, "application/octet-stream"),
-        }
         response = _post(
             endpoint="/api/enablers/generate_synthetic_data",
             files={"original_dataset": f},
