@@ -41,7 +41,7 @@ def generate_prompt_model_configuration(
     Horizon's OpenAI API key is used for prompt generation and embeddings (user's API LLM API keys still used for inference).
 
     Args:
-        user_objective (str): objectuse of the use case.
+        user_objective (str): objective of the use case.
         task (Task): db record corresponding to task.
         prompt (Prompt): db record corresponding to prompt.
         openai_api_key (str, optional): OpenAI API key to use if wanting to consider OpenAI models. Defaults to None.

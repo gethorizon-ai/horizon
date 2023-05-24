@@ -1,7 +1,6 @@
 # horizon_ai/__init__.py
 
 import requests
-import os
 from urllib.parse import urljoin
 
 # Base url for API calls
@@ -19,11 +18,12 @@ def _get(endpoint, headers=None):
     return _handle_response(response)
 
 
-def _post(endpoint, json=None, headers=None, files=None):
+def _post(endpoint, json=None, data=None, headers=None, files=None):
     global base_url
     response = requests.post(
         urljoin(base_url, endpoint),
         json=json,
+        data=data,
         headers=headers,
         files=files,
     )
@@ -490,3 +490,27 @@ def view_deployment_logs(task_id):
 #     payload = {"prompt_id": prompt_id, "inputs": inputs}
 #     response = _post(endpoint="/api/prompts/deploy", json=payload, headers=headers)
 #     return response
+
+
+# Enabler-related methods
+def generate_synthetic_data(objective, num_synthetic_data, file_path):
+    global api_key, openai_api_key
+    if api_key == None:
+        raise Exception("Must set Horizon API key.")
+    if openai_api_key == None:
+        raise Exception("Must set OpenAI API key.")
+
+    headers = {"X-Api-Key": api_key}
+    payload = {
+        "objective": objective,
+        "num_synthetic_data": num_synthetic_data,
+        "openai_api_key": openai_api_key,
+    }
+    with open(file_path, "rb") as f:
+        response = _post(
+            endpoint="/api/enablers/generate_synthetic_data",
+            files={"original_dataset": f},
+            data=payload,
+            headers=headers,
+        )
+        return response

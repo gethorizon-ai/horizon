@@ -500,7 +500,7 @@ class UploadEvaluationDatasetsAPI(Resource):
             return {"error": "Task not found or not associated with user"}, 404
 
         if "evaluation_dataset" not in request.files:
-            return {"error": f"No file provided\n{request.files}"}, 400
+            return {"error": f"No file provided"}, 400
 
         evaluation_dataset = request.files["evaluation_dataset"]
 
@@ -617,7 +617,7 @@ class UploadOutputSchemasAPI(Resource):
             return {"error": "Task not found or not associated with user"}, 404
 
         if "output_schema" not in request.files:
-            return {"error": f"No file provided\n{request.files}"}, 400
+            return {"error": f"No file provided"}, 400
 
         if not task.evaluation_dataset:
             return {

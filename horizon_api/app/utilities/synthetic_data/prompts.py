@@ -20,11 +20,11 @@ BEGIN:
 """
 
     for input_var in task_request.input_variables:
-        prompt_string_category += f"<{input_var}>: {{input_var}}\n"
+        prompt_string_category += f"<{input_var}>: {{{input_var}}}\n"
     prompt_string_category += "<OUTPUT>: {ground_truth}"
     prompt_string_category += "<CATEGORY LABEL>:"
 
-    prompt_category = PromptTemplateFactory(
+    prompt_category = PromptTemplateFactory.create_prompt_template(
         template_type="prompt",
         template=prompt_string_category,
         input_variables=task_request.input_variables + ["ground_truth"],
@@ -43,7 +43,7 @@ def get_category_generation_prompt() -> PromptTemplate:
 {category_labels}
 <NEXT CATEGORY LABELS>:"""
 
-    prompt_category_generation = PromptTemplateFactory(
+    prompt_category_generation = PromptTemplateFactory.create_prompt_template(
         template_type="prompt",
         template=prompt_string_category_generation,
         input_variables=["num_synthetic_data", "category_labels"],
@@ -57,7 +57,7 @@ def get_synthetic_data_generation_prompt_prefix() -> PromptTemplate:
     Returns:
         PromptTemplate: prompt to use.
     """
-    prompt_string_synthetic_data_prefix = """You are an intelligent professor. I am creating a test for my students. First, I created an instruction for my students to use for every question in the test. Then, I determined the category for each question. Finally, I came up with each question by developing the input values and desired output that best satisfies my overall test instruction and category for each question. Using the following examples, generate an exceptional, realistic question and desired output that I can use with my students. Make sure it aligns with the structure, tone, and formatting of the given examples and the category specified for the new question.
+    prompt_string_synthetic_data_prefix = """You are an intelligent professor. I am creating a test for my students. First, I created an instruction for my students to use for every question in the test. Then, I determined the category for each question. Finally, I came up with each question by developing the input values and desired output that best satisfies my overall test instruction and category for each question. Using the following examples, generate an exceptional, realistic question and desired output that I can use with my students. Generate fresh new content for each input and output value for the new question that aligns with its category.
 
 ==
 INSTRUCTION: {user_objective}
@@ -67,10 +67,12 @@ EXAMPLES:
 
 """
 
-    prompt_prefix_synthetic_data_generation = PromptTemplateFactory(
-        template_type="prompt",
-        template=prompt_string_synthetic_data_prefix,
-        input_variables=["user_objective"],
+    prompt_prefix_synthetic_data_generation = (
+        PromptTemplateFactory.create_prompt_template(
+            template_type="prompt",
+            template=prompt_string_synthetic_data_prefix,
+            input_variables=["user_objective"],
+        )
     )
     return prompt_prefix_synthetic_data_generation
 
@@ -89,14 +91,18 @@ def get_synthetic_data_generation_example_prompt(
     prompt_string_synthetic_data_generation_example = "<category>: {category}\n"
     for input_var in task_request.input_variables:
         prompt_string_synthetic_data_generation_example += (
-            f"<{input_var}>: {{input_var}}\n"
+            f"<{input_var}>: {{{input_var}}}\n"
         )
     prompt_string_synthetic_data_generation_example += "<OUTPUT>: {ground_truth}\n\n"
 
-    prompt_template_synthetic_data_generation_example = PromptTemplateFactory(
-        template_type="prompt",
-        template=prompt_string_synthetic_data_generation_example,
-        input_variables=["category"] + task_request.input_variables + ["ground_truth"],
+    prompt_template_synthetic_data_generation_example = (
+        PromptTemplateFactory.create_prompt_template(
+            template_type="prompt",
+            template=prompt_string_synthetic_data_generation_example,
+            input_variables=["category"]
+            + task_request.input_variables
+            + ["ground_truth"],
+        )
     )
     return prompt_template_synthetic_data_generation_example
 
@@ -121,14 +127,16 @@ Here is the output schema:
 """
     output_schema = "{{"
     for input_var in task_request.input_variables:
-        output_schema += f""""{input_var}": {{"type": "string"}},\n"""
+        output_schema += f""""{input_var}": {{{{"type": "string"}}}},\n"""
     output_schema += """"OUTPUT": {{"type": "string"}}}}"""
     prompt_string_synthetic_data_generation_suffix += output_schema
     prompt_string_synthetic_data_generation_suffix += """\n\nJSON OUTPUT:"""
 
-    prompt_suffix_synthetic_data_generation = PromptTemplateFactory(
-        template_type="prompt",
-        template=prompt_string_synthetic_data_generation_suffix,
-        input_variables=["new_category"],
+    prompt_suffix_synthetic_data_generation = (
+        PromptTemplateFactory.create_prompt_template(
+            template_type="prompt",
+            template=prompt_string_synthetic_data_generation_suffix,
+            input_variables=["new_category"],
+        )
     )
     return prompt_suffix_synthetic_data_generation
