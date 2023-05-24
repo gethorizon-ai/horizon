@@ -93,7 +93,6 @@ def generate_synthetic_data(
     new_category_labels = []
     for i in range(num_synthetic_data):
         prompt_category_generation_formatted = prompt_category_generation.format(
-            num_synthetic_data=num_synthetic_data,
             category_labels="\n".join(category_labels + new_category_labels),
         )
         next_category = (
@@ -102,6 +101,7 @@ def generate_synthetic_data(
             .text.strip()
         )
         new_category_labels.append(next_category)
+        print(f"Next category: {next_category}")
 
     if len(new_category_labels) != num_synthetic_data:
         raise ValueError("Couldn't generate new category labels.")
