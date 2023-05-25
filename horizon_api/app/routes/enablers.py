@@ -87,7 +87,7 @@ class GenerateSyntheticDataAPI(Resource):
             return {"error": str(e)}, 400
 
         return {
-            "message": "Synthetic data generation initiated. This generally takes <15 mins, depending on the data size, number of synthetic data points to generate, and LLM provider latency. You will be emailed once the job is completed.",
+            "message": "Success! Check your email for the outputs. (It takes <15 mins, depending on the data size and LLM provider latency).",
         }, 200
 
 
