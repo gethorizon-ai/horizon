@@ -40,7 +40,7 @@ def get_category_generation_llm(openai_api_key: str) -> BaseLLM:
     # Define the prompt template factory instance
     model_params = {
         "model_name": "text-davinci-003",
-        "temperature": 0.7,
+        "temperature": 0.9,
         "max_tokens": 500,
         "openai_api_key": openai_api_key,
     }
