@@ -1,0 +1,14 @@
+{
+    "title": "OutputSchema",
+    "type": "object",
+    "properties": {
+        "locations": {
+            "title": "Locations",
+            "description": "locations of the job in the job listing",
+            "type": "string"
+        }
+    },
+    "required": [
+        "locations"
+    ]
+}

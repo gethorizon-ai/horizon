@@ -1,0 +1,14 @@
+{
+    "title": "OutputSchema",
+    "type": "object",
+    "properties": {
+        "pay_max": {
+            "title": "Pay_max",
+            "description": "Maximum pay of the job in the job listing",
+            "type": "string"
+        }
+    },
+    "required": [
+        "pay_max"
+    ]
+}
