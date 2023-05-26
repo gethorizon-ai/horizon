@@ -1,6 +1,7 @@
 from config import Config
 import horizon_ai
 import json
+import concurrent
 
 horizon_ai.api_key = "83efb517-66cf-47e7-9318-707f9c13903e"
 horizon_ai.openai_api_key = Config.HORIZON_OPENAI_API_KEY
@@ -11,60 +12,31 @@ test_job_listing = """Operations Manager, Change Management, Swedesboro, NJ, At 
 inputs = {"input_data": test_job_listing}
 result = {}
 
-title = json.loads(
-    horizon_ai.deploy_task(task_id=215, inputs=inputs, log_deployment=True)[
-        "completion"
-    ]
-)
-result.update(title)
-print(title)
 
-sub_role = json.loads(
-    horizon_ai.deploy_task(task_id=216, inputs=inputs, log_deployment=True)[
-        "completion"
-    ]
-)
-result.update(sub_role)
-print(sub_role)
+# Define a function to make the API call and update the result
+def make_api_call(task_id):
+    return json.loads(
+        horizon_ai.deploy_task(task_id=task_id, inputs=inputs, log_deployment=True)[
+            "completion"
+        ]
+    )
 
-tenure = json.loads(
-    horizon_ai.deploy_task(task_id=219, inputs=inputs, log_deployment=True)[
-        "completion"
-    ]
-)
-result.update(tenure)
-print(tenure)
 
-locations = json.loads(
-    horizon_ai.deploy_task(task_id=224, inputs=inputs, log_deployment=True)[
-        "completion"
-    ]
-)
-result.update(locations)
-print(locations)
+# List of task IDs to parallelize
+task_ids = [215, 216, 219, 224, 222, 223, 214]
 
-pay_min = json.loads(
-    horizon_ai.deploy_task(task_id=222, inputs=inputs, log_deployment=True)[
-        "completion"
-    ]
-)
-result.update(pay_min)
-print(pay_min)
+with concurrent.futures.ThreadPoolExecutor() as executor:
+    # Submit tasks to the executor and store the future objects
+    futures = [executor.submit(make_api_call, task_id) for task_id in task_ids]
 
-pay_max = json.loads(
-    horizon_ai.deploy_task(task_id=223, inputs=inputs, log_deployment=True)[
-        "completion"
-    ]
-)
-result.update(pay_max)
-print(pay_max)
-
-responsibility = json.loads(
-    horizon_ai.deploy_task(task_id=214, inputs=inputs, log_deployment=True)[
-        "completion"
-    ]
-)
-result.update(responsibility)
-print(responsibility)
+    # Retrieve the results as they complete
+    for future, task_id in zip(concurrent.futures.as_completed(futures), task_ids):
+        try:
+            # Get the result of the completed task
+            task_result = future.result()
+            result.update(task_result)
+            print(task_result)
+        except Exception as e:
+            print(f"Error occurred while executing task {task_id}: {e}")
 
 print(json.dumps(result, indent=4))
