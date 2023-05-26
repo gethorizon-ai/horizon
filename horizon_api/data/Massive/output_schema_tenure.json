@@ -5,7 +5,14 @@
         "tenure": {
             "title": "Tenure",
             "description": "tenure of the job in the job listing",
-            "type": "string"
+            "type": "string",
+            "choices": [
+                "Junior (1-2 years)",
+                "Mid Level (3-5 years)",
+                "Senior (6-9 years)",
+                "Expert & Leadership (10+ years)",
+                "Entry Level & Graduate"
+            ]
         }
     },
     "required": [

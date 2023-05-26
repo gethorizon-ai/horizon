@@ -5,7 +5,23 @@
         "locations": {
             "title": "Locations",
             "description": "locations of the job in the job listing",
-            "type": "string"
+            "type": "string",
+            "choices": [
+                "Miami",
+                "Seattle",
+                "Los Angeles",
+                "New York City",
+                "San Francisco",
+                "Denver",
+                "Chicago",
+                "Boston",
+                "Austin",
+                "Vancouver",
+                "Toronto",
+                "Portland",
+                "Remote (US)",
+                "Remote (Global)"
+            ]
         }
     },
     "required": [
