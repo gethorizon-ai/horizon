@@ -15,35 +15,42 @@ title = json.loads(
     horizon_ai.deploy_task(task_id=215, inputs=inputs, log_deployment=True)
 )["completion"]
 result.update(title)
+print(title)
 
 sub_role = json.loads(
     horizon_ai.deploy_task(task_id=216, inputs=inputs, log_deployment=True)
 )["completion"]
 result.update(sub_role)
+print(sub_role)
 
 tenure = json.loads(
     horizon_ai.deploy_task(task_id=216, inputs=inputs, log_deployment=True)
 )["completion"]
 result.update(tenure)
+print(tenure)
 
 locations = json.loads(
     horizon_ai.deploy_task(task_id=224, inputs=inputs, log_deployment=True)
 )["completion"]
 result.update(locations)
+print(locations)
 
 pay_min = json.loads(
     horizon_ai.deploy_task(task_id=222, inputs=inputs, log_deployment=True)
 )["completion"]
 result.update(pay_min)
+print(pay_min)
 
 pay_max = json.loads(
     horizon_ai.deploy_task(task_id=223, inputs=inputs, log_deployment=True)
 )["completion"]
 result.update(pay_max)
+print(pay_max)
 
 responsibility = json.loads(
     horizon_ai.deploy_task(task_id=214, inputs=inputs, log_deployment=True)
 )["completion"]
 result.update(responsibility)
+print(responsibility)
 
 print(json.dumps(result, indent=4))
