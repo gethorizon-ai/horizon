@@ -15,6 +15,7 @@ VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA = [
     "type",
     "properties",
     "description",
+    "choices",
     "required",
 ]
 
