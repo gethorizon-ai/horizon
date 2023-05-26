@@ -1,0 +1,14 @@
+{
+    "title": "OutputSchema",
+    "type": "object",
+    "properties": {
+        "tenure": {
+            "title": "Tenure",
+            "description": "tenure of the job in the job listing",
+            "type": "string"
+        }
+    },
+    "required": [
+        "title"
+    ]
+}
