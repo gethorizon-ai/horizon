@@ -60,10 +60,12 @@ pay_max = json.loads(
 result.update(pay_max)
 print(pay_max)
 
-responsibility = horizon_ai.deploy_task(
-    task_id=210, inputs=inputs, log_deployment=False
-)["completion"]
-# result.update(responsibility)
+responsibility = json.loads(
+    horizon_ai.deploy_task(task_id=214, inputs=inputs, log_deployment=False)[
+        "completion"
+    ]
+)
+result.update(responsibility)
 print(responsibility)
 
 print(json.dumps(result, indent=4))
