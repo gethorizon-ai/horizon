@@ -1,0 +1,14 @@
+{
+    "title": "OutputSchema",
+    "type": "object",
+    "properties": {
+        "responsibility": {
+            "title": "Responsibility",
+            "description": "responsibility of the job listing",
+            "type": "string"
+        }
+    },
+    "required": [
+        "responsibility"
+    ]
+}
