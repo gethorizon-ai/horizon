@@ -6,7 +6,7 @@
             "title": "Sub_role",
             "description": "sub_role of the job in the job listing",
             "type": "string",
-            "choices": [
+            "enum": [
                 "Frontend Engineer",
                 "Backend Engineer",
                 "DevOps & SRE",

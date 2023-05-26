@@ -5,8 +5,7 @@
         "locations": {
             "title": "Locations",
             "description": "locations of the job in the job listing",
-            "type": "string",
-            "choices": [
+            "enum": [
                 "Miami",
                 "Seattle",
                 "Los Angeles",
@@ -21,7 +20,8 @@
                 "Portland",
                 "Remote (US)",
                 "Remote (Global)"
-            ]
+            ],
+            "type": "string"
         }
     },
     "required": [

@@ -6,7 +6,7 @@
             "title": "Tenure",
             "description": "tenure of the job in the job listing",
             "type": "string",
-            "choices": [
+            "enum": [
                 "Junior (1-2 years)",
                 "Mid Level (3-5 years)",
                 "Senior (6-9 years)",

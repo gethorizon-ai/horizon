@@ -15,7 +15,7 @@ VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA = [
     "type",
     "properties",
     "description",
-    "choices",
+    "enum",
     "required",
 ]
 
@@ -127,16 +127,16 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
                 raise AssertionError(
                     f"Invalid field in output schema 'properties': '{key}'"
                 )
-            if key != "choices" and not isinstance(value, str):
+            if key != "enum" and not isinstance(value, str):
                 raise AssertionError(
                     f"Invalid value in output schema (must be str): '{key}': '{value}'"
                 )
-            if key == "choices" and (
+            if key == "enum" and (
                 not isinstance(value, list)
                 or not all(isinstance(element, str) for element in value)
             ):
                 raise AssertionError(
-                    f"Invalid value in output schema ('choices' must be list of str): '{key}': '{value}'"
+                    f"Invalid value in output schema ('enum' must be list of str): '{key}': '{value}'"
                 )
 
     # Check that any required fields are listed in properties
