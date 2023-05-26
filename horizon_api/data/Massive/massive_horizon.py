@@ -1,5 +1,5 @@
-import horizon_ai
 from config import Config
+import horizon_ai
 import json
 
 horizon_ai.api_key = "83efb517-66cf-47e7-9318-707f9c13903e"
