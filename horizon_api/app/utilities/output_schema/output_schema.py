@@ -133,7 +133,7 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
                 )
             if key == "choices" and (
                 not isinstance(value, list)
-                or all(isinstance(element, str) for element in value)
+                or not all(isinstance(element, str) for element in value)
             ):
                 raise AssertionError(
                     f"Invalid value in output schema ('choices' must be list of str): '{key}': '{value}'"
