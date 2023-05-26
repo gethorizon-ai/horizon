@@ -36,7 +36,6 @@ with ThreadPoolExecutor() as executor:
             # Get the result of the completed task
             task_result = future.result()
             result.update(task_result)
-            print(task_result)
         except Exception as e:
             print(f"Error occurred while executing task {task_id}: {e}")
 
