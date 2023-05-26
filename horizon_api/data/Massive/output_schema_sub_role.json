@@ -3,7 +3,7 @@
     "type": "object",
     "properties": {
         "sub_role": {
-            "title": "Sub_role",
+            "sub_role": "Sub_role",
             "description": "sub_role of the job in the job listing",
             "type": "string"
         }
