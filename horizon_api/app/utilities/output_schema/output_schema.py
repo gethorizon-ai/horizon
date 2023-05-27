@@ -7,6 +7,7 @@ import json
 import os
 import importlib
 import sys
+from typing import Any
 
 
 ASSUMED_PYDANTIC_CLASS_NAME = "OutputSchema"
@@ -16,7 +17,9 @@ VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA = [
     "properties",
     "description",
     "enum",
+    "items",
     "required",
+    "definitions",
 ]
 
 
@@ -116,7 +119,7 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
             'Cannot have more than 5 fields in "properties" (to limit complexity).'
         )
 
-    # Check that each field in properties is only a single level dict
+    # Check that each field in properties is only a single level dict, except for "items"
     for field in output_schema["properties"].keys():
         if not isinstance(output_schema["properties"][field], dict):
             raise AssertionError(
@@ -127,7 +130,7 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
                 raise AssertionError(
                     f"Invalid field in output schema 'properties': '{key}'"
                 )
-            if key != "enum" and not isinstance(value, str):
+            if key != "enum" and key != "items" and not isinstance(value, str):
                 raise AssertionError(
                     f"Invalid value in output schema (must be str): '{key}': '{value}'"
                 )
@@ -138,6 +141,23 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
                 raise AssertionError(
                     f"Invalid value in output schema ('enum' must be list of str): '{key}': '{value}'"
                 )
+            if key == "items":
+                if not isinstance(value, dict):
+                    raise AssertionError(f"Value of 'items' field must be a dict")
+                for sub_key, sub_value in value.items():
+                    if sub_key not in VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA:
+                        raise AssertionError(f"Invalid key in output schema: '{key}'")
+                    if sub_key != "enum" and not isinstance(sub_value, str):
+                        raise AssertionError(
+                            f"Invalid value in output schema (must be str) or too many levels in output schema: '{key}': '{value}'"
+                        )
+                    if sub_key == "enum" and (
+                        not isinstance(sub_value, list)
+                        or not all(isinstance(element, str) for element in sub_value)
+                    ):
+                        raise AssertionError(
+                            f"Invalid value in output schema ('enum' must be list of str): '{key}': '{value}'"
+                        )
 
     # Check that any required fields are listed in properties
     if "required" in output_schema:
