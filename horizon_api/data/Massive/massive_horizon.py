@@ -17,7 +17,7 @@ result = {}
 # Define a function to make the API call and update the result
 def make_api_call(task_id):
     return json.loads(
-        horizon_ai.deploy_task(task_id=task_id, inputs=inputs, log_deployment=True)[
+        horizon_ai.deploy_task(task_id=task_id, inputs=inputs, log_deployment=False)[
             "completion"
         ]
     )
