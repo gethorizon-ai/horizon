@@ -24,14 +24,22 @@ def make_api_call(task_id):
 
 
 # List of task IDs to parallelize
-task_ids = [215, 216, 219, 224, 222, 223, 214]
+task_ids = {
+    "title": 215,
+    "sub_role": 245,
+    "tenure": 244,
+    "locations": 243,
+    "pay_min": 222,
+    "pay_max": 223,
+    "responsibility": 214,
+}
 
 with ThreadPoolExecutor() as executor:
     # Submit tasks to the executor and store the future objects
-    futures = [executor.submit(make_api_call, task_id) for task_id in task_ids]
+    futures = [executor.submit(make_api_call, task_id) for task_id in task_ids.values()]
 
     # Retrieve the results as they complete
-    for future, task_id in zip(as_completed(futures), task_ids):
+    for future, task_id in zip(as_completed(futures), task_ids.values()):
         try:
             # Get the result of the completed task
             task_result = future.result()
