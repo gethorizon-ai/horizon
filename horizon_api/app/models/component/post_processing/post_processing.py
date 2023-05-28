@@ -46,7 +46,7 @@ class PostProcessing:
         # Initialize RetryOutputParser if llm object provided
         self.retry_output_parser = None
         if llm:
-            self.set_llm_for_retry_output_parser(llm=llm)
+            self.set_llm_for_output_parser(llm=llm)
 
     def set_llm_for_output_parser(self, llm: BaseLLM):
         """Update or initialize RetryWithErrorOutputParser using provided llm object.
