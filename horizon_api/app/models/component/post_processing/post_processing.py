@@ -4,7 +4,7 @@ from app.models.llm.base import BaseLLM
 from app.models.parser.pydantic_output_parser import PydanticOutputParser
 from app.models.parser.retry_with_error_output_parser import RetryWithErrorOutputParser
 from app.utilities.output_schema import output_schema
-from langchain.prompts.base import StringPromptValue
+from langchain.prompts.prompt import PromptTemplate
 import copy
 
 
@@ -12,13 +12,15 @@ import copy
 FINAL_ERROR_MESSAGE = "Failed to generate output satisfying output schema requirements."
 
 # Retry prompt that only shows error message, but not original prompt or completion. More useful in correcting JSON errors
-RETRY_PROMPT = """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema.
+RETRY_PROMPT = PromptTemplate.from_template(
+    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output conform to the JSON schema while keeping the intended meaning.
 
 <OUTPUT>: {completion}
 
 <ERROR>: {error}
 
 <CORRECTED JSON OUTPUT>:"""
+)
 
 
 class PostProcessing:
