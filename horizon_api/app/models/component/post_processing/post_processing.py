@@ -2,7 +2,7 @@
 
 from app.models.llm.base import BaseLLM
 from app.models.parser.pydantic_output_parser import PydanticOutputParser
-from app.models.parser.retry_with_error_output_parser import RetryWithErrorOutputParser
+from app.models.parser.retry_output_parser import RetryOutputParser
 from app.utilities.output_schema import output_schema
 from langchain.prompts.prompt import PromptTemplate
 import copy
@@ -43,12 +43,12 @@ class PostProcessing:
             self.pydantic_output_parser.get_format_instructions()
         )
 
-        # Initialize RetryWithErrorOutputParser if llm object provided
-        self.retry_with_error_output_parser = None
+        # Initialize RetryOutputParser if llm object provided
+        self.retry_output_parser = None
         if llm:
-            self.set_llm_for_retry_with_error_output_parser(llm=llm)
+            self.set_llm_for_retry_output_parser(llm=llm)
 
-    def set_llm_for_retry_with_error_output_parser(self, llm: BaseLLM):
+    def set_llm_for_output_parser(self, llm: BaseLLM):
         """Update or initialize RetryWithErrorOutputParser using provided llm object.
 
         Args:
@@ -58,8 +58,8 @@ class PostProcessing:
         llm_copy = copy.deepcopy(llm)
         llm_copy.set_temperature(temperature=0)
 
-        # Add retry_with_error_output_parser
-        self.retry_with_error_output_parser = RetryWithErrorOutputParser.from_llm(
+        # Add retry_output_parser
+        self.retry_output_parser = RetryOutputParser.from_llm(
             llm=llm_copy, parser=self.pydantic_output_parser, prompt=RETRY_PROMPT
         )
 
@@ -79,18 +79,18 @@ class PostProcessing:
         Returns:
             str: output string satisfying output schema requirements.
         """
-        # If retry_with_error_output_parser is setup, then try parsing with it. Enables 1 retry currently
-        if self.retry_with_error_output_parser:
+        # If retry_output_parser is setup, then try parsing with it. Enables 1 retry currently
+        if self.retry_output_parser:
             try:
                 # prompt_value = StringPromptValue(text=prompt_string)
-                parsed_output = self.retry_with_error_output_parser.parse(
+                parsed_output = self.retry_output_parser.parse(
                     completion=original_output,
                     # prompt_value=prompt_value,
                 )
                 return parsed_output.json()
             except Exception as e:
                 raise ValueError(FINAL_ERROR_MESSAGE + "\n" + str(e))
-        # If retry_with_error_output_parser is not setup, then try parsing output directly with no retry
+        # If retry_output_parser is not setup, then try parsing output directly with no retry
         else:
             try:
                 parsed_output = self.pydantic_output_parser.parse(

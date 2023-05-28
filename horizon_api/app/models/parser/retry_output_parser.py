@@ -2,7 +2,7 @@
 
 from .base import BaseParser
 from langchain.output_parsers import (
-    RetryWithErrorOutputParser as RetryWithErrorOutputParserOriginal,
+    RetryOutputParser as RetryOutputParserOriginal,
 )
 
 from langchain.schema import OutputParserException
@@ -11,7 +11,7 @@ from typing import TypeVar
 T = TypeVar("T")
 
 
-class RetryWithErrorOutputParser(BaseParser, RetryWithErrorOutputParserOriginal):
+class RetryOutputParser(BaseParser, RetryOutputParserOriginal):
     """Class to retry LLM if error occurs when parsing output."""
 
     def parse(self, completion: str) -> str:
