@@ -13,7 +13,7 @@ FINAL_ERROR_MESSAGE = "Failed to generate output satisfying output schema requir
 
 # Retry prompt that only shows error message, but not original prompt or completion. More useful in correcting JSON errors
 RETRY_PROMPT = PromptTemplate.from_template(
-    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output conform to the JSON schema while keeping the intended meaning.
+    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema while keeping the intended meaning.
 
 <OUTPUT>: {completion}
 
