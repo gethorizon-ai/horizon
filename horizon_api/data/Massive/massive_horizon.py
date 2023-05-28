@@ -25,13 +25,13 @@ def make_api_call(task_id):
 
 # List of task IDs to parallelize
 task_ids = {
-    # "title": 215,
-    # "sub_role": 245,
-    # "tenure": 244,
+    "title": 215,
+    "sub_role": 245,
+    "tenure": 244,
     "locations": 243,
-    # "pay_min": 222,
-    # "pay_max": 223,
-    # "responsibility": 214,
+    "pay_min": 222,
+    "pay_max": 223,
+    "responsibility": 214,
 }
 
 with ThreadPoolExecutor() as executor:
