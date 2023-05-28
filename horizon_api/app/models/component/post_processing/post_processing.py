@@ -15,9 +15,9 @@ FINAL_ERROR_MESSAGE = "Failed to generate output satisfying output schema requir
 RETRY_PROMPT = PromptTemplate.from_template(
     """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema.
 
-<JSON SCHEMA>: {schema}
-
 <ORIGINAL OUTPUT>: {completion}
+
+<JSON SCHEMA>: {schema}
 
 <CORRECTED JSON OUTPUT>:"""
 )
