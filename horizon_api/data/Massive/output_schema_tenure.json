@@ -7,11 +7,11 @@
             "description": "tenure of the job in the job listing",
             "type": "string",
             "enum": [
+                "Entry Level & Graduate",
                 "Junior (1-2 years)",
                 "Mid Level (3-5 years)",
                 "Senior (6-9 years)",
-                "Expert & Leadership (10+ years)",
-                "Entry Level & Graduate"
+                "Expert & Leadership (10+ years)"
             ]
         }
     },
