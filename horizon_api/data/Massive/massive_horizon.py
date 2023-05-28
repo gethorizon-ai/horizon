@@ -14,16 +14,6 @@ test_job_listings = [
 ###"""
 ]
 
-
-# Define a function to make the API call and update the result
-def make_api_call(task_id, inputs):
-    return json.loads(
-        horizon_ai.deploy_task(task_id=task_id, inputs=inputs, log_deployment=False)[
-            "completion"
-        ]
-    )
-
-
 # List of task IDs to extract necessary elements from job listing
 task_ids = {
     "title": 215,
@@ -35,20 +25,29 @@ task_ids = {
     "responsibility": 214,
 }
 
+
+# Define a function to make the API call and update the result
+def make_api_call(task_id, inputs):
+    return json.loads(
+        horizon_ai.deploy_task(task_id=task_id, inputs=inputs, log_deployment=False)[
+            "completion"
+        ]
+    )
+
+
 aggregate_results = []
 with ThreadPoolExecutor() as executor:
     # Process each job listing
     for listing in test_job_listings:
-        inputs = {"input_data": listing}
-        result = {}
-
         # Submit tasks to the executor for concurrent calls and store the future objects
+        inputs = {"input_data": listing}
         futures = [
             executor.submit(make_api_call, task_id, inputs)
             for task_id in task_ids.values()
         ]
 
         # Retrieve the results as they complete
+        result = {}
         for future, field, task_id in zip(
             as_completed(futures), task_ids.keys(), task_ids.values()
         ):
