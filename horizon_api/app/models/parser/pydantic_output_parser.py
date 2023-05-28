@@ -24,6 +24,10 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
     def get_format_instructions(self, escape_curly_braces=True) -> str:
         """Returns output format instructions to append to prompt prefix.
 
+        Args:
+            escape_curly_braces (bool, optional): whether to escape curly braces in format instructions by doubling each curly brace.
+                Defaults to True.
+
         Returns:
             str: output format instructions to append to prompt prefix.
         """
