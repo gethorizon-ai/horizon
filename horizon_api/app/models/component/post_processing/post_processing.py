@@ -82,10 +82,8 @@ class PostProcessing:
         # If retry_output_parser is setup, then try parsing with it. Enables 1 retry currently
         if self.retry_output_parser:
             try:
-                # prompt_value = StringPromptValue(text=prompt_string)
                 parsed_output = self.retry_output_parser.parse(
                     completion=original_output,
-                    # prompt_value=prompt_value,
                 )
                 return parsed_output.json()
             except Exception as e:
