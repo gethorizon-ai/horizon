@@ -80,4 +80,5 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
         except (json.JSONDecodeError, ValidationError) as e:
             name = self.pydantic_object.__name__
             msg = f"Failed to parse {name} from completion {text}. Got: {e}"
+            print(f"Error as dict: {e.errors()}")
             raise OutputParserException(msg)
