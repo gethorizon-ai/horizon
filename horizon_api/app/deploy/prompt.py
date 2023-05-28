@@ -113,8 +113,6 @@ def deploy_prompt(
     # Generate the output
     llm_result = model_instance.generate([formatted_prompt_for_llm])
     output = llm_result.generations[0][0].text.strip()
-    print(f"PROMPT: {formatted_prompt_for_llm}")
-    print(f"OUTPUT: {output}")
 
     # Conduct post-processing of output, if applicable
     if task.pydantic_model:
