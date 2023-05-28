@@ -3,19 +3,20 @@ import horizon_ai
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# TODO: set Horizon API key and OpenAI API key
 horizon_ai.api_key = "83efb517-66cf-47e7-9318-707f9c13903e"
 horizon_ai.openai_api_key = Config.HORIZON_OPENAI_API_KEY
 
-test_job_listing = """Regional Sales Executive, Seattle, WA, YOUR IMPACT  We are looking for experienced regional sales executives with a proven track record of growth in the ediscovery/legal technology industry or Saas/Technology sales. This is a field sales position in major U.S. markets.    Your contribution will accelerate our DISCO growth across both law firms and corporate legal departments in the legal technology space.  You will have the best legal technology tools in your backpack to share with the market.    WHAT YOU'LL DO   * You will sell the DISCO ediscovery, Managed Review, and Case Builder    platforms with responsibility for driving new business logos and expanding    existing client revenue through direct and team selling regionally.   * You’ll create and nurture trusted, long-term relationships with clients that    result in substantial multi-year revenue growth.  * You will relentlessly provide complete and appropriate solutions for all    clients in order to increase top-line revenue growth, client acquisition    levels and overall profitability through sourcing referrals from clients and    prospects and quickly building a local network at the user level to drive    viral growth.  * You will analyze market and territory potential, track sales, and maintain    status reports that deliver upon client needs, issues, interests, competitive    activities, and potential for cross-functional product sales and services.   * You will also keep abreast of best practices and trends in assigned territory    and overall market.   WHO YOU ARE   * Minimum 5 years in a complex selling environment requiring multi-level,    multi-party support to develop and close deals  * Proven track record of success selling in Legal Technology and/or SaaS    environments selling to executive level contacts  * Demonstrated history of overachievement on annual quotas >$1M  * Consistently ranked as a top performer in previous sales roles  * An expert in executing sales fundamentals including prospecting, cold    calling, pipeline and Salesforce management to ensure accurate data capture    and pipeline views  * Innate belief in a metrics driven approach to building a book of business  * Experience working with and developing Sales Development Representatives    (SDRs) to source and nurture leads  * Subject matter expert in the business and practice of law, legal technology,    competitive landscape, and market trends highly preferred   * Solidified commitment to  understand DISCO’s distinct position and    differentiators and our commitment to transforming the manner in which our    clients work  * Adept at partnering and collaborating with colleagues in all departments in    order to exceed client expectations and to secure the resources required to    win  * Ability to adapt, shift, and change quickly while maintaining a high quality    of work and output  * Demonstrate strong interpersonal communication, organization, and are    self-motivated with an entrepreneurial spirit   EDUCATION:   * BA or BS required; JD or MBA a plus, but not required.   LOCATION & TRAVEL:   * DISCO is hiring in all major U.S. cities. Travel as required to clients    within your territory as well as industry events and conferences.  *Business travel to commence based on COVID-19 situation  Perks of DISCO:   * Open, inclusive, and fun environment  * Benefits, including medical, dental and vision insurance, as well as 401(k)   * Competitive salary plus RSUs  * Flexible PTO   * Opportunity to be a part of a company that is revolutionizing the legal    industry  * Growth opportunities throughout the company   ABOUT DISCO  DISCO provides a cloud-native, artificial intelligence-powered legal solution that simplifies ediscovery, legal document review and case management for enterprises, law firms, legal services providers and governments. Our scalable, integrated solution enables legal departments to easily collect, process and review enterprise data that is relevant or potentially relevant to legal matters.   Are you ready to help us fulfill our mission to use technology to strengthen the rule of law? Join us!   We are an equal opportunity employer and value diversity. We do not discriminate on the basis of race, religion, color, national origin, gender, sexual orientation, age, marital status, veteran status, or disability status.  Please note that DISCO has a mandatory COVID vaccination policy which requires all employees in the U.S. to be fully vaccinated, subject to applicable legal exemptions.   
+# TODO: create list of job listings. Currently, just has one element
+test_job_listings = [
+    """Senior Content Editor - Token, New York, NY (HQ), We’re looking for an experienced content creator and editor that is excited to shake up the world of cryptocurrency.   Are you ready to shape our brand and voice? Are you ready to attract new audiences and build a close-knit community? If so, join us at Quidd!   You will be responsible for nearly all content that shows up, from Quidd Token about Quidd Token, across the blogs, email newsletters, ads, press releases, and other long-form mediums. As the resident in-house copywriter, copy editor, and content planner, you will run everything end-to-end, from overall strategy to messaging to production to analysis.   The QUIDD token is the official utility token for the QUIDD ecosystem which first pioneered digital collecting 5 years ago with officially-licensed collectibles from over 325 of the world's most beloved brands and 7 million collectors. The QUIDD token is designed to give QUIDD collectors and creators added utility in both the QUIDD app including purchasing of NFTs and collectibles, governance and trade as well as trade, create and collect-to-earn programs utilizing the QUIDD token.   This will be your mission -- to tell the world about Quidd Token and its community; all the while growing the community. To accomplish this, everyday you will work with a small, cross-functional team, including product managers, designers, engineers, and merchandisers, putting you at the center of the action. What You'll Do Develop and execute the company’s content strategyDefine key messages, always knowing what sells from a reader’s perspectivePlan, write, and edit a lot, including copy for blog posts, website articles, ad creative, push notifications, automated emails, user guides, email newsletters, and press releasesProduce a series of original long-form content focused on popular culture, balancing crypto credibility with mainstream understanding and appeal, etc.Own and operate the overall content schedule, including management of an extended team of freelance copywriters in on-going content productionTrack, analyze, and report on all media exposure, including open rates, click-thru rates, pageviews, and more across content channelsPartner with graphic designers and video production companies to produce world-class teaser materials Who You Are An extremely-organized person; your world-class project management is an inborn characteristic...there is something inside you that must do itA talented writer; writing and editing comes easy to do, and you enjoy doing itA storyteller; you are a natural at drawing in an audience and telling our story, and the story of our collectors Super curious about cryptocurrency: you’ve seen the headlines and gone further down the rabbit hole; you’ve researched some of the latest projects and have your own investments or interest in investingA hands-on doer; you can run content schedules, craft messaging, create graphics and short video clips on-the-fly, publish content, and analyze resultsNot a beginner; you have proven track record and can point to a portfolio of content and content marketing you’ve done, both good and badA resilient sponge; small teams and startups aren’t easy and there will be hazards along the way so you must be fortified and willing to learn...success will be more rewarding as a result What You're Good At Branding and voice; you can craft a unique and fresh voice for this 5 year-old brand, both through creative inspiration and real-time iterationCalendarization; you are oriented towards the future and plan very, very well Researching & Writing; you are skilled with copywriting and can write persuasively, quickly and easily; you can interview and conduct research, detailing and contextualizing the stories behind the collectibles Editing & Communicating; you can get the most out of other writers, turning feedback into actions through an extended network of collaborators and writers, at scaleGoing Deeper; there’s the surface and then there’s what is underneath; you are skilled at investigating what is happening on deeper levels, using empathy, and contextualizing stories for the world to consume and understandGeeking Out; you can effortlessly go deep on pop culture references What You've Done Functional: a minimum of 5+ years managing editorial, content creation, and content marketing for a startup, technology company, or big brandIndustry: personal and professional experience in crypto and/or marketplaces, collectibles, e-commerce
 
 ###"""
-
-inputs = {"input_data": test_job_listing}
-result = {}
+]
 
 
 # Define a function to make the API call and update the result
-def make_api_call(task_id):
+def make_api_call(task_id, inputs):
     return json.loads(
         horizon_ai.deploy_task(task_id=task_id, inputs=inputs, log_deployment=False)[
             "completion"
@@ -23,7 +24,7 @@ def make_api_call(task_id):
     )
 
 
-# List of task IDs to parallelize
+# List of task IDs to extract necessary elements from job listing
 task_ids = {
     "title": 215,
     "sub_role": 245,
@@ -34,21 +35,34 @@ task_ids = {
     "responsibility": 214,
 }
 
+aggregate_results = []
 with ThreadPoolExecutor() as executor:
-    # Submit tasks to the executor and store the future objects
-    futures = [executor.submit(make_api_call, task_id) for task_id in task_ids.values()]
+    # Process each job listing
+    for listing in test_job_listings:
+        inputs = {"input_data": listing}
+        result = {}
 
-    # Retrieve the results as they complete
-    for future, field, task_id in zip(
-        as_completed(futures), task_ids.keys(), task_ids.values()
-    ):
-        try:
-            # Get the result of the completed task
-            task_result = future.result()
-        except Exception as e:
-            # If error occurs, set field to None
-            task_result = {field: None}
-            print(f"Error occurred while executing task {task_id}: {e}")
-        result.update(task_result)
+        # Submit tasks to the executor for concurrent calls and store the future objects
+        futures = [
+            executor.submit(make_api_call, task_id, inputs)
+            for task_id in task_ids.values()
+        ]
 
-print(json.dumps(result, indent=4))
+        # Retrieve the results as they complete
+        for future, field, task_id in zip(
+            as_completed(futures), task_ids.keys(), task_ids.values()
+        ):
+            try:
+                # Get the result of the completed task
+                task_result = future.result()
+            except Exception as e:
+                # If error occurs, set field to None and print error
+                task_result = {field: None}
+                print(f"Error occurred while executing task {task_id}: {e}")
+            result.update(task_result)
+
+        # Store final result in aggregate_results object
+        aggregate_results.append(result)
+
+# TODO: Process aggregate_results. Currently, just prints first result
+print(json.dumps(aggregate_results[0], indent=4))
