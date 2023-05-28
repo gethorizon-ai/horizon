@@ -28,7 +28,7 @@ class RetryWithErrorOutputParser(BaseParser, RetryWithErrorOutputParserOriginal)
             parsed_completion = self.parser.parse(completion)
         except OutputParserException as e:
             print(f"Error: {repr(e)}")
-            new_completion = self.retry_chain.run(completion=completion, error=repr(e))
+            new_completion = self.retry_chain.run(completion=completion, error=str(e))
             print(f"New completion: {new_completion}")
             parsed_completion = self.parser.parse(new_completion)
 
