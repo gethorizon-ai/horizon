@@ -21,12 +21,11 @@ PYDANTIC_FORMAT_INSTRUCTIONS = """Only respond with a valid JSON object that con
 class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
     """Wrapper around LangChain PydanticOutputParser."""
 
-    def get_format_instructions(self, escape_curly_braces=True) -> str:
+    def get_format_instructions(self, schema_only=False) -> str:
         """Returns output format instructions to append to prompt prefix.
 
         Args:
-            escape_curly_braces (bool, optional): whether to escape curly braces in format instructions by doubling each curly brace.
-                Defaults to True.
+            schema_only (bool, optional): whether to only get the schema without any formatting for prompt prefix. Defaults to False.
 
         Returns:
             str: output format instructions to append to prompt prefix.
@@ -49,12 +48,12 @@ class PydanticOutputParser(BaseParser, PydanticOutputParserOriginal):
         # Ensure json in context is well-formed with double quotes.
         schema_str = json.dumps(reduced_schema)
 
-        if escape_curly_braces:
+        if schema_only:
+            return schema_str
+        else:
             return "\n\n" + PYDANTIC_FORMAT_INSTRUCTIONS.format(
                 schema=schema_str
             ).replace("{", "{{").replace("}", "}}")
-        else:
-            return "\n\n" + PYDANTIC_FORMAT_INSTRUCTIONS.format(schema=schema_str)
 
     def parse(self, text: str) -> T:
         """Attempts to parse given text according to Pydantic model stored inside.
