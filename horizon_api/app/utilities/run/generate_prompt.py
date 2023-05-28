@@ -248,7 +248,7 @@ def generate_prompt_model_configuration(
 
         # Add llm instance to post_processing retry attempts, if applicable
         if post_processing:
-            post_processing.update_llm_for_retry_with_error_output_parser(
+            post_processing.set_llm_for_retry_with_error_output_parser(
                 llm=copy.deepcopy(llm_instance)
             )
 

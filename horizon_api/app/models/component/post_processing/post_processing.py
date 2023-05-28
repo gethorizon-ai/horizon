@@ -35,11 +35,9 @@ class PostProcessing:
         # Initialize RetryWithErrorOutputParser if llm object provided
         self.retry_with_error_output_parser = None
         if llm:
-            self.retry_with_error_output_parser = RetryWithErrorOutputParser.from_llm(
-                parser=self.pydantic_output_parser, llm=llm
-            )
+            self.set_llm_for_retry_with_error_output_parser(llm=llm)
 
-    def update_llm_for_retry_with_error_output_parser(self, llm: BaseLLM):
+    def set_llm_for_retry_with_error_output_parser(self, llm: BaseLLM):
         """Update or initialize RetryWithErrorOutputParser using provided llm object.
 
         Args:
@@ -73,10 +71,10 @@ class PostProcessing:
         # If retry_with_error_output_parser is setup, then try parsing with it. Enables 1 retry currently
         if self.retry_with_error_output_parser:
             try:
-                prompt_value = StringPromptValue(text=prompt_string)
-                parsed_output = self.retry_with_error_output_parser.parse_with_prompt(
+                # prompt_value = StringPromptValue(text=prompt_string)
+                parsed_output = self.retry_with_error_output_parser.parse(
                     completion=original_output,
-                    prompt_value=prompt_value,
+                    # prompt_value=prompt_value,
                 )
                 return parsed_output.json()
             except Exception as e:
