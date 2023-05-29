@@ -65,6 +65,11 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         self,
         query: str,
         evaluation_data_id_list: List[int],
+        include_embeddings: bool = True,
+        include_metatatas: bool = True,
+        include_evaluation_data_id_in_metadatas: bool = True,
+        include_input_variables_in_metadatas: bool = True,
+        include_ground_truth_in_metadatas: bool = True,
     ) -> dict:
         """Fetches db record for each of the provided evaluation data ids that is most similar to given query string, then returns
         consolidated list of chroma ids, metadatas, and embeddings across all the fetched records.
@@ -72,10 +77,21 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         Args:
             query (str): query to find most similar db entry.
             evaluation_data_id_list (List[int]): list of evaluation data ids for which to fetch one db record each.
+            include_evaluation_data_id_in_metadatas (bool, optional): whether to include "evaluation_data_id" key in metadatas.
+                Defaults to True.
+            include_input_variables_in_metadatas (bool, optional): whether to include input variable keys in metadatas. Defaults to
+                True.
+            include_ground_truth_in_metadatas (bool, optional): whether to include "ground_truth" key in metadatas. Defaults to True.
 
         Returns:
             dict: consolidated list of chroma ids, metadatas, and embeddings.
         """
+        include_statement = []
+        if include_embeddings:
+            include_statement.append("embeddings")
+        if include_metatatas:
+            include_statement.append("metadatas")
+
         query_embedding = self._embedding_function.embed_query(query)
 
         combined_ids = []
@@ -88,15 +104,37 @@ class Chroma(BaseVectorStore, ChromaOriginal):
                 query_embeddings=[query_embedding],
                 n_results=1,
                 where={"evaluation_data_id": id},
-                include=["metadatas", "embeddings"],
+                include=include_statement,
             )
             combined_ids.append(db_result["ids"])
-            combined_metadatas.append(db_result["metadatas"])
-            combined_embeddings.append(db_result["embeddings"])
+
+            if include_embeddings:
+                combined_embeddings.append(db_result["embeddings"])
+            if include_metatatas:
+                combined_metadatas.append(db_result["metadatas"])
+
+        if include_metatatas:
+            # Remove evaluation_data_id key in metadatas if requested
+            if not include_evaluation_data_id_in_metadatas:
+                for metadata in combined_metadatas:
+                    del metadata["evaluation_data_id"]
+
+            # Remove input values in metadatas if requested
+            if not include_input_variables_in_metadatas:
+                input_variables = self.get_input_variables_from_collection_metadata()
+                for metadata in combined_metadatas:
+                    for var in input_variables:
+                        del metadata[var]
+
+            # Remove ground truth in metadatas if requested
+            if not include_ground_truth_in_metadatas:
+                for metadata in combined_metadatas:
+                    del metadata["ground_truth"]
 
         combined_db_result = {
             "ids": combined_ids,
             "metadatas": combined_metadatas,
             "embeddings": combined_embeddings,
         }
+
         return combined_db_result

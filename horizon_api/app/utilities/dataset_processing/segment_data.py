@@ -66,4 +66,6 @@ def segment_evaluation_dataset(
     return {
         "num_train_data": num_train_data,
         "num_test_data": num_test_data,
+        "train_data_id_list": range(num_train_data),
+        "test_data_id_list": range(num_train_data, num_test_data),
     }

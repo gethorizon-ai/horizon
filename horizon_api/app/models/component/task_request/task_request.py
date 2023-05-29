@@ -54,6 +54,8 @@ class TaskRequest:
         # self.test_dataset = None
         self.num_train_data = None
         self.num_test_data = num_test_data_input
+        self.train_data_id_list = None
+        self.test_data_id_list = None
         self.max_input_tokens = None
         self.max_ground_truth_tokens = None
         self.max_input_characters = None
@@ -128,6 +130,8 @@ class TaskRequest:
         )
         self.num_train_data = evaluation_dataset_segments["num_train_data"]
         self.num_test_data = evaluation_dataset_segments["num_test_data"]
+        self.train_data_id_list = evaluation_dataset_segments["train_data_id_list"]
+        self.test_data_id_list = evaluation_dataset_segments["test_data_id_list"]
         # self.input_data_train = evaluation_dataset_segments["input_data_train"]
         # self.ground_truth_data_train = evaluation_dataset_segments[
         #     "ground_truth_data_train"

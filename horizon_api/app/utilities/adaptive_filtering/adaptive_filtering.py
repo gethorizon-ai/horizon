@@ -66,9 +66,7 @@ def adaptive_filtering(
     print(f"Candidate batch sizes: {candidate_batch_sizes}")
 
     # Segment test data points into approximately equal sizes for each iteration
-    evaluation_data_id_list = task_request.input_data_test[
-        "evaluation_data_id"
-    ].to_list()
+    evaluation_data_id_list = task_request.test_data_id_list
     evaluation_data_id_segments = np.array_split(
         evaluation_data_id_list, num_iterations
     )
