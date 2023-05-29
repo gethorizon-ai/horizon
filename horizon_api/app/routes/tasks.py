@@ -413,7 +413,7 @@ class GenerateTaskAPI(Resource):
             return {"error": str(e)}, 400
 
         return {
-            "message": "Success! Task generation initiated. Check your email for the outputs. (It generally takes 0.5-2.0 hours depending on the selected models, data size, and LLM provider latency).",
+            "message": "Success! Task generation initiated. Check your email for the outputs. (It generally takes 30-60 minutes depending on the selected models, data size, and LLM provider latency).",
         }, 200
 
 
