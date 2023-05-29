@@ -20,11 +20,6 @@ def segment_evaluation_dataset(
     Returns:
         dict: number of training and test data points, along with segmented training and test datasets.
     """
-    # if not isinstance(evaluation_dataset, pd.DataFrame):
-    #     raise AssertionError(
-    #         "Must add evalution dataset first before computing data lengths in evaluation dataset."
-    #     )
-
     # Determine ideal sample size based on https://www.calculator.net/sample-size-calculator.html
     confidence_interval = 0.95
     z_score = scipy.stats.norm.ppf((1 + confidence_interval) / 2)
@@ -49,17 +44,15 @@ def segment_evaluation_dataset(
         )
     )
 
-    # Determine size of train dataset such that there is at least 5 and at most ideal_sample_size data points. In between that range,
-    # allocate at least 20% of the dataset or however much is left after allocating ideal_sample_size to test dataset
-    num_train_data = max(
-        5,
-        min(
-            ideal_sample_size,
-            max(
-                0.2 * num_unique_data,
-                num_unique_data - ideal_sample_size,
-            ),
+    # Determine size of train dataset such that there is at least 5 and no more than the ideal sample size
+    # In between that range, select 20% of the dataset or however much is left after allocating ideal_sample_size to test dataset
+    num_train_data = min(
+        max(
+            5,
+            0.2 * num_unique_data,
+            num_unique_data - ideal_sample_size,
         ),
+        ideal_sample_size,
     )
 
     # Determine size of test dataset. Allocate at most ideal_sample_size or what's left after allocating num_train_data
@@ -69,34 +62,8 @@ def segment_evaluation_dataset(
     if num_test_data_input is not None:
         num_test_data = min(num_test_data_input, num_test_data)
 
-    # # Assign input and ground truth data. Keep evaluation_data_id column in all.
-    # input_data_train = (
-    #     evaluation_dataset.iloc[:num_train_data, :]
-    #     .drop("ground_truth", axis=1)
-    #     .reset_index(drop=True)
-    # )
-    # ground_truth_data_train = evaluation_dataset.iloc[:num_train_data, :][
-    #     ["evaluation_data_id", "ground_truth"]
-    # ].reset_index(drop=True)
-    # input_data_test = (
-    #     evaluation_dataset.iloc[
-    #         num_train_data : num_train_data + num_test_data,
-    #         :,
-    #     ]
-    #     .drop("ground_truth", axis=1)
-    #     .reset_index(drop=True)
-    # )
-    # ground_truth_data_test = evaluation_dataset.iloc[
-    #     num_train_data : num_train_data + num_test_data,
-    #     :,
-    # ][["evaluation_data_id", "ground_truth"]].reset_index(drop=True)
-
     # Return outputs
     return {
         "num_train_data": num_train_data,
         "num_test_data": num_test_data,
-        # "input_data_train": input_data_train,
-        # "ground_truth_data_train": ground_truth_data_train,
-        # "input_data_test": input_data_test,
-        # "ground_truth_data_test": ground_truth_data_test,
     }

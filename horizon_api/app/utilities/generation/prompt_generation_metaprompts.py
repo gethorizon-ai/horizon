@@ -30,13 +30,12 @@ INSTRUCTION:"""
 
 
 def get_metaprompt_user_objective_training_data(
-    task_request: TaskRequest, openai_api_key: str
+    task_request: TaskRequest,
 ) -> FewshotPromptTemplate:
     """Produces metaprompt for prompt generation method of user objective with training data.
 
     Args:
-        task_request (TaskRequest): TaskRequest object with training data
-        openai_api_key (str): OpenAI API key to use.
+        task_request (TaskRequest): TaskRequest object with training data.
 
     Returns:
         FewshotPromptTemplate: prompt object to serve as prompt generation metaprompt.
@@ -61,7 +60,7 @@ What is the optimal instruction I should give to my friend to best accomplish my
 INSTRUCTION:"""
 
     # Create a list of few shot examples
-    # Each example should be dict with keys as input variables and values as values for those input variables
+    # Each example should be dict with keys as input variables and ground truth, and associated values
     # Allow at most half the max number of few shots possible to leave tokens to generate prompts
     examples = cluster_data.cluster_shortlist_data(
         task_request=task_request,
@@ -70,7 +69,6 @@ INSTRUCTION:"""
             task_request.num_train_data,
         ),
         train_or_test_dataset="train",
-        openai_api_key=openai_api_key,
     )
 
     # Iterate through each input variable to create example prompt template

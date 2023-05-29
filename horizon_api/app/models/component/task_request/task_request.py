@@ -18,11 +18,13 @@ class TaskRequest:
 
     def __init__(
         self,
+        openai_api_key: str,
         raw_dataset_s3_key: str = None,
         vector_db_s3_key: str = None,
         user_objective: str = None,
         allowed_models: list = None,
         num_test_data_input: int = None,
+        columns_to_chunk: List[str] = None,
     ):
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
@@ -64,24 +66,23 @@ class TaskRequest:
                 "User objective can be at most 500 characters to manage token limits."
             )
 
-        if raw_dataset_s3_key == None and vector_db_s3_key == None:
-            raise ValueError("Must provide raw dataset or vector db.")
-
         # Load evaluation dataset as vector db if provided
         if vector_db_s3_key:
             self.evaluation_dataset_vector_db = vector_db.load_vector_db(
-                vector_db_s3_key=vector_db_s3_key, openai_api_key="TODO:"
+                vector_db_s3_key=vector_db_s3_key,
+                openai_api_key=openai_api_key,
             )
-
         # Load raw dataset and setup evaluation dataset as vector db
-        else:
+        elif raw_dataset_s3_key:
             self.evaluation_dataset_vector_db = (
                 vector_db.get_vector_db_from_raw_dataset(
                     raw_dataset_s3_key=raw_dataset_s3_key,
-                    openai_api_key="TODO:",
-                    columns_to_chunk="TODO:",
+                    openai_api_key=openai_api_key,
+                    columns_to_chunk=columns_to_chunk,
                 )
             )
+        else:
+            raise ValueError("Must provide raw dataset or vector db.")
 
         # Set input variables
         self.input_variables = (
@@ -145,7 +146,7 @@ class TaskRequest:
             List[str]: list of input variable names.
         """
         return input_variable_naming.get_normalized_input_variables(
-            evaluation_dataset=self.evaluation_dataset
+            processed_input_variables=self.evaluation_dataset_vector_db.get_input_variables_from_collection_metadata()
         )
 
     def check_relevant_api_keys(

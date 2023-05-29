@@ -4,7 +4,10 @@ from app.models.embedding.open_ai import OpenAIEmbeddings
 from app.models.vector_stores.chroma import Chroma
 from app.utilities.dataset_processing import data_check
 from app.utilities.dataset_processing import input_variable_naming
-from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
+from app.utilities.S3.s3_util import (
+    download_file_from_s3_and_save_locally,
+    download_directory_from_s3_and_save_locally,
+)
 from langchain.text_splitter import (
     RecursiveCharacterTextSplitter,
 )
@@ -31,7 +34,7 @@ def get_vector_db_from_raw_dataset(
     os.remove(raw_dataset_file_path)
     num_unique_data = len(raw_dataset)
     input_variables = input_variable_naming.get_input_variables(
-        evaluation_dataset=raw_dataset
+        dataset_fields=raw_dataset.columns.to_list()
     )
 
     # Chunk columns if required
@@ -59,9 +62,9 @@ def get_vector_db_from_raw_dataset(
 
     # Setup texts for embedding. Exclude evaluation_data_id so it's not embedded
     texts = [
-        "\n\n".join(
+        "\n".join(
             [
-                f"{key}: {value}"
+                f"<{key}>: {value}"
                 for key, value in record.items()
                 if key != "evaluation_data_id"
             ]
@@ -70,7 +73,7 @@ def get_vector_db_from_raw_dataset(
     ]
 
     # Setup vector db
-    vector_db_file_path = tempfile.NamedTemporaryFile().name
+    vector_db_temp_directory = tempfile.mkdtemp()
     embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
     collection_metadata = {
         "num_unique_data": num_unique_data,
@@ -79,7 +82,7 @@ def get_vector_db_from_raw_dataset(
     vector_db = Chroma(
         collection_name=VECTOR_DB_COLLECTION_NAME,
         embedding_function=embedding,
-        persist_directory=vector_db_file_path,
+        persist_directory=vector_db_temp_directory,
         collection_metadata=collection_metadata,
     )
     vector_db.add_text_embeddings_and_metadatas(texts=texts, metadatas=metadatas)
@@ -88,11 +91,13 @@ def get_vector_db_from_raw_dataset(
 
 
 def load_vector_db(vector_db_s3_key: str, openai_api_key: str) -> Chroma:
-    vector_db_file_path = download_file_from_s3_and_save_locally(vector_db_s3_key)
+    vector_db_persist_directory = download_directory_from_s3_and_save_locally(
+        s3_directory=vector_db_s3_key
+    )
     embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
     vector_db = Chroma(
         collection_name=VECTOR_DB_COLLECTION_NAME,
         embedding_function=embedding,
-        persist_directory=vector_db_file_path,
+        persist_directory=vector_db_persist_directory,
     )
     return vector_db

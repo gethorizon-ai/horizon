@@ -25,7 +25,8 @@ class Task(db.Model):
     name = db.Column(db.String(64), nullable=False)
     objective = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
-    evaluation_dataset = db.Column(db.Text, nullable=True)
+    raw_evaluation_dataset = db.Column(db.Text, nullable=True)
+    evaluation_dataset_vector_db = db.Column(db.Text, nullable=True)
     output_schema = db.Column(db.Text, nullable=True)
     pydantic_model = db.Column(db.Text, nullable=True)
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
@@ -61,7 +62,8 @@ class Task(db.Model):
             "name": self.name,
             "objective": self.objective,
             "task_type": self.task_type,
-            "evaluation_dataset": self.evaluation_dataset,
+            "raw_evaluation_dataset": self.raw_evaluation_dataset,
+            "evaluation_dataset_vector_db": self.evaluation_dataset_vector_db,
             "output_schema": os.path.basename(self.output_schema)
             if (self.output_schema is not None)
             else "Undefined",
@@ -106,13 +108,21 @@ class Task(db.Model):
 
 @event.listens_for(Task, "before_delete")
 def _clean_up_and_remove_dependencies(mapper, connection, target):
-    # Delete evaluation dataset from S3, if it exists
-    if target.evaluation_dataset is not None:
+    # Delete raw evaluation dataset from S3, if it exists
+    if target.raw_evaluation_dataset is not None:
         try:
-            delete_file_from_s3(target.evaluation_dataset)
+            delete_file_from_s3(target.raw_evaluation_dataset)
         except:
             pass
-        target.evaluation_dataset = None
+        target.raw_evaluation_dataset = None
+
+    # Delete evaluation dataset vector db from S3, if it exists
+    if target.evaluation_dataset_vector_db is not None:
+        try:
+            delete_file_from_s3(target.evaluation_dataset_vector_db)
+        except:
+            pass
+        target.evaluation_dataset_vector_db = None
 
     # Delete output schema from S3, if it exists
     if target.output_schema is not None:
@@ -139,7 +149,8 @@ def _clean_up_and_remove_dependencies(mapper, connection, target):
         target.__table__.update()
         .where(target.__table__.c.id == target.id)
         .values(
-            evaluation_dataset=target.evaluation_dataset,
+            raw_evaluation_dataset=target.raw_evaluation_dataset,
+            evaluation_dataset_vector_db=target.evaluation_dataset_vector_db,
             output_schema=target.output_schema,
             pydantic_model=target.pydantic_model,
             active_prompt_id=target.active_prompt_id,
