@@ -5,6 +5,7 @@ from app.models.component.task_request import TaskRequest
 from app.models.embedding.open_ai import OpenAIEmbeddings
 import time
 import numpy as np
+import pandas as pd
 
 
 def get_semantic_cosine_similarity_openAI(
@@ -24,10 +25,19 @@ def get_semantic_cosine_similarity_openAI(
     print("Starting evaluation")
 
     # Get ground truth data corresponding to each evaluation_data_id
+    db_results = (
+        task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
+            evaluation_data_id_list=inference_evaluation_results["evaluation_data_id"]
+            .unique()
+            .to_list(),
+            include_embeddings=False,
+            include_input_variables_in_metadatas=False,
+        )
+    )
+    ground_truth_data = pd.DataFrame(db_results["metadatas"])
+
     reference_table = inference_evaluation_results.join(
-        task_request.evaluation_dataset[
-            ["evaluation_data_id", "ground_truth"]
-        ].set_index("evaluation_data_id"),
+        ground_truth_data.set_index("evaluation_data_id"),
         on="evaluation_data_id",
     )
 

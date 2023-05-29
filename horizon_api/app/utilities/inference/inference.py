@@ -43,7 +43,6 @@ def run_inference(
                 include_ground_truth_in_metadatas=False,
             )
         )
-        input_data = task_request.input_data_test
     elif train_or_test_dataset == "test":
         db_results = (
             task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(

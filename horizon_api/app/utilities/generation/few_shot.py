@@ -3,12 +3,12 @@
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.post_processing.post_processing import PostProcessing
-from app.models.embedding.open_ai import OpenAIEmbeddings
 from app.models.prompt.factory import PromptTemplateFactory
+from app.models.example_selector.max_marginal_relevance_example_selector import (
+    MaxMarginalRelevanceExampleSelector,
+)
 from app.utilities.generation import base
 from app.utilities.generation import prompt_generation_metaprompts
-from langchain.vectorstores import FAISS
-from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelector
 import copy
 
 
@@ -16,7 +16,6 @@ def prompt_generation_few_shots(
     task_request: TaskRequest,
     prompt_model_candidates: PromptModelCandidates,
     starting_prompt_model_id: int,
-    openai_api_key: str,
     post_processing: PostProcessing = None,
 ) -> PromptModelCandidates:
     """Generates few-shot based prompts for each of the given prompts.
@@ -30,12 +29,7 @@ def prompt_generation_few_shots(
     Returns:
         PromptModelCandidates: new set of few-shot based prompt-model candidates.
     """
-    training_dataset = task_request.input_data_train.join(
-        task_request.ground_truth_data_train.set_index("evaluation_data_id"),
-        on="evaluation_data_id",
-    )
-    training_dataset = training_dataset.drop("evaluation_data_id", axis=1)
-    examples = training_dataset.to_dict("records")
+    # Get template for each few shot example
     example_formatter_template = (
         prompt_generation_metaprompts.get_few_shot_example_formatter_template(
             input_variables=task_request.input_variables
@@ -64,15 +58,17 @@ def prompt_generation_few_shots(
         model_name = row["model_object"].get_model_name()
 
         # create the example selector
-        # examples: This is the list of examples available to select from.
-        # embeddings: This is the Embeddings class that is used to embed the examples.
-        # vector_store: This is the VectorStore class that is used to store the embeddings and do a similarity search over.
-        # k: This is the number of examples to produce.
-        example_selector = MaxMarginalRelevanceExampleSelector.from_examples(
-            examples,
-            OpenAIEmbeddings(openai_api_key=openai_api_key),
-            FAISS,
+        # vectorstore: evaluation dataset vector db
+        # k: number of examples to select
+        # example_keys: keys on which to filter vector db metadata (removes evaluation_data_id key)
+        # filter_statement: "where" clause when selecting examples from vector db (filters to training dataset)
+        example_selector = MaxMarginalRelevanceExampleSelector(
+            vectorstore=task_request.evaluation_dataset_vector_db,
             k=task_request.applicable_llms[model_name]["max_few_shots"],
+            example_keys=task_request.input_variables + ["ground_truth"],
+            filter_statement={
+                "evaluation_data_id": {"$lt": task_request.num_train_data}
+            },
         )
 
         # create the few shot prompt template

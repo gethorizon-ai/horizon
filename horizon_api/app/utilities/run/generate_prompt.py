@@ -28,6 +28,7 @@ from config import Config
 import pandas as pd
 import json
 import copy
+import shutil
 
 
 def generate_prompt_model_configuration(
@@ -475,7 +476,8 @@ def generate_prompt_model_configuration(
 
     print("Finished prompt-model configuration.")
 
-    # TODO: Clean up vector db
+    # Clean up vector db
+    shutil.rmtree(task_request.evaluation_dataset_vector_db._persist_directory)
 
     # Commit the changes to the database
     db.session.commit()

@@ -74,7 +74,7 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         """Fetches db record for each of the provided evaluation data ids that is most similar to given query string, then returns
         consolidated list of chroma ids, metadatas, and embeddings across all the fetched records.
 
-        If query string is not provided, then just fetches random db record for each of the provided evaluation data ids. This can be
+        If query string is not provided, then just fetches first db record for each of the provided evaluation data ids. This can be
         used to get the ground truth for each evaluation data id (which should be the same across all chunks).
 
         Option to exclude to metadatas or embeddings for increased efficiency.
@@ -106,7 +106,7 @@ class Chroma(BaseVectorStore, ChromaOriginal):
             combined_metadatas = []
 
         # Fetch db record for each evaluation data id that is most similar to query, then add to combined list
-        # If no query is provided, then fetch random db record for each of the provided evaluation data ids
+        # If no query string is provided, then fetch first db record for each of the provided evaluation data ids
         for id in evaluation_data_id_list:
             if query:
                 db_result = self._collection.query(
