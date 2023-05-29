@@ -3,12 +3,12 @@
 # Algorithm parameters reduced from full prompt generation algorithm
 PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
     "stage_1": {
-        "num_prompts_user_objective": 3,  # 10,
-        "num_prompts_pattern_role_play": 3,  # 10,
-        "num_prompts_user_objective_training_data": 3,  # 10,
+        "num_prompts_user_objective": 5,  # 10,
+        "num_prompts_pattern_role_play": 5,  # 10,
+        "num_prompts_user_objective_training_data": 5,  # 10,
         "num_variants": 1,  # 2,
-        "num_clusters": 5,  # 20,
-        "num_shortlist": 1,  # 10,
+        "num_clusters": 10,  # 20,
+        "num_shortlist": 5,  # 10,
         "num_iterations": 3,  # 3,
     },
     "stage_2": {"num_shortlist": 1},
