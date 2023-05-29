@@ -276,48 +276,56 @@ def generate_prompt_model_configuration(
         print("finished adaptive_filtering for stage_1")
 
         # STAGE 2 - Few shots
-        # Generate few shot-based prompts
-        prompt_model_candidates_stage_2 = few_shot.prompt_generation_few_shots(
-            task_request=task_request,
-            prompt_model_candidates=prompt_model_candidates_stage_1_shortlisted,
-            starting_prompt_model_id=starting_prompt_model_id,
-            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-            post_processing=post_processing,
-        )
-        starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
-            "num_shortlist"
-        ]
-        print("finished prompt_generation_few_shots")
+        # Generate few shot prompts if allowed by token limits
+        if llm_info["max_few_shots"] > 0:
+            prompt_model_candidates_stage_2 = few_shot.prompt_generation_few_shots(
+                task_request=task_request,
+                prompt_model_candidates=prompt_model_candidates_stage_1_shortlisted,
+                starting_prompt_model_id=starting_prompt_model_id,
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+                post_processing=post_processing,
+            )
+            starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS[
+                "stage_1"
+            ]["num_shortlist"]
+            print("finished prompt_generation_few_shots")
 
-        # Run inference and evaluation of few-shot based prompts, and store in aggregated results
-        inference_evaluation_results_stage_2 = inference.run_inference(
-            task_request=task_request,
-            prompt_model_candidates=prompt_model_candidates_stage_2,
-            train_or_test_dataset="test",
-            stage_id="stage_2",
-            post_processing=post_processing,
-        )
-        evaluation.run_evaluation(
-            task_request=task_request,
-            inference_evaluation_results=inference_evaluation_results_stage_2,
-            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-        )
-        aggregated_inference_evaluation_results = pd.concat(
-            [
-                aggregated_inference_evaluation_results,
-                inference_evaluation_results_stage_2,
-            ],
-            axis=0,
-        ).reset_index(drop=True)
+            # Run inference and evaluation of few-shot based prompts, and store in aggregated results
+            inference_evaluation_results_stage_2 = inference.run_inference(
+                task_request=task_request,
+                prompt_model_candidates=prompt_model_candidates_stage_2,
+                train_or_test_dataset="test",
+                stage_id="stage_2",
+                post_processing=post_processing,
+            )
+            evaluation.run_evaluation(
+                task_request=task_request,
+                inference_evaluation_results=inference_evaluation_results_stage_2,
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+            )
+            aggregated_inference_evaluation_results = pd.concat(
+                [
+                    aggregated_inference_evaluation_results,
+                    inference_evaluation_results_stage_2,
+                ],
+                axis=0,
+            ).reset_index(drop=True)
 
-        # Shortlist from stage 1 prompts and few-shot versions in stage 2
-        prompt_model_candidates_stage_1_and_2 = pd.concat(
-            [
-                prompt_model_candidates_stage_1_shortlisted,
-                prompt_model_candidates_stage_2,
-            ],
-            axis=0,
-        ).reset_index(drop=True)
+            # Shortlist from stage 1 prompts and few-shot versions in stage 2
+            prompt_model_candidates_stage_1_and_2 = pd.concat(
+                [
+                    prompt_model_candidates_stage_1_shortlisted,
+                    prompt_model_candidates_stage_2,
+                ],
+                axis=0,
+            ).reset_index(drop=True)
+
+        # Skip few shot prompts if not allowed due to token limits
+        else:
+            prompt_model_candidates_stage_1_and_2 = (
+                prompt_model_candidates_stage_1_shortlisted.copy(deep=True)
+            )
+
         prompt_model_candidates_stage_2_shortlisted = (
             shortlist.shortlist_prompt_model_candidates(
                 prompt_model_candidates=prompt_model_candidates_stage_1_and_2,

@@ -58,6 +58,11 @@ def generate_synthetic_data(
         allowed_models=ALLOWED_MODELS,
     )
 
+    if task_request.applicable_llms["text-davinci-003"]["max_few_shots"] == 0:
+        raise ValueError(
+            "Input and output data length exceed context length of available LLMs (assumes few shot examples are used)."
+        )
+
     # Check that valid API key is provided
     task_request.check_relevant_api_keys(openai_api_key=openai_api_key)
 
