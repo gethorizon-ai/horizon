@@ -58,7 +58,7 @@ def check_evaluation_dataset_and_data_length(
     # Check that text-davinci-003 is an applicable LLM (needed for prompt generation)
     if "text-davinci-003" not in applicable_llms:
         raise AssertionError(
-            "Input and output data length exceed context length of available LLMs (assumes few shot examples are used)."
+            "Input and output data length exceed context length of available LLMs needed for prompt generation."
         )
 
 

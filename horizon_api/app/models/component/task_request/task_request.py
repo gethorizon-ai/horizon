@@ -106,7 +106,7 @@ class TaskRequest:
         # Check that text-davinci-003 is an applicable LLM (needed for prompt generation)
         if "text-davinci-003" not in self.applicable_llms:
             raise AssertionError(
-                "Input and output data length exceed context length of available LLMs (assumes few shot examples are used)."
+                "Input and output data length exceed context length of available LLMs needed for prompt generation."
             )
 
         # Segment evaluation dataset into input and ground_truth datasets
