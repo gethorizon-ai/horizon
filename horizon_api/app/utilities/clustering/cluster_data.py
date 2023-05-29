@@ -25,16 +25,20 @@ def cluster_shortlist_data(
     """
     # Pull embeddings and metadatas from vector db
     if train_or_test_dataset == "train":
-        db_results = task_request.evaluation_dataset_vector_db.get_most_similar_data_per_evaluation_data_id(
-            query=task_request.user_objective,
-            evaluation_data_id_list=task_request.train_data_id_list,
-            include_evaluation_data_id_in_metadatas=False,
+        db_results = (
+            task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
+                evaluation_data_id_list=task_request.train_data_id_list,
+                query=task_request.user_objective,
+                include_evaluation_data_id_in_metadatas=False,
+            )
         )
     elif train_or_test_dataset == "test":
-        db_results = task_request.evaluation_dataset_vector_db.get_most_similar_data_per_evaluation_data_id(
-            query=task_request.user_objective,
-            evaluation_data_id_list=task_request.test_data_id_list,
-            include_evaluation_data_id_in_metadatas=False,
+        db_results = (
+            task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
+                evaluation_data_id_list=task_request.test_data_id_list,
+                query=task_request.user_objective,
+                include_evaluation_data_id_in_metadatas=False,
+            )
         )
     embeddings = db_results["embeddings"]
     metadatas = db_results["metadatas"]

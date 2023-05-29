@@ -61,10 +61,10 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         metadatas_dataframe = pd.DataFrame(metadatas)
         return metadatas_dataframe
 
-    def get_most_similar_data_per_evaluation_data_id(
+    def get_data_per_evaluation_data_id(
         self,
-        query: str,
         evaluation_data_id_list: List[int],
+        query: str = None,
         include_embeddings: bool = True,
         include_metatatas: bool = True,
         include_evaluation_data_id_in_metadatas: bool = True,
@@ -73,6 +73,11 @@ class Chroma(BaseVectorStore, ChromaOriginal):
     ) -> dict:
         """Fetches db record for each of the provided evaluation data ids that is most similar to given query string, then returns
         consolidated list of chroma ids, metadatas, and embeddings across all the fetched records.
+
+        If query string is not provided, then just fetches random db record for each of the provided evaluation data ids. This can be
+        used to get the ground truth for each evaluation data id (which should be the same across all chunks).
+
+        Option to exclude to metadatas or embeddings for increased efficiency.
 
         Args:
             query (str): query to find most similar db entry.
@@ -86,28 +91,38 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         Returns:
             dict: consolidated list of chroma ids, metadatas, and embeddings.
         """
+        # Embed query if provided
+        if query:
+            query_embedding = self._embedding_function.embed_query(query)
+
+        # Create include statement for and lists to store combined results from db pull
         include_statement = []
+        combined_ids = []
         if include_embeddings:
             include_statement.append("embeddings")
+            combined_embeddings = []
         if include_metatatas:
             include_statement.append("metadatas")
-
-        query_embedding = self._embedding_function.embed_query(query)
-
-        combined_ids = []
-        combined_metadatas = []
-        combined_embeddings = []
+            combined_metadatas = []
 
         # Fetch db record for each evaluation data id that is most similar to query, then add to combined list
+        # If no query is provided, then fetch random db record for each of the provided evaluation data ids
         for id in evaluation_data_id_list:
-            db_result = self.__query_collection(
-                query_embeddings=[query_embedding],
-                n_results=1,
-                where={"evaluation_data_id": id},
-                include=include_statement,
-            )
-            combined_ids.append(db_result["ids"])
+            if query:
+                db_result = self._collection.query(
+                    query_embeddings=[query_embedding],
+                    n_results=1,
+                    where={"evaluation_data_id": id},
+                    include=include_statement,
+                )
+            else:
+                db_result = self._collection.get(
+                    where={"evaluation_data_id": id},
+                    limit=1,
+                    include=include_statement,
+                )
 
+            combined_ids.append(db_result["ids"])
             if include_embeddings:
                 combined_embeddings.append(db_result["embeddings"])
             if include_metatatas:
@@ -131,10 +146,10 @@ class Chroma(BaseVectorStore, ChromaOriginal):
                 for metadata in combined_metadatas:
                     del metadata["ground_truth"]
 
-        combined_db_result = {
-            "ids": combined_ids,
-            "metadatas": combined_metadatas,
-            "embeddings": combined_embeddings,
-        }
+        combined_db_result = {"ids": combined_ids}
+        if include_embeddings:
+            combined_db_result["embeddings"] = combined_embeddings
+        if include_metatatas:
+            combined_db_result["metadatas"] = combined_metadatas
 
         return combined_db_result

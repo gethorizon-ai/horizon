@@ -9,6 +9,7 @@ from app.models.component.inference_evaluation_results import InferenceEvaluatio
 from app.models.component.post_processing.post_processing import PostProcessing
 import time
 from typing import List
+import pandas as pd
 
 
 def run_inference(
@@ -32,13 +33,29 @@ def run_inference(
     Returns:
         InferenceEvaluationResults: data structure with inference results.
     """
-    # Get correct input dataset
-    if train_or_test_dataset == "test":
+    # Get input data from vector db
+    if train_or_test_dataset == "train":
+        db_results = (
+            task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
+                evaluation_data_id_list=task_request.train_data_id_list,
+                query=task_request.user_objective,
+                include_embeddings=False,
+                include_ground_truth_in_metadatas=False,
+            )
+        )
         input_data = task_request.input_data_test
-    elif train_or_test_dataset == "train":
-        input_data = task_request.input_data_train
+    elif train_or_test_dataset == "test":
+        db_results = (
+            task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
+                evaluation_data_id_list=task_request.test_data_id_list,
+                query=task_request.user_objective,
+                include_embeddings=False,
+                include_ground_truth_in_metadatas=False,
+            )
+        )
     else:
         assert ValueError("train_or_test_dataset must be either 'train' or 'test'")
+    input_data = pd.DataFrame(db_results["metadatas"])
 
     # Filter data to selected evaluation_data_ids, if provided
     if evaluation_data_id_list is not None:

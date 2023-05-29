@@ -61,6 +61,7 @@ def get_vector_db_from_raw_dataset(
     metadatas = raw_dataset.to_dict(orient="records")
 
     # Setup texts for embedding. Exclude evaluation_data_id so it's not embedded
+    # TODO: exclude ground_truth from embedding?
     texts = [
         "\n".join(
             [
