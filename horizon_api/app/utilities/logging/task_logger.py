@@ -7,6 +7,7 @@ from app.utilities.S3.s3_util import upload_file_to_s3
 from datetime import datetime
 import pandas as pd
 from io import BytesIO
+import json
 
 
 class TaskLogger:
@@ -36,7 +37,7 @@ class TaskLogger:
         log_entry.prompt_id = prompt_id
         log_entry.timestamp = timestamp
         log_entry.model_name = model_name
-        log_entry.input_values = str(input_values)
+        log_entry.input_values = json.dumps(input_values)
         log_entry.llm_completion = llm_completion
         log_entry.inference_latency = inference_latency
         log_entry.data_unit = data_unit

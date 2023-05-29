@@ -106,7 +106,7 @@ class TaskRequest:
         # Check that text-davinci-003 is an applicable LLM and that at least 3 few shot examples fit (needed for prompt generation)
         if (
             "text-davinci-003" not in self.applicable_llms
-            or self.applicable_llms["text-davinci-003"]["max_few_shots"] < 3
+            or self.applicable_llms["text-davinci-003"]["max_few_shots"] == 0
         ):
             raise AssertionError(
                 "Input and output data length exceed context length of available LLMs (assumes few shot examples are used)."

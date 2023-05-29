@@ -1,0 +1,14 @@
+{
+    "title": "OutputSchema",
+    "type": "object",
+    "properties": {
+        "pay_min": {
+            "title": "Pay_min",
+            "description": "Minimum pay of the job in the job listing",
+            "type": "string"
+        }
+    },
+    "required": [
+        "pay_min"
+    ]
+}

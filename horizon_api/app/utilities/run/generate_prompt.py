@@ -94,55 +94,64 @@ def generate_prompt_model_configuration(
     print("Beginning stage 1")
 
     # Generate prompt-model candidates using user objective method
-    prompt_model_candidates_user_objective = (
-        prompt_generation_user_objective.prompt_generation_user_objective(
-            task_request=task_request,
-            num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
-                "num_prompts_user_objective"
-            ],
-            starting_prompt_model_id=starting_prompt_model_id,
-            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-            post_processing=post_processing,
+    try:
+        prompt_model_candidates_user_objective = (
+            prompt_generation_user_objective.prompt_generation_user_objective(
+                task_request=task_request,
+                num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                    "num_prompts_user_objective"
+                ],
+                starting_prompt_model_id=starting_prompt_model_id,
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+                post_processing=post_processing,
+            )
         )
-    )
-    starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
-        "num_prompts_user_objective"
-    ]
-    print("finished prompt_generation_user_objective")
+        starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+            "num_prompts_user_objective"
+        ]
+        print("finished prompt_generation_user_objective")
+    except:
+        prompt_model_candidates_user_objective = None
 
     # Generate prompt-model candidates using role play pattern method
-    prompt_model_candidates_pattern_role_play = (
-        pattern_role_play.prompt_generation_pattern_role_play(
-            task_request=task_request,
-            num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
-                "num_prompts_pattern_role_play"
-            ],
-            starting_prompt_model_id=starting_prompt_model_id,
-            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-            post_processing=post_processing,
+    try:
+        prompt_model_candidates_pattern_role_play = (
+            pattern_role_play.prompt_generation_pattern_role_play(
+                task_request=task_request,
+                num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                    "num_prompts_pattern_role_play"
+                ],
+                starting_prompt_model_id=starting_prompt_model_id,
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+                post_processing=post_processing,
+            )
         )
-    )
-    starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
-        "num_prompts_pattern_role_play"
-    ]
-    print("finished prompt_generation_pattern_role_play")
+        starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+            "num_prompts_pattern_role_play"
+        ]
+        print("finished prompt_generation_pattern_role_play")
+    except:
+        prompt_model_candidates_pattern_role_play = None
 
     # Generate prompt-model candidates using user objective with training data method
-    prompt_model_candidates_user_objective_training_data = (
-        user_objective_training_data.prompt_generation_user_objective_training_data(
-            task_request=task_request,
-            num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
-                "num_prompts_user_objective_training_data"
-            ],
-            starting_prompt_model_id=starting_prompt_model_id,
-            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-            post_processing=post_processing,
+    try:
+        prompt_model_candidates_user_objective_training_data = (
+            user_objective_training_data.prompt_generation_user_objective_training_data(
+                task_request=task_request,
+                num_prompts=PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+                    "num_prompts_user_objective_training_data"
+                ],
+                starting_prompt_model_id=starting_prompt_model_id,
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+                post_processing=post_processing,
+            )
         )
-    )
-    starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
-        "num_prompts_user_objective_training_data"
-    ]
-    print("finished prompt_generation_user_objective_training_data")
+        starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS["stage_1"][
+            "num_prompts_user_objective_training_data"
+        ]
+        print("finished prompt_generation_user_objective_training_data")
+    except:
+        prompt_model_candidates_user_objective_training_data = None
 
     # Concatenate current set of prompt-model candidates
     prompt_model_candidates_stage_1_initial = pd.concat(
@@ -239,7 +248,7 @@ def generate_prompt_model_configuration(
 
         # Add llm instance to post_processing retry attempts, if applicable
         if post_processing:
-            post_processing.update_llm_for_retry_with_error_output_parser(
+            post_processing.set_llm_for_retry_output_parser(
                 llm=copy.deepcopy(llm_instance)
             )
 

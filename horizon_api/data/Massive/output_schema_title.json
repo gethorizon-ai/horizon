@@ -1,0 +1,14 @@
+{
+    "title": "OutputSchema",
+    "type": "object",
+    "properties": {
+        "title": {
+            "title": "Title",
+            "description": "title of the job in the job listing",
+            "type": "string"
+        }
+    },
+    "required": [
+        "title"
+    ]
+}

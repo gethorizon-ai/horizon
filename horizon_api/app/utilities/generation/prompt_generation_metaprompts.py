@@ -66,7 +66,7 @@ INSTRUCTION:"""
     examples = cluster_data.cluster_shortlist_data(
         task_request=task_request,
         num_clusters=min(
-            task_request.applicable_llms["text-davinci-003"]["max_few_shots"] // 2,
+            task_request.applicable_llms["text-davinci-003"]["max_few_shots"],
             task_request.num_train_data,
         ),
         train_or_test_dataset="train",
