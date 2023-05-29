@@ -306,7 +306,6 @@ def generate_prompt_model_configuration(
                 task_request=task_request,
                 prompt_model_candidates=prompt_model_candidates_stage_1_shortlisted,
                 starting_prompt_model_id=starting_prompt_model_id,
-                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
                 post_processing=post_processing,
             )
             starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS[
