@@ -18,9 +18,10 @@ class TaskRequest:
 
     def __init__(
         self,
+        task_id: int,
         openai_api_key: str,
         raw_dataset_s3_key: str = None,
-        vector_db_s3_key: str = None,
+        vector_db_collection_name: str = None,
         user_objective: str = None,
         allowed_models: list = None,
         num_test_data_input: int = None,
@@ -43,6 +44,7 @@ class TaskRequest:
             AssertionError: checks if input and output data lengths exceed token limits of available llms.
             AssertionError: checks if input and output data lengths exceed token limits of available llms.
         """
+        self.task_id = task_id
         self.user_objective = user_objective
         self.input_variables = None
         self.evaluation_dataset_vector_db = None
@@ -68,23 +70,29 @@ class TaskRequest:
                 "User objective can be at most 500 characters to manage token limits."
             )
 
-        # Load evaluation dataset as vector db if provided
-        if vector_db_s3_key:
+        # Load evaluation dataset from vector db if availale
+        if vector_db_collection_name:
             self.evaluation_dataset_vector_db = vector_db.load_vector_db(
-                vector_db_s3_key=vector_db_s3_key,
+                collection_name=vector_db_collection_name,
                 openai_api_key=openai_api_key,
             )
-        # Load raw dataset and setup evaluation dataset as vector db
+
+        # Otherwise, load raw dataset and setup evaluation dataset in vector db
         elif raw_dataset_s3_key:
             self.evaluation_dataset_vector_db = (
-                vector_db.get_vector_db_from_raw_dataset(
+                vector_db.initialize_vector_db_from_raw_dataset(
+                    task_id=task_id,
                     raw_dataset_s3_key=raw_dataset_s3_key,
                     openai_api_key=openai_api_key,
                     columns_to_chunk=columns_to_chunk,
                 )
             )
+
+        # Throw error if no raw or vector db version of evaluation dataset
         else:
-            raise ValueError("Must provide raw dataset or vector db.")
+            raise ValueError(
+                "Must provide either raw dataset or vector db collection name."
+            )
 
         # Set input variables
         self.input_variables = (

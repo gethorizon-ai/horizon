@@ -34,6 +34,14 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         self._collection.add(metadatas=metadatas, embeddings=embeddings, ids=ids)
         return ids
 
+    def get_collection_name(self) -> str:
+        """Returns collection name.
+
+        Returns:
+            str: collection name.
+        """
+        return self._collection.name
+
     def get_num_unique_data_from_collection_metadata(self) -> int:
         """Returns number of unique data points (i.e., rows in evaluation dataset before chunking) from collection metadata assuming
         it was added there upon creation of collection.
