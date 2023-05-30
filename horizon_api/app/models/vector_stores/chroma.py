@@ -131,10 +131,13 @@ class Chroma(BaseVectorStore, ChromaOriginal):
                 )
 
             combined_ids.append(db_result["ids"])
+            print(f"Combined IDs: {combined_ids}")
             if include_embeddings:
                 combined_embeddings.append(db_result["embeddings"])
+                print(f"Combined embeddings: {combined_embeddings}")
             if include_metatatas:
                 combined_metadatas.append(db_result["metadatas"])
+                print(f"Combined metadatas: {combined_metadatas}")
 
         if include_metatatas:
             # Remove evaluation_data_id key in metadatas if requested
