@@ -18,7 +18,6 @@ from app.utilities.clustering import cluster_prompts
 from app.utilities.inference import inference
 from app.utilities.evaluation import evaluation
 from app.utilities.adaptive_filtering import adaptive_filtering
-from app.utilities.S3.s3_util import delete_file_from_s3
 from app.utilities.shortlist import shortlist
 from app.utilities.run.prompt_generation_algorithm_parameters import (
     PROMPT_GENERATION_ALGORITHM_PARAMETERS,
@@ -28,7 +27,6 @@ from config import Config
 import pandas as pd
 import json
 import copy
-import shutil
 
 
 def generate_prompt_model_configuration(
