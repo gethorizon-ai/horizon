@@ -1,6 +1,5 @@
 """Defines helper methods to segment evaluation dataset (e.g., between train and test datasets)."""
 
-import pandas as pd
 import scipy
 
 
