@@ -128,7 +128,6 @@ class Chroma(BaseVectorStore, ChromaOriginal):
                     combined_embeddings.extend(db_result["embeddings"][0])
                 if include_metatatas:
                     combined_metadatas.extend(db_result["metadatas"][0])
-                    print(f"Combined metadatas: {combined_metadatas}")
             else:
                 db_result = self._collection.get(
                     where={"evaluation_data_id": id},
@@ -140,7 +139,6 @@ class Chroma(BaseVectorStore, ChromaOriginal):
                     combined_embeddings.extend(db_result["embeddings"])
                 if include_metatatas:
                     combined_metadatas.extend(db_result["metadatas"])
-                    print(f"Combined metadatas: {combined_metadatas}")
 
         if include_metatatas:
             # Remove evaluation_data_id key in metadatas if requested
