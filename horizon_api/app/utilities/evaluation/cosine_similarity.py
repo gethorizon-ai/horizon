@@ -35,13 +35,11 @@ def get_semantic_cosine_similarity_openAI(
         )
     )
     ground_truth_data = pd.DataFrame(db_results["metadatas"])
-    print(f"Ground truth data: {ground_truth_data}")
 
     reference_table = inference_evaluation_results.join(
         ground_truth_data.set_index("evaluation_data_id"),
         on="evaluation_data_id",
     )
-    print(f"Reference table: {reference_table}")
 
     # Compute cosine similarity over every combination of output and ground truth
     for index, row in reference_table.iterrows():
@@ -50,11 +48,9 @@ def get_semantic_cosine_similarity_openAI(
             output_embedding = OpenAIEmbeddings(
                 openai_api_key=openai_api_key
             ).embed_query(row["output"])
-            print(f"Output embedding: {output_embedding}")
             ground_truth_embedding = OpenAIEmbeddings(
                 openai_api_key=openai_api_key
             ).embed_query(row["ground_truth"])
-            print(f"Ground truth embedding: {ground_truth_embedding}")
             cosine_similarity = np.dot(output_embedding, ground_truth_embedding) / (
                 np.linalg.norm(output_embedding)
                 * np.linalg.norm(ground_truth_embedding)

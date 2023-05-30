@@ -11,7 +11,7 @@ class MaxMarginalRelevanceExampleSelector(
     BaseExampleSelector, MaxMarginalRelevanceExampleSelectorOriginal
 ):
     # Filter statement in vector db search. Can be used to filter to subset of evaluation dataset (e.g., training data)
-    filter_statement: Dict[str, str] = None
+    filter_statement: dict = None
 
     def select_examples(self, input_variables: Dict[str, str]) -> List[dict]:
         """Gets examples that optimize for max marginal relevance to given input values.
