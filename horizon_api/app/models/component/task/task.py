@@ -30,6 +30,7 @@ class Task(db.Model):
     evaluation_dataset_vector_db_collection_name = db.Column(
         db.String(64), nullable=True
     )
+    input_variables_to_chunk = db.Column(db.Text, nullable=False)
     output_schema = db.Column(db.Text, nullable=True)
     pydantic_model = db.Column(db.Text, nullable=True)
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
@@ -67,6 +68,7 @@ class Task(db.Model):
             "task_type": self.task_type,
             "raw_evaluation_dataset": self.raw_evaluation_dataset,
             "evaluation_dataset_vector_db_collection_name": self.evaluation_dataset_vector_db_collection_name,
+            "input_variables_to_chunk": self.input_variables_to_chunk,
             "output_schema": os.path.basename(self.output_schema)
             if (self.output_schema is not None)
             else "Undefined",
@@ -92,6 +94,7 @@ class Task(db.Model):
             "id",
             "name",
             "objective",
+            "input_variables_to_chunk",
             "output_schema",
             "project_id",
             "allowed_models",
@@ -119,7 +122,7 @@ def _clean_up_and_remove_dependencies(mapper, connection, target):
             pass
         target.raw_evaluation_dataset = None
 
-    # Delete evaluation dataset from vector db, if it exists
+    # Delete evaluation dataset from vector db collection, if it exists
     if target.evaluation_dataset_vector_db_collection_name is not None:
         try:
             vector_db.delete_vector_db_collection(

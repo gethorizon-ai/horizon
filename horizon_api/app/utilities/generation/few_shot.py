@@ -50,6 +50,7 @@ def prompt_generation_few_shots(
     prompt_object_list = []
     prompt_prefix_list = []
     model_object_list = []
+
     # Iterate through each prompt-model candidate and produce a few shot version of it
     for index, row in prompt_model_candidates.iterrows():
         few_shot_prompt_prefix = (
@@ -57,11 +58,6 @@ def prompt_generation_few_shots(
         )
         model_name = row["model_object"].get_model_name()
 
-        # create the example selector
-        # vectorstore: evaluation dataset vector db
-        # k: number of examples to select
-        # example_keys: keys on which to filter vector db metadata (removes evaluation_data_id key)
-        # filter_statement: "where" clause when selecting examples from vector db (filters to training dataset)
         example_selector = MaxMarginalRelevanceExampleSelector(
             vectorstore=task_request.evaluation_dataset_vector_db,
             k=task_request.applicable_llms[model_name]["max_few_shots"],

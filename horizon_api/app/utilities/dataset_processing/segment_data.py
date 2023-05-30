@@ -8,17 +8,14 @@ def segment_evaluation_dataset(
     num_unique_data: int, num_test_data_input: int = None
 ) -> dict:
     """Segment evaluation data into training and test data.
-    TODO: update docstring.
 
     Args:
-        num_test_data (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
-            assignment of test data points. Defaults to None.
-
-    Raises:
-        AssertionError: task_request must have evaluation dataset.
+        num_unique_data (int): number of unique data points available (e.g., across all chunks).
+        num_test_data_input (int, optional): number of test data points to use. Used if it does not exceed the algorithm's normal
+            assignment of test data points.. Defaults to None.
 
     Returns:
-        dict: number of training and test data points, along with segmented training and test datasets.
+        dict: number of training and test data points, along with segmented training and test data ids.
     """
     # Determine ideal sample size based on https://www.calculator.net/sample-size-calculator.html
     confidence_interval = 0.95

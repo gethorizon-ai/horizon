@@ -21,7 +21,7 @@ def initialize_vector_db_from_raw_dataset(
     task_id: int,
     raw_dataset_s3_key: str,
     openai_api_key: str,
-    columns_to_chunk: list = None,
+    input_variables_to_chunk: list = None,
 ) -> Chroma:
     # Get raw dataset
     raw_dataset_file_path = download_file_from_s3_and_save_locally(raw_dataset_s3_key)
@@ -35,11 +35,11 @@ def initialize_vector_db_from_raw_dataset(
         dataset_fields=raw_dataset.columns.to_list()
     )
 
-    # Chunk columns if required
-    if columns_to_chunk:
-        # Ensure that columns_to_chunk are all valid columns in raw_dataset
+    # Chunk input variables if required
+    if input_variables_to_chunk:
+        # Ensure that input_variables_to_chunk are all valid columns in raw_dataset
         assert all(
-            column in raw_dataset.columns.to_list() for column in columns_to_chunk
+            var in raw_dataset.columns.to_list() for var in input_variables_to_chunk
         )
 
         # Setup text splitter
@@ -47,12 +47,12 @@ def initialize_vector_db_from_raw_dataset(
             chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
         )
 
-        # Chunk each column
-        for column in columns_to_chunk:
-            raw_dataset[column] = raw_dataset[column].apply(
+        # Chunk each input variable
+        for var in input_variables_to_chunk:
+            raw_dataset[var] = raw_dataset[var].apply(
                 lambda x: text_splitter.split_text(x)
             )
-            raw_dataset = raw_dataset.explode(column)
+            raw_dataset = raw_dataset.explode(var)
             raw_dataset = raw_dataset.reset_index(drop=True)
 
     # Setup metadatas as list of dicts for each evaluation data point

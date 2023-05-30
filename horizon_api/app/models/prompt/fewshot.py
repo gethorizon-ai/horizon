@@ -1,15 +1,15 @@
 from .base import BasePromptTemplate
+from app.models.example_selector.max_marginal_relevance_example_selector import (
+    MaxMarginalRelevanceExampleSelector,
+)
 from app.models.prompt import prompt
-from app.models.embedding.open_ai import OpenAIEmbeddings
-from app.utilities.dataset_processing import data_check
+from app.models.vector_stores.chroma import Chroma
 from langchain.prompts.few_shot import FewShotPromptTemplate as FewShotPromptOriginal
-from langchain.vectorstores import FAISS
-from langchain.prompts.example_selector import MaxMarginalRelevanceExampleSelector
 
 
 class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
     def reconstruct_from_stored_data(
-        dataset_file_path: str, template_data: dict, openai_api_key: str
+        evaluation_dataset_vector_db: Chroma, template_data: dict
     ) -> "FewshotPromptTemplate":
         """Reconstructs a few shot prompt object from data stored.
 
@@ -21,19 +21,10 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
         Returns:
             FewshotPromptTemplate: few shot prompt object to be deployed.
         """
-        # Get evaluation dataset and convert each row to dict
-        evaluation_dataset = data_check.get_evaluation_dataset(
-            dataset_file_path=dataset_file_path, escape_curly_braces=True
-        )
-        evaluation_dataset = evaluation_dataset.drop("evaluation_data_id", axis=1)
-        examples = evaluation_dataset.to_dict("records")
-
-        # Construct example selector
-        example_selector = MaxMarginalRelevanceExampleSelector.from_examples(
-            examples,
-            OpenAIEmbeddings(openai_api_key=openai_api_key),
-            FAISS,
+        example_selector = MaxMarginalRelevanceExampleSelector(
+            vectorstore=evaluation_dataset_vector_db,
             k=template_data["k"],
+            example_keys=template_data["input_variables"] + ["ground_truth"],
         )
 
         # Construct example prompt

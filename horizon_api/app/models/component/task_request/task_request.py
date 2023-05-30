@@ -6,11 +6,14 @@ Class organizes information around Task request, including objective, input vari
 from app.models.llm.factory import LLMFactory
 from app.models.schema import HumanMessage
 from app.utilities.dataset_processing import input_variable_naming
+from app.utilities.dataset_processing import data_check
 from app.utilities.dataset_processing import data_length
 from app.utilities.dataset_processing import llm_applicability
 from app.utilities.dataset_processing import segment_data
+from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 from app.utilities.vector_db import vector_db
 from typing import List
+import os
 
 
 class TaskRequest:
@@ -18,42 +21,41 @@ class TaskRequest:
 
     def __init__(
         self,
-        task_id: int,
-        openai_api_key: str,
+        task_id: int = None,
+        openai_api_key: str = None,
         raw_dataset_s3_key: str = None,
         vector_db_collection_name: str = None,
         user_objective: str = None,
         allowed_models: list = None,
         num_test_data_input: int = None,
-        columns_to_chunk: List[str] = None,
+        input_variables_to_chunk: List[str] = None,
+        synthetic_data_generation: bool = False,
     ):
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
         Args:
-            TODO: update docstring
-            dataset_s3_key (str): s3 key for evaluation dataset.
-            user_objective (str, optional): task objective. Defaults to None.
+            task_id (int, optional): id of task. Defaults to None.
+            openai_api_key (str, optional): OpenAI API key to use for embeddings. Defaults to None.
+            raw_dataset_s3_key (str, optional): s3 key for raw evaluation dataset. Defaults to None.
+            vector_db_collection_name (str, optional): name of vector db collection.. Defaults to None.
+            user_objective (str, optional): objective of the use case.. Defaults to None.
             allowed_models (list, optional): list of allowed models for this task. Defaults to None.
-            synthetic_data_generation (bool, optional): whether this task request is to generate synthetic data. Defaults to False.
-            num_test_data (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
-                assignment of test data points Defaults to None.
+            num_test_data_input (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
+                assignment of test data points. Defaults to None.
+            input_variables_to_chunk (List[str], optional): list of input variables to chunk. Defaults to None.
+            synthetic_data_generation (bool, optional): whether attempting to do synthetic data generation. Defaults to False.
 
         Raises:
             ValueError: checks that user objective is provided and has >0 characters.
-            ValueError: checks that user objective is at most 500 characters to manage token limits.
+            ValueError: checks if evaluation dataset passed for synthetic data generation.
+            ValueError: checks if vector db or raw dataset and task id passed for non-synthetic data generation.
             AssertionError: checks if input and output data lengths exceed token limits of available llms.
             AssertionError: checks if input and output data lengths exceed token limits of available llms.
         """
-        self.task_id = task_id
         self.user_objective = user_objective
         self.input_variables = None
         self.evaluation_dataset_vector_db = None
-        # self.input_data_train = None
-        # self.ground_truth_data_train = None
-        # self.input_data_test = None
-        # self.ground_truth_data_test = None
-        # self.train_dataset = None
-        # self.test_dataset = None
+        self.synthetic_data_generation_dataset = None
         self.num_train_data = None
         self.num_test_data = num_test_data_input
         self.train_data_id_list = None
@@ -70,40 +72,83 @@ class TaskRequest:
                 "User objective can be at most 500 characters to manage token limits."
             )
 
-        # Load evaluation dataset from vector db if availale
-        if vector_db_collection_name:
-            self.evaluation_dataset_vector_db = vector_db.load_vector_db(
-                collection_name=vector_db_collection_name,
-                openai_api_key=openai_api_key,
-            )
-
-        # Otherwise, load raw dataset and setup evaluation dataset in vector db
-        elif raw_dataset_s3_key:
-            self.evaluation_dataset_vector_db = (
-                vector_db.initialize_vector_db_from_raw_dataset(
-                    task_id=task_id,
-                    raw_dataset_s3_key=raw_dataset_s3_key,
-                    openai_api_key=openai_api_key,
-                    columns_to_chunk=columns_to_chunk,
+        # If synthetic data generation, then load raw dataset into DataFrame
+        if synthetic_data_generation:
+            if not raw_dataset_s3_key:
+                raise ValueError(
+                    "Must pass evaluation dataset for synthetic data generation"
                 )
+
+            # Load raw dataset into DataFrame
+            raw_dataset_file_path = download_file_from_s3_and_save_locally(
+                raw_dataset_s3_key
+            )
+            self.synthetic_data_generation_dataset = data_check.get_evaluation_dataset(
+                dataset_file_path=raw_dataset_file_path,
+                escape_curly_braces=True,
+            )
+            os.remove(raw_dataset_file_path)
+
+            # Set input variables
+            self.input_variables = input_variable_naming.get_input_variables(
+                dataset_fields=self.synthetic_data_generation_dataset.columns.to_list()
             )
 
-        # Throw error if no raw or vector db version of evaluation dataset
+            # Set evaluation data length
+            evaluation_data_length = data_length.get_evaluation_data_length(
+                evaluation_dataset=self.synthetic_data_generation_dataset,
+                unescape_curly_braces=True,
+            )
+
+            # Get number of test and train data points, which will be used to index data points
+            evaluation_dataset_segments = segment_data.segment_evaluation_dataset(
+                num_unique_data=len(self.synthetic_data_generation_dataset),
+                num_test_data_input=self.num_test_data,
+            )
+
+        # If not synthetic data generation, proceed with vector db
         else:
-            raise ValueError(
-                "Must provide either raw dataset or vector db collection name."
+            # Load evaluation dataset from vector db if availale
+            if vector_db_collection_name:
+                self.evaluation_dataset_vector_db = vector_db.load_vector_db(
+                    collection_name=vector_db_collection_name,
+                    openai_api_key=openai_api_key,
+                )
+
+            # Otherwise, load raw dataset and setup evaluation dataset in vector db
+            elif raw_dataset_s3_key and task_id:
+                self.evaluation_dataset_vector_db = (
+                    vector_db.initialize_vector_db_from_raw_dataset(
+                        task_id=task_id,
+                        raw_dataset_s3_key=raw_dataset_s3_key,
+                        openai_api_key=openai_api_key,
+                        input_variables_to_chunk=input_variables_to_chunk,
+                    )
+                )
+
+            # Throw error if no raw or vector db version of evaluation dataset
+            else:
+                raise ValueError(
+                    "Must provide either vector db collection name or raw dataset and task id."
+                )
+
+            # Set input variables
+            self.input_variables = (
+                self.evaluation_dataset_vector_db.get_input_variables_from_collection_metadata()
             )
 
-        # Set input variables
-        self.input_variables = (
-            self.evaluation_dataset_vector_db.get_input_variables_from_collection_metadata()
-        )
+            # Set evaluation data length
+            evaluation_data_length = data_length.get_evaluation_data_length(
+                evaluation_dataset=self.evaluation_dataset_vector_db.get_metadatas_as_dataframe(),
+                unescape_curly_braces=True,
+            )
 
-        # Set evaluation data length
-        evaluation_data_length = data_length.get_evaluation_data_length(
-            evaluation_dataset=self.evaluation_dataset_vector_db.get_metadatas_as_dataframe(),
-            unescape_curly_braces=True,
-        )
+            # Get number of test and train data points, which will be used to index data points
+            evaluation_dataset_segments = segment_data.segment_evaluation_dataset(
+                num_unique_data=self.evaluation_dataset_vector_db.get_num_unique_data_from_collection_metadata(),
+                num_test_data_input=self.num_test_data,
+            )
+
         self.max_input_tokens = evaluation_data_length["max_input_tokens"]
         self.max_ground_truth_tokens = evaluation_data_length["max_ground_truth_tokens"]
         self.max_input_characters = evaluation_data_length["max_input_characters"]
@@ -131,23 +176,10 @@ class TaskRequest:
                 "Input and output data length exceed context length of available LLMs needed for prompt generation."
             )
 
-        # Get number of test and train data points, which will be used to index data points
-        evaluation_dataset_segments = segment_data.segment_evaluation_dataset(
-            num_unique_data=self.evaluation_dataset_vector_db.get_num_unique_data_from_collection_metadata(),
-            num_test_data_input=self.num_test_data,
-        )
         self.num_train_data = evaluation_dataset_segments["num_train_data"]
         self.num_test_data = evaluation_dataset_segments["num_test_data"]
         self.train_data_id_list = evaluation_dataset_segments["train_data_id_list"]
         self.test_data_id_list = evaluation_dataset_segments["test_data_id_list"]
-        # self.input_data_train = evaluation_dataset_segments["input_data_train"]
-        # self.ground_truth_data_train = evaluation_dataset_segments[
-        #     "ground_truth_data_train"
-        # ]
-        # self.input_data_test = evaluation_dataset_segments["input_data_test"]
-        # self.ground_truth_data_test = evaluation_dataset_segments[
-        #     "ground_truth_data_test"
-        # ]
 
     def get_normalized_input_variables(self) -> List[str]:
         """Get input variables from evaluation dataset without "var_" prepended to them.
@@ -158,7 +190,7 @@ class TaskRequest:
             List[str]: list of input variable names.
         """
         return input_variable_naming.get_normalized_input_variables(
-            processed_input_variables=self.evaluation_dataset_vector_db.get_input_variables_from_collection_metadata()
+            processed_input_variables=self.input_variables
         )
 
     def check_relevant_api_keys(

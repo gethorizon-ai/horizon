@@ -74,23 +74,19 @@ def generate_prompt_model_configuration(
         )
 
     # Otherwise, load vector db from raw evaluation dataset if provided
-    elif task.raw_evaluation_dataset:
+    elif task.evaluation_dataset:
         task_request = TaskRequest(
             task_id=task.id,
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             raw_dataset_s3_key=task.evaluation_dataset,
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
-            # columns_to_chunk=TODO:
+            # input_variables_to_chunk=TODO:
         )
         task_request.evaluation_dataset_vector_db.persist()
         task.evaluation_dataset_vector_db_collection_name = (
             task_request.evaluation_dataset_vector_db.get_collection_name()
         )
-
-        # Remove raw dataset
-        delete_file_from_s3(task.raw_evaluation_dataset)
-        task.raw_evaluation_dataset = None
 
     # Throw error if no raw or vector db version of evaluation dataset
     else:
