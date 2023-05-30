@@ -26,7 +26,7 @@ class Task(db.Model):
     name = db.Column(db.String(64), nullable=False)
     objective = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
-    raw_evaluation_dataset = db.Column(db.Text, nullable=True)
+    evaluation_dataset = db.Column(db.Text, nullable=True)
     evaluation_dataset_vector_db_collection_name = db.Column(
         db.String(64), nullable=True
     )
@@ -66,7 +66,7 @@ class Task(db.Model):
             "name": self.name,
             "objective": self.objective,
             "task_type": self.task_type,
-            "raw_evaluation_dataset": self.raw_evaluation_dataset,
+            "evaluation_dataset": self.evaluation_dataset,
             "evaluation_dataset_vector_db_collection_name": self.evaluation_dataset_vector_db_collection_name,
             "input_variables_to_chunk": self.input_variables_to_chunk,
             "output_schema": os.path.basename(self.output_schema)
@@ -115,12 +115,12 @@ class Task(db.Model):
 @event.listens_for(Task, "before_delete")
 def _clean_up_and_remove_dependencies(mapper, connection, target):
     # Delete raw evaluation dataset from S3, if it exists
-    if target.raw_evaluation_dataset is not None:
+    if target.evaluation_dataset is not None:
         try:
-            delete_file_from_s3(target.raw_evaluation_dataset)
+            delete_file_from_s3(target.evaluation_dataset)
         except:
             pass
-        target.raw_evaluation_dataset = None
+        target.evaluation_dataset = None
 
     # Delete evaluation dataset from vector db collection, if it exists
     if target.evaluation_dataset_vector_db_collection_name is not None:
@@ -157,7 +157,7 @@ def _clean_up_and_remove_dependencies(mapper, connection, target):
         target.__table__.update()
         .where(target.__table__.c.id == target.id)
         .values(
-            raw_evaluation_dataset=target.raw_evaluation_dataset,
+            evaluation_dataset=target.evaluation_dataset,
             evaluation_dataset_vector_db_collection_name=target.evaluation_dataset_vector_db_collection_name,
             output_schema=target.output_schema,
             pydantic_model=target.pydantic_model,
