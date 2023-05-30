@@ -69,6 +69,7 @@ def generate_prompt_model_configuration(
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
+            num_test_data_input=3,  # TODO: remove,
         )
 
     # Otherwise, load vector db from raw evaluation dataset if provided
@@ -79,6 +80,7 @@ def generate_prompt_model_configuration(
             raw_dataset_s3_key=task.evaluation_dataset,
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
+            num_test_data_input=3,  # TODO: remove
             # input_variables_to_chunk=TODO:
         )
         task_request.evaluation_dataset_vector_db.persist()
