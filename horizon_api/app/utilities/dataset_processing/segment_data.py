@@ -42,13 +42,15 @@ def segment_evaluation_dataset(
 
     # Determine size of train dataset such that there is at least 5 and no more than the ideal sample size
     # In between that range, select 20% of the dataset or however much is left after allocating ideal_sample_size to test dataset
-    num_train_data = min(
-        max(
-            5,
-            0.2 * num_unique_data,
-            num_unique_data - ideal_sample_size,
+    num_train_data = max(
+        5,
+        min(
+            ideal_sample_size,
+            max(
+                0.2 * num_unique_data,
+                num_unique_data - ideal_sample_size,
+            ),
         ),
-        ideal_sample_size,
     )
 
     # Determine size of test dataset. Allocate at most ideal_sample_size or what's left after allocating num_train_data
@@ -63,5 +65,5 @@ def segment_evaluation_dataset(
         "num_train_data": num_train_data,
         "num_test_data": num_test_data,
         "train_data_id_list": range(num_train_data),
-        "test_data_id_list": range(num_train_data, num_test_data),
+        "test_data_id_list": range(num_train_data, num_train_data + num_test_data),
     }
