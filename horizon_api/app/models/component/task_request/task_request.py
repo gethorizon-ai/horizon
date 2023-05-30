@@ -29,7 +29,7 @@ class TaskRequest:
         allowed_models: list = None,
         num_test_data_input: int = None,
         input_variables_to_chunk: List[str] = None,
-        synthetic_data_generation: bool = False,
+        use_vector_db: bool = True,
     ):
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
@@ -43,7 +43,7 @@ class TaskRequest:
             num_test_data_input (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
                 assignment of test data points. Defaults to None.
             input_variables_to_chunk (List[str], optional): list of input variables to chunk. Defaults to None.
-            synthetic_data_generation (bool, optional): whether attempting to do synthetic data generation. Defaults to False.
+            use_vector_db (bool, optional): whether to store data in vector db. If False, stores data in DataFrame. Defaults to True.
 
         Raises:
             ValueError: checks that user objective is provided and has >0 characters.
@@ -55,7 +55,7 @@ class TaskRequest:
         self.user_objective = user_objective
         self.input_variables = None
         self.evaluation_dataset_vector_db = None
-        self.synthetic_data_generation_dataset = None
+        self.evaluation_dataset_dataframe = None
         self.num_train_data = None
         self.num_test_data = num_test_data_input
         self.train_data_id_list = None
@@ -72,8 +72,8 @@ class TaskRequest:
                 "User objective can be at most 500 characters to manage token limits."
             )
 
-        # If synthetic data generation, then load raw dataset into DataFrame
-        if synthetic_data_generation:
+        # If avoiding vector db (e.g., for synthetic data generation), then load raw dataset into DataFrame
+        if not use_vector_db:
             if not raw_dataset_s3_key:
                 raise ValueError(
                     "Must pass evaluation dataset for synthetic data generation"
@@ -83,7 +83,7 @@ class TaskRequest:
             raw_dataset_file_path = download_file_from_s3_and_save_locally(
                 raw_dataset_s3_key
             )
-            self.synthetic_data_generation_dataset = data_check.get_evaluation_dataset(
+            self.evaluation_dataset_dataframe = data_check.get_evaluation_dataset(
                 dataset_file_path=raw_dataset_file_path,
                 escape_curly_braces=True,
             )
@@ -91,18 +91,18 @@ class TaskRequest:
 
             # Set input variables
             self.input_variables = input_variable_naming.get_input_variables(
-                dataset_fields=self.synthetic_data_generation_dataset.columns.to_list()
+                dataset_fields=self.evaluation_dataset_dataframe.columns.to_list()
             )
 
             # Set evaluation data length
             evaluation_data_length = data_length.get_evaluation_data_length(
-                evaluation_dataset=self.synthetic_data_generation_dataset,
+                evaluation_dataset=self.evaluation_dataset_dataframe,
                 unescape_curly_braces=True,
             )
 
             # Get number of test and train data points, which will be used to index data points
             evaluation_dataset_segments = segment_data.segment_evaluation_dataset(
-                num_unique_data=len(self.synthetic_data_generation_dataset),
+                num_unique_data=len(self.evaluation_dataset_dataframe),
                 num_test_data_input=self.num_test_data,
             )
 
