@@ -30,7 +30,7 @@ class Task(db.Model):
     evaluation_dataset_vector_db_collection_name = db.Column(
         db.String(64), nullable=True
     )
-    input_variables_to_chunk = db.Column(db.Text, nullable=False)
+    input_variables_to_chunk = db.Column(db.Text, nullable=True)
     output_schema = db.Column(db.Text, nullable=True)
     pydantic_model = db.Column(db.Text, nullable=True)
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
