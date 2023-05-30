@@ -123,21 +123,24 @@ class Chroma(BaseVectorStore, ChromaOriginal):
                     where={"evaluation_data_id": id},
                     include=include_statement,
                 )
+                combined_ids.extend(db_result["ids"][0])
+                if include_embeddings:
+                    combined_embeddings.extend(db_result["embeddings"][0])
+                if include_metatatas:
+                    combined_metadatas.extend(db_result["metadatas"][0])
+                    print(f"Combined metadatas: {combined_metadatas}")
             else:
                 db_result = self._collection.get(
                     where={"evaluation_data_id": id},
                     limit=1,
                     include=include_statement,
                 )
-
-            combined_ids.append(db_result["ids"])
-            print(f"Combined IDs: {combined_ids}")
-            if include_embeddings:
-                combined_embeddings.append(db_result["embeddings"])
-                print(f"Combined embeddings: {combined_embeddings}")
-            if include_metatatas:
-                combined_metadatas.append(db_result["metadatas"])
-                print(f"Combined metadatas: {combined_metadatas}")
+                combined_ids.extend(db_result["ids"])
+                if include_embeddings:
+                    combined_embeddings.extend(db_result["embeddings"])
+                if include_metatatas:
+                    combined_metadatas.extend(db_result["metadatas"])
+                    print(f"Combined metadatas: {combined_metadatas}")
 
         if include_metatatas:
             # Remove evaluation_data_id key in metadatas if requested
