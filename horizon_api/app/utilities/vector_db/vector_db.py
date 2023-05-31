@@ -36,8 +36,8 @@ def initialize_vector_db_from_dataset(
         dataset_fields=evaluation_dataset.columns.to_list()
     )
 
-    # Setup metadatas as list of dicts for each evaluation data point
-    metadatas = evaluation_dataset.to_dict(orient="records")
+    # Setup metadata as list of dicts for each evaluation data point
+    metadata = evaluation_dataset.to_dict(orient="records")
 
     # Setup texts for embedding. Exclude evaluation_data_id so it's not embedded
     # TODO: exclude ground_truth from embedding?
@@ -49,7 +49,7 @@ def initialize_vector_db_from_dataset(
                 if key != "evaluation_data_id"
             ]
         )
-        for record in metadatas
+        for record in metadata
     ]
 
     # Initialize vector db namespace for this task_id
@@ -63,7 +63,7 @@ def initialize_vector_db_from_dataset(
         input_variables=input_variables,
         num_unique_data=num_unique_data,
     )
-    vector_db.add_text_embeddings_and_metadatas(texts=texts, metadatas=metadatas)
+    vector_db.add_text_embeddings_and_metadata(texts=texts, metadata=metadata)
 
     return vector_db
 

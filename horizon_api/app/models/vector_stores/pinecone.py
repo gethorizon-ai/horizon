@@ -27,20 +27,20 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         self.num_unique_data = num_unique_data
         super().__init__(**kwargs)
 
-    def add_text_embeddings_and_metadatas(
+    def add_text_embeddings_and_metadata(
         self,
         texts: Iterable[str],
-        metadatas: Optional[List[dict]] = None,
+        metadata: Optional[List[dict]] = None,
         ids: Optional[List[str]] = None,
         batch_size: int = 32,
     ) -> List[str]:
-        """Embed texts and add associated ids, embeddings, and metadatas to vectorstore without adding texts themselves.
+        """Embed texts and add associated ids, embeddings, and metadata to vectorstore without adding texts themselves.
 
-        Not adding texts reduces memory required. This is useful when all the data in the text is captured in the metadatas.
+        Not adding texts reduces memory required. This is useful when all the data in the text is captured in the metadata.
 
         Args:
             texts (Iterable[str]): Texts to add to the vectorstore.
-            metadatas (Optional[List[dict]], optional): Optional list of metadatas.
+            metadata (Optional[List[dict]], optional): Optional list of metadata.
             ids (Optional[List[str]], optional): Optional list of IDs.
             batch_size (int, optional): batch size for upserting vectors. Defaults to 32.
 
@@ -52,8 +52,8 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         ids = ids or [str(uuid.uuid4()) for _ in texts]
         for i, text in enumerate(texts):
             embedding = self._embedding_function(text)
-            metadata = metadatas[i] if metadatas else {}
-            docs.append((ids[i], embedding, metadata))
+            metadata_item = metadata[i] if metadata else {}
+            docs.append((ids[i], embedding, metadata_item))
 
         # upsert to Pinecone
         self._index.upsert(
@@ -98,26 +98,26 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         include_ground_truth_in_metadata: bool = True,
     ) -> dict:
         """Fetches db record for each of the provided evaluation data ids that is most similar to given query string, then returns
-        consolidated list of db ids, metadatas, and embeddings across all the fetched records.
+        consolidated list of db ids, metadata, and embeddings across all the fetched records.
 
         If query string is not provided, then just fetches first db record for each of the provided evaluation data ids. This can be
         used to get the ground truth for each evaluation data id (which should be the same across all chunks).
 
-        Options to exclude to metadatas or embeddings for increased efficiency.
+        Options to exclude to metadata or embeddings for increased efficiency.
 
         Args:
             query (str): query to find most similar db entry.
             evaluation_data_id_list (List[int]): list of evaluation data ids for which to fetch one db record each.
             include_embeddings (bool, optional): whether to fetch embeddings from vector db. Defaults to True.
             include_metadata (bool, optional): whether to fetch metadata from vector db. Defaults to True.
-            include_evaluation_data_id_in_metadata (bool, optional): whether to include "evaluation_data_id" key in metadatas.
+            include_evaluation_data_id_in_metadata (bool, optional): whether to include "evaluation_data_id" key in metadata.
                 Defaults to True.
-            include_input_variables_in_metadata (bool, optional): whether to include input variable keys in metadatas. Defaults to
+            include_input_variables_in_metadata (bool, optional): whether to include input variable keys in metadata. Defaults to
                 True.
-            include_ground_truth_in_metadata (bool, optional): whether to include "ground_truth" key in metadatas. Defaults to True.
+            include_ground_truth_in_metadata (bool, optional): whether to include "ground_truth" key in metadata. Defaults to True.
 
         Returns:
-            dict: consolidated list of db ids, metadatas, and embeddings.
+            dict: consolidated list of db ids, metadata, and embeddings.
         """
         # Embed query if provided
         query_embedding = None
@@ -151,19 +151,19 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
                 combined_metadata.append(fetched_data["metadata"])
 
         if include_metatata:
-            # Remove evaluation_data_id key in metadatas if requested
+            # Remove evaluation_data_id key in metadata if requested
             if not include_evaluation_data_id_in_metadata:
                 for metadata in combined_metadata:
                     del metadata["evaluation_data_id"]
 
-            # Remove input values in metadatas if requested
+            # Remove input values in metadata if requested
             if not include_input_variables_in_metadata:
                 input_variables = self.get_input_variables()
                 for metadata in combined_metadata:
                     for var in input_variables:
                         del metadata[var]
 
-            # Remove ground truth in metadatas if requested
+            # Remove ground truth in metadata if requested
             if not include_ground_truth_in_metadata:
                 for metadata in combined_metadata:
                     del metadata["ground_truth"]
@@ -185,23 +185,23 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         filter_statement: dict = None,
         lambda_mult: float = 0.5,
     ) -> List[Dict[str, str]]:
-        """Return metadatas selected using maximal marginal relevance.
+        """Return metadata selected using maximal marginal relevance.
 
         Maximal marginal relevance optimizes for similarity to query and diversity among selected items.
 
         Args:
-            query (str): text for which to pull similar metadatas.
-            k (int, optional): number of metadatas to return. Defaults to 4.
-            fetch_k (int, optional): number of metadatas to pass to max marginal relevance algorithm. Defaults to 20.
+            query (str): text for which to pull similar metadata.
+            k (int, optional): number of metadata to return. Defaults to 4.
+            fetch_k (int, optional): number of metadata to pass to max marginal relevance algorithm. Defaults to 20.
             filter_statement (dict, optional): statement to filter metadata pulled. Defaults to None.
             lambda_mult (float, optional): Number between 0 and 1 that determines the degree of diversity among the results with 0
                 corresponding to maximum diversity and 1 to minimum diversity. Defaults to 0.5.
 
         Raises:
-            ValueError: checks if embedding function exists to pull metadatas.
+            ValueError: checks if embedding function exists to pull metadata.
 
         Returns:
-            Dict[str, str]: list of metadatas.
+            Dict[str, str]: list of metadata.
         """
         if self._embedding_function is None:
             raise ValueError(

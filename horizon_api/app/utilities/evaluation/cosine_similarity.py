@@ -34,7 +34,7 @@ def get_semantic_cosine_similarity_openAI(
             include_input_variables_in_metadata=False,
         )
     )
-    ground_truth_data = pd.DataFrame(db_results["metadatas"])
+    ground_truth_data = pd.DataFrame(db_results["metadata"])
 
     reference_table = inference_evaluation_results.join(
         ground_truth_data.set_index("evaluation_data_id"),

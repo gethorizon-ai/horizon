@@ -54,7 +54,7 @@ def run_inference(
         )
     else:
         assert ValueError("train_or_test_dataset must be either 'train' or 'test'")
-    input_data = pd.DataFrame(db_results["metadatas"])
+    input_data = pd.DataFrame(db_results["metadata"])
 
     # Filter data to selected evaluation_data_ids, if provided
     if evaluation_data_id_list is not None:

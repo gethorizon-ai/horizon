@@ -23,7 +23,7 @@ def cluster_shortlist_data(
     Returns:
         List(dict): list containing a dict representing each selected data point.
     """
-    # Pull embeddings and metadatas from vector db
+    # Pull embeddings and metadata from vector db
     if train_or_test_dataset == "train":
         db_results = (
             task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
@@ -41,7 +41,7 @@ def cluster_shortlist_data(
             )
         )
     embeddings = db_results["embeddings"]
-    metadatas = db_results["metadatas"]
+    metadata = db_results["metadata"]
 
     # Compute k-means clusters of embeddings
     clusters = KMeans(n_clusters=num_clusters, n_init="auto").fit(embeddings)
@@ -59,6 +59,6 @@ def cluster_shortlist_data(
                 for cluster_point_index in cluster_points_indices
             ]
         )
-        shortlisted_examples.append(metadatas[cluster_points_indices[min_index]])
+        shortlisted_examples.append(metadata[cluster_points_indices[min_index]])
 
     return shortlisted_examples
