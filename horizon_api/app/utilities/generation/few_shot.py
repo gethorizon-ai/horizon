@@ -58,9 +58,6 @@ def prompt_generation_few_shots(
         )
         model_name = row["model_object"].get_model_name()
 
-        print(
-            f"k used for few-shot: {task_request.applicable_llms[model_name]['max_few_shots']}"
-        )
         example_selector = MaxMarginalRelevanceExampleSelector(
             vectorstore=task_request.evaluation_dataset_vector_db,
             k=task_request.applicable_llms[model_name]["max_few_shots"],

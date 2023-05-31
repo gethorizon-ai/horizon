@@ -104,6 +104,7 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         # Embed query if provided
         if query:
             query_embedding = self._embedding_function.embed_query(query)
+            print(f"Embedding function used: {self._embedding_function}")
 
         # Create include statement for and lists to store combined results from db pull
         include_statement = []

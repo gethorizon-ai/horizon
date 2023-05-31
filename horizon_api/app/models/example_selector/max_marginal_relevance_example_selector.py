@@ -30,8 +30,6 @@ class MaxMarginalRelevanceExampleSelector(
             [f"<{key}>: {value}" for key, value in input_variables.items()]
         )
 
-        print(f"k used in max marginal relevance: {self.k}")
-
         # Get the examples from the metadata.
         # This assumes that examples are stored in metadata.
         examples = self.vectorstore.max_marginal_relevance_search(
