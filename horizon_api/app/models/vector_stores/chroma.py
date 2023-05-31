@@ -134,6 +134,7 @@ class Chroma(BaseVectorStore, ChromaOriginal):
             if query:
                 print(f"Made it just before pulling from db")
                 self.reset_connection_with_collections()
+                print(f"Reset connection with collection")
                 db_result = self._collection.query(
                     query_embeddings=[query_embedding],
                     n_results=1,
