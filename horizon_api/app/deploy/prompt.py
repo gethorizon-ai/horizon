@@ -43,8 +43,6 @@ def deploy_prompt(
     Returns:
         str: The output or completion of the deployed prompt.
     """
-    time1 = time.time()
-
     # Get task
     task_id = prompt.task_id
     task = Task.query.get(task_id)
@@ -98,7 +96,6 @@ def deploy_prompt(
             evaluation_dataset_dataframe = data_check.get_evaluation_dataset(
                 dataset_file_path=raw_dataset_file_path,
                 escape_curly_braces=True,
-                input_variables_to_chunk=task.input_variables_to_chunk,
             )
             os.remove(raw_dataset_file_path)
 
@@ -126,8 +123,6 @@ def deploy_prompt(
     processed_input_values = {}
     for variable, value in input_values.items():
         processed_input_values["var_" + variable] = value
-
-    time2 = time.time()
 
     # Format prompt by substituting input values
     original_formatted_prompt = prompt_instance.format(**processed_input_values)
@@ -188,15 +183,5 @@ def deploy_prompt(
             completion_cost=completion_cost,
             total_inference_cost=prompt_cost + completion_cost,
         )
-
-    final = time.time()
-
-    print(f"Setup: {time2 - time1:.2f}")
-    print(
-        f"Few shot prompt construction (embedding, vector db): {inference_start_time - time2:.2f}"
-    )
-    print(f"Inference: {inference_end_time - inference_start_time:.2f}")
-    print(f"Finishing steps: {final - inference_end_time:.2f}")
-    print(f"Total time: {final - time1:.2f}")
 
     return output

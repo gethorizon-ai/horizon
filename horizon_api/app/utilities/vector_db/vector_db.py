@@ -25,10 +25,9 @@ def initialize_vector_db_from_dataset(
         task_id (int): id of task.
         evaluation_dataset (pd.DataFrame): dataframe holding evaluation dataset.
         openai_api_key (str): OpenAI API key to use for embeddings.
-        input_variables_to_chunk (list, optional): list of input variable names for which to chunk values. Defaults to None.
 
     Returns:
-        Pinecone: _description_
+        Pinecone: initialized vector db.
     """
     num_unique_data = len(evaluation_dataset)
     input_variables = input_variable_naming.get_input_variables(

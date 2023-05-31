@@ -81,7 +81,6 @@ def generate_prompt_model_configuration(
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
-            # input_variables_to_chunk=TODO:
         )
 
         # Store vector db metadata in task object and commit changes to db
