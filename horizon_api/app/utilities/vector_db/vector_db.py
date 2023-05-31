@@ -39,7 +39,6 @@ def initialize_vector_db_from_dataset(
     metadata = evaluation_dataset.to_dict(orient="records")
 
     # Setup texts for embedding. Exclude evaluation_data_id so it's not embedded
-    # TODO: exclude ground_truth from embedding?
     texts = [
         "\n".join(
             [
