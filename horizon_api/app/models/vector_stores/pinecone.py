@@ -10,11 +10,22 @@ import numpy as np
 
 
 class Pinecone(BaseVectorStore, PineconeOriginal):
-    # List of input variables
-    input_variables: List[str] = None
+    def __init__(
+        self,
+        input_variables: List[str] = None,
+        num_unique_data: int = None,
+        **kwargs,
+    ):
+        """Initializes object with custom fields and then calls parent constructor.
 
-    # Number of unique data points stored for user's namespace (without double counting across chunks of the same data)
-    num_unique_data: int = None
+        Args:
+            input_variables (List[str], optional): List of input variables. Defaults to None.
+            num_unique_data (int, optional): Number of unique data points stored for user's namespace (without double counting across
+                chunks of the same data). Defaults to None.
+        """
+        self.input_variables = input_variables
+        self.num_unique_data = num_unique_data
+        super().__init__(**kwargs)
 
     def add_text_embeddings_and_metadatas(
         self,
