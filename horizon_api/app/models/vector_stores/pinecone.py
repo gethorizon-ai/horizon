@@ -226,7 +226,7 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
 
         # Aggregate embeddings across all matches returned from db
         embeddings = [
-            db_result["matches"][i]["values"] for i in len(db_result["matches"])
+            db_result["matches"][i]["values"] for i in range(len(db_result["matches"]))
         ]
 
         # Select results using max marginal relevance
