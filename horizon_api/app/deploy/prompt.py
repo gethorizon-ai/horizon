@@ -9,14 +9,16 @@ from app.models.llm.open_ai import ChatOpenAI
 from app.models.llm.anthropic import ChatAnthropic
 from app.models.prompt.factory import PromptTemplateFactory
 from app.models.prompt.chat import HumanMessage
+from app.utilities.dataset_processing import data_check
 from app.utilities.logging.task_logger import TaskLogger
+from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 from app.utilities.vector_db import vector_db
 from config import Config
 from config import Config
 import json
 from datetime import datetime
 import time
-import gc
+import os
 
 
 def deploy_prompt(
@@ -87,14 +89,28 @@ def deploy_prompt(
 
         # If vector db does not exist, set it up from raw evaluation dataset
         elif task.evaluation_dataset:
+            # Get raw dataset
+            raw_dataset_file_path = download_file_from_s3_and_save_locally(
+                task.evaluation_dataset
+            )
+            evaluation_dataset_dataframe = data_check.get_evaluation_dataset(
+                dataset_file_path=raw_dataset_file_path,
+                escape_curly_braces=True,
+                input_variables_to_chunk=task.input_variables_to_chunk,
+            )
+            os.remove(raw_dataset_file_path)
+
+            # Initialize vector db
             evaluation_dataset_vector_db = (
                 vector_db.initialize_vector_db_from_raw_dataset(
                     task_id=task.id,
-                    raw_dataset_s3_key=task.evaluation_dataset,
+                    evaluation_dataset=evaluation_dataset_dataframe,
                     openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-                    input_variables_to_chunk=task.input_variables_to_chunk,
                 )
             )
+
+            # Store vector db metadata in task object and commit changes to db
+            task.store_vector_db_metadata(vector_db=evaluation_dataset_vector_db)
 
         # Throw error if no raw or vector db version of evaluation dataset
         else:

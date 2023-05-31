@@ -87,13 +87,9 @@ def generate_prompt_model_configuration(
         )
 
         # Store vector db metadata in task object and commit changes to db
-        vector_db_metadata = {
-            "namespace": task_request.evaluation_dataset_vector_db.get_namespace(),
-            "input_variables": task_request.evaluation_dataset_vector_db.get_input_variables(),
-            "num_unique_data": task_request.evaluation_dataset_vector_db.get_num_unique_data(),
-        }
-        task.vector_db_metadata = json.dumps(vector_db_metadata)
-        db.session.commit()
+        task.store_vector_db_metadata(
+            vector_db=task_request.evaluation_dataset_vector_db
+        )
 
     # Throw error if no raw or vector db version of evaluation dataset
     else:

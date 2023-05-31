@@ -7,6 +7,7 @@ from app.models.component.prompt import Prompt
 from app.models.component.task_deployment_log.task_deployment_log import (
     TaskDeploymentLog,
 )
+from app.models.vector_stores.pinecone import Pinecone
 from app.utilities.S3.s3_util import delete_file_from_s3
 from app.utilities.vector_db import vector_db
 from sqlalchemy import Enum as SQLEnum
@@ -108,6 +109,15 @@ class Task(db.Model):
         ]
 
         return filtered_dict
+
+    def store_vector_db_metadata(self, vector_db: Pinecone) -> None:
+        vector_db_metadata = {
+            "namespace": vector_db.get_namespace(),
+            "input_variables": vector_db.get_input_variables(),
+            "num_unique_data": vector_db.get_num_unique_data(),
+        }
+        self.vector_db_metadata = json.dumps(vector_db_metadata)
+        db.session.commit()
 
 
 @event.listens_for(Task, "before_delete")

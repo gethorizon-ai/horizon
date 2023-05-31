@@ -3,7 +3,6 @@
 Class organizes information around Task request, including objective, input variables, and evaluation dataset.
 """
 
-from app.models.component.task import Task
 from app.models.llm.factory import LLMFactory
 from app.models.schema import HumanMessage
 from app.utilities.dataset_processing import input_variable_naming
