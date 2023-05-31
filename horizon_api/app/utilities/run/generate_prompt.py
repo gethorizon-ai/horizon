@@ -471,10 +471,6 @@ def generate_prompt_model_configuration(
     # Commit the changes to the database
     db.session.commit()
 
-    # Release vector db
-    del task_request.evaluation_dataset_vector_db
-    gc.collect()
-
     print("Returning from generate_prompt_model_configuration function.")
 
     # Return task overview with selected prompt-model candidate
