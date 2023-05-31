@@ -7,9 +7,9 @@ PROMPT_GENERATION_ALGORITHM_PARAMETERS = {
         "num_prompts_pattern_role_play": 1,  # 5,
         "num_prompts_user_objective_training_data": 1,  # 5,
         "num_variants": 1,  # 2,
-        "num_clusters": 4,  # 10,
+        "num_clusters": 2,  # 10,
         "num_shortlist": 1,  # 5,
-        "num_iterations": 3,  # 3,
+        "num_iterations": 1,  # 3,
     },
     "stage_2": {"num_shortlist": 1},
     "stage_3": {

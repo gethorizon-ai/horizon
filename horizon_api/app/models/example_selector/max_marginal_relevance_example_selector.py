@@ -22,7 +22,6 @@ class MaxMarginalRelevanceExampleSelector(
         Returns:
             List[dict]: selected examples.
         """
-        print("HI THERE!!!!")
         if self.input_keys:
             input_variables = {key: input_variables[key] for key in self.input_keys}
 
@@ -31,15 +30,16 @@ class MaxMarginalRelevanceExampleSelector(
             [f"<{key}>: {value}" for key, value in input_variables.items()]
         )
 
+        print(f"k used in max marginal relevance: {self.k}")
+
         # Get the examples from the metadata.
         # This assumes that examples are stored in metadata.
-        example_docs = self.vectorstore.max_marginal_relevance_search(
+        examples = self.vectorstore.max_marginal_relevance_search(
             query,
             k=self.k,
             fetch_k=self.fetch_k,
             filter=self.filter_statement,
         )
-        examples = [dict(e.metadata) for e in example_docs]
 
         # If example keys are provided, filter examples to those keys.
         if self.example_keys:

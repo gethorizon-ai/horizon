@@ -2,9 +2,11 @@
 
 from .base import BaseVectorStore
 from langchain.vectorstores import Chroma as ChromaOriginal
+from langchain.vectorstores.utils import maximal_marginal_relevance
 from typing import Any, Iterable, List, Optional, Dict
 import uuid
 import pandas as pd
+import numpy as np
 
 
 class Chroma(BaseVectorStore, ChromaOriginal):
@@ -165,3 +167,62 @@ class Chroma(BaseVectorStore, ChromaOriginal):
             combined_db_result["metadatas"] = combined_metadatas
 
         return combined_db_result
+
+    def max_marginal_relevance_search(
+        self,
+        query: str,
+        k: int = 4,
+        fetch_k: int = 20,
+        filter_statement: dict = None,
+        lambda_mult: float = 0.5,
+    ) -> List[Dict[str, str]]:
+        """Return metadatas selected using maximal marginal relevance.
+
+        Maximal marginal relevance optimizes for similarity to query and diversity among selected items.
+
+        Args:
+            query (str): text for which to pull similar metadatas.
+            k (int, optional): number of metadatas to return. Defaults to 4.
+            fetch_k (int, optional): number of metadatas to pass to max marginal relevance algorithm. Defaults to 20.
+            filter_statement (dict, optional): statement to filter metadata pulled. Defaults to None.
+            lambda_mult (float, optional): Number between 0 and 1 that determines the degree of diversity among the results with 0
+                corresponding to maximum diversity and 1 to minimum diversity. Defaults to 0.5.
+
+        Raises:
+            ValueError: checks if embedding function exists to pull metadatas.
+
+        Returns:
+            Dict[str, str]: list of metadatas.
+        """
+        if self._embedding_function is None:
+            raise ValueError(
+                "For MMR search, you must specify an embedding function on creation."
+            )
+
+        # Embed query
+        query_embedding = self._embedding_function.embed_query(query)
+
+        # Fetch results from vector db
+        db_result = self._collection.query(
+            query_embeddings=[query_embedding],
+            n_results=fetch_k,
+            where=filter_statement,
+            include=["metadatas", "embeddings"],
+        )
+
+        # Select results using max marginal relevance
+        mmr_selected = maximal_marginal_relevance(
+            np.array(query_embedding, dtype=np.float32),
+            db_result["embeddings"][0],
+            k=k,
+            lambda_mult=lambda_mult,
+        )
+
+        # Filter to results selected by max marginal relevance
+        selected_results = [
+            result
+            for index, result in enumerate(db_result["metadatas"][0])
+            if index in mmr_selected
+        ]
+
+        return selected_results
