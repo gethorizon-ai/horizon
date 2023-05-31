@@ -5,8 +5,9 @@ from langchain.vectorstores import Pinecone as PineconeOriginal
 from langchain.vectorstores.utils import maximal_marginal_relevance
 from typing import Any, Iterable, List, Optional, Dict
 import uuid
-import pandas as pd
 import numpy as np
+
+VECTOR_DIMENSIONS = 1536
 
 
 class Pinecone(BaseVectorStore, PineconeOriginal):
@@ -120,9 +121,11 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
             dict: consolidated list of db ids, metadata, and embeddings.
         """
         # Embed query if provided
-        query_embedding = None
         if query:
             query_embedding = self._embedding_function(query)
+        # Otherwise, use zero vector
+        else:
+            query_embedding = [0] * VECTOR_DIMENSIONS
 
         # Create lists to store combined results from db pull
         combined_ids = []
