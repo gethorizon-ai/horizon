@@ -16,6 +16,7 @@ from config import Config
 import json
 from datetime import datetime
 import time
+import gc
 
 
 def deploy_prompt(
@@ -147,6 +148,7 @@ def deploy_prompt(
 
     # Release vector db
     del evaluation_dataset_vector_db
+    gc.collect()
 
     # Log deployment if logging is enabled
     if log_deployment:
