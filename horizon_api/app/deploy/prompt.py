@@ -145,6 +145,9 @@ def deploy_prompt(
 
     inference_end_time = time.time()
 
+    # Release vector db
+    del evaluation_dataset_vector_db
+
     # Log deployment if logging is enabled
     if log_deployment:
         prompt_data_length = model_instance.get_prompt_data_length(
