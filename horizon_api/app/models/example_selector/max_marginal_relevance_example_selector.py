@@ -22,6 +22,7 @@ class MaxMarginalRelevanceExampleSelector(
         Returns:
             List[dict]: selected examples.
         """
+        print("HI THERE!!!!")
         if self.input_keys:
             input_variables = {key: input_variables[key] for key in self.input_keys}
 
