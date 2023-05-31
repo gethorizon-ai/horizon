@@ -11,8 +11,8 @@ from langchain.text_splitter import (
     RecursiveCharacterTextSplitter,
 )
 
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 0
+# CHUNK_SIZE = 1000
+# CHUNK_OVERLAP = 0
 
 
 def check_evaluation_dataset_and_data_length(
@@ -188,24 +188,27 @@ def get_evaluation_dataset(
 
     # Chunk input variables if required
     if input_variables_to_chunk:
-        # Ensure that input_variables_to_chunk are all valid columns in raw_dataset
-        assert all(
-            var in evaluation_dataset.columns.to_list()
-            for var in input_variables_to_chunk
-        )
+        pass
 
-        # Setup text splitter
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
-        )
+        # # TODO:
+        # # Ensure that input_variables_to_chunk are all valid columns in raw_dataset
+        # assert all(
+        #     var in evaluation_dataset.columns.to_list()
+        #     for var in input_variables_to_chunk
+        # )
 
-        # Chunk each input variable
-        for var in input_variables_to_chunk:
-            evaluation_dataset[var] = evaluation_dataset[var].apply(
-                lambda x: text_splitter.split_text(x)
-            )
-            evaluation_dataset = evaluation_dataset.explode(var)
-            evaluation_dataset = evaluation_dataset.reset_index(drop=True)
+        # # Setup text splitter
+        # text_splitter = RecursiveCharacterTextSplitter(
+        #     chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
+        # )
+
+        # # Chunk each input variable
+        # for var in input_variables_to_chunk:
+        #     evaluation_dataset[var] = evaluation_dataset[var].apply(
+        #         lambda x: text_splitter.split_text(x)
+        #     )
+        #     evaluation_dataset = evaluation_dataset.explode(var)
+        #     evaluation_dataset = evaluation_dataset.reset_index(drop=True)
 
     # Return processed evaluation dataset
     return evaluation_dataset
