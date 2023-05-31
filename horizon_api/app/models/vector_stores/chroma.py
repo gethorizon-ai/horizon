@@ -101,10 +101,15 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         Returns:
             dict: consolidated list of chroma ids, metadatas, and embeddings.
         """
+        print(f"HI FROM INFERENCE!")
         # Embed query if provided
         if query:
-            query_embedding = self._embedding_function.embed_query(query)
             print(f"Embedding function used: {self._embedding_function}")
+            try:
+                query_embedding = self._embedding_function.embed_query(query)
+            except Exception as e:
+                print(f"Error: {str(e)}")
+                raise RuntimeError
 
         # Create include statement for and lists to store combined results from db pull
         include_statement = []
