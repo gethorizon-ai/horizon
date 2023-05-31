@@ -38,7 +38,7 @@ class MaxMarginalRelevanceExampleSelector(
             query,
             k=self.k,
             fetch_k=self.fetch_k,
-            filter=self.filter_statement,
+            filter_statement=self.filter_statement,
         )
 
         # If example keys are provided, filter examples to those keys.
