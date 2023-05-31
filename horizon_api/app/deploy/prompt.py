@@ -191,10 +191,12 @@ def deploy_prompt(
 
     final = time.time()
 
-    print(f"Setup interval: {time2 - time1:.2f}")
-    print(f"Vector db retrival: {inference_start_time - time2:.2f}")
-    print(f"Inference latency: {inference_end_time - inference_start_time:.2f}")
-    print(f"Residual time: {final - inference_end_time:.2f}")
+    print(f"Setup: {time2 - time1:.2f}")
+    print(
+        f"Few shot prompt construction (embedding, vector db): {inference_start_time - time2:.2f}"
+    )
+    print(f"Inference: {inference_end_time - inference_start_time:.2f}")
+    print(f"Finishing steps: {final - inference_end_time:.2f}")
     print(f"Total time: {final - time1:.2f}")
 
     return output
