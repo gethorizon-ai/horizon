@@ -109,12 +109,7 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         """
         # Embed query if provided
         if query:
-            print(f"Embedding function used: {self._embedding_function}")
-            try:
-                query_embedding = self._embedding_function.embed_query(query)
-            except Exception as e:
-                print(f"Error: {str(e)}")
-                raise RuntimeError
+            query_embedding = self._embedding_function.embed_query(query)
 
         # Create include statement for and lists to store combined results from db pull
         include_statement = []
@@ -135,12 +130,16 @@ class Chroma(BaseVectorStore, ChromaOriginal):
                 print(f"Made it just before pulling from db")
                 self.reset_connection_with_collections()
                 print(f"Reset connection with collection")
-                db_result = self._collection.query(
-                    query_embeddings=[query_embedding],
-                    n_results=1,
-                    where={"evaluation_data_id": id},
-                    include=include_statement,
-                )
+                try:
+                    db_result = self._collection.query(
+                        query_embeddings=[query_embedding],
+                        n_results=1,
+                        where={"evaluation_data_id": id},
+                        include=include_statement,
+                    )
+                except Exception as e:
+                    print(f"Error: {str(e)}")
+                    raise RuntimeError
                 print(f"Made it after pulling from db")
                 combined_ids.extend(db_result["ids"][0])
                 if include_embeddings:
