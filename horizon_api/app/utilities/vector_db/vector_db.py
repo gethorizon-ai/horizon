@@ -14,7 +14,7 @@ pinecone_index = pinecone.Index(Config.PINECONE_INDEX)
 VECTOR_DB_NAMESPACE_FORMAT_STRING = "task_id_{task_id}"
 
 
-def initialize_vector_db_from_raw_dataset(
+def initialize_vector_db_from_dataset(
     task_id: int,
     evaluation_dataset: pd.DataFrame,
     openai_api_key: str,
@@ -23,7 +23,7 @@ def initialize_vector_db_from_raw_dataset(
 
     Args:
         task_id (int): id of task.
-        raw_dataset_s3_key (str): s3 key from which to fetch raw evaluation dataset.
+        evaluation_dataset (pd.DataFrame): dataframe holding evaluation dataset.
         openai_api_key (str): OpenAI API key to use for embeddings.
         input_variables_to_chunk (list, optional): list of input variable names for which to chunk values. Defaults to None.
 
@@ -37,7 +37,7 @@ def initialize_vector_db_from_raw_dataset(
     )
 
     # Setup metadatas as list of dicts for each evaluation data point
-    metadatas = raw_dataset.to_dict(orient="records")
+    metadatas = evaluation_dataset.to_dict(orient="records")
 
     # Setup texts for embedding. Exclude evaluation_data_id so it's not embedded
     # TODO: exclude ground_truth from embedding?

@@ -101,12 +101,10 @@ def deploy_prompt(
             os.remove(raw_dataset_file_path)
 
             # Initialize vector db
-            evaluation_dataset_vector_db = (
-                vector_db.initialize_vector_db_from_raw_dataset(
-                    task_id=task.id,
-                    evaluation_dataset=evaluation_dataset_dataframe,
-                    openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-                )
+            evaluation_dataset_vector_db = vector_db.initialize_vector_db_from_dataset(
+                task_id=task.id,
+                evaluation_dataset=evaluation_dataset_dataframe,
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             )
 
             # Store vector db metadata in task object and commit changes to db

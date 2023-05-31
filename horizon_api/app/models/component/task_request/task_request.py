@@ -145,7 +145,7 @@ class TaskRequest:
             # Otherwise, load raw dataset and setup evaluation dataset in vector db
             elif task_id:
                 self.evaluation_dataset_vector_db = (
-                    vector_db.initialize_vector_db_from_raw_dataset(
+                    vector_db.initialize_vector_db_from_dataset(
                         task_id=task_id,
                         evaluation_dataset=self.evaluation_dataset_dataframe,
                         openai_api_key=openai_api_key,
