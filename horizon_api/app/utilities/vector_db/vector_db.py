@@ -1,59 +1,40 @@
 """Defines helper methods for vector databases."""
 
 from app.models.embedding.open_ai import OpenAIEmbeddings
-from app.models.vector_stores.chroma import Chroma
-from app.utilities.dataset_processing import data_check
+from app.models.vector_stores.pinecone import Pinecone
 from app.utilities.dataset_processing import input_variable_naming
-from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
-from langchain.text_splitter import (
-    RecursiveCharacterTextSplitter,
-)
-import os
+from config import Config
+import pandas as pd
+import pinecone
+
+pinecone.init(api_key=Config.PINECONE_API_KEY, environment=Config.PINECONE_ENVIRONMENT)
+pinecone_index = pinecone.Index(Config.PINECONE_INDEX)
 
 
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 0
-VECTOR_DB_PERSIST_DIRECTORY = ".chromadb/"
-VECTOR_DB_COLLECTION_NAME_FORMAT_STRING = "task_id_{task_id}"
+VECTOR_DB_NAMESPACE_FORMAT_STRING = "task_id_{task_id}"
 
 
 def initialize_vector_db_from_raw_dataset(
     task_id: int,
-    raw_dataset_s3_key: str,
+    evaluation_dataset: pd.DataFrame,
     openai_api_key: str,
-    input_variables_to_chunk: list = None,
-) -> Chroma:
-    # Get raw dataset
-    raw_dataset_file_path = download_file_from_s3_and_save_locally(raw_dataset_s3_key)
-    raw_dataset = data_check.get_evaluation_dataset(
-        dataset_file_path=raw_dataset_file_path,
-        escape_curly_braces=True,
-    )
-    os.remove(raw_dataset_file_path)
-    num_unique_data = len(raw_dataset)
+) -> Pinecone:
+    """Initializes entries into vector db from raw evaluation dataset.
+
+    Args:
+        task_id (int): id of task.
+        raw_dataset_s3_key (str): s3 key from which to fetch raw evaluation dataset.
+        openai_api_key (str): OpenAI API key to use for embeddings.
+        input_variables_to_chunk (list, optional): list of input variable names for which to chunk values. Defaults to None.
+
+    Returns:
+        Pinecone: _description_
+    """
+
+    num_unique_data = len(evaluation_dataset)
     input_variables = input_variable_naming.get_input_variables(
-        dataset_fields=raw_dataset.columns.to_list()
+        dataset_fields=evaluation_dataset.columns.to_list()
     )
-
-    # Chunk input variables if required
-    if input_variables_to_chunk:
-        # Ensure that input_variables_to_chunk are all valid columns in raw_dataset
-        assert all(
-            var in raw_dataset.columns.to_list() for var in input_variables_to_chunk
-        )
-
-        # Setup text splitter
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
-        )
-
-        # Chunk each input variable
-        for var in input_variables_to_chunk:
-            raw_dataset[var] = raw_dataset[var].apply(
-                lambda x: text_splitter.split_text(x)
-            )
-            raw_dataset = raw_dataset.explode(var)
-            raw_dataset = raw_dataset.reset_index(drop=True)
 
     # Setup metadatas as list of dicts for each evaluation data point
     metadatas = raw_dataset.to_dict(orient="records")
@@ -71,18 +52,16 @@ def initialize_vector_db_from_raw_dataset(
         for record in metadatas
     ]
 
-    # Initialize vector db collection for this task_id
-    embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
-    collection_metadata = {
-        "task_id": task_id,
-        "num_unique_data": num_unique_data,
-        "input_variables": input_variables,
-    }
-    vector_db = Chroma(
-        collection_name=VECTOR_DB_COLLECTION_NAME_FORMAT_STRING.format(task_id=task_id),
-        embedding_function=embedding,
-        persist_directory=VECTOR_DB_PERSIST_DIRECTORY,
-        collection_metadata=collection_metadata,
+    # Initialize vector db namespace for this task_id
+    embedding_function = OpenAIEmbeddings(openai_api_key=openai_api_key).embed_query
+    namespace = VECTOR_DB_NAMESPACE_FORMAT_STRING.format(task_id=task_id)
+    vector_db = Pinecone(
+        index=pinecone_index,
+        embedding_function=embedding_function,
+        text_key="text",
+        namespace=namespace,
+        input_variables=input_variables,
+        num_unique_data=num_unique_data,
     )
     vector_db.add_text_embeddings_and_metadatas(texts=texts, metadatas=metadatas)
 
@@ -90,44 +69,44 @@ def initialize_vector_db_from_raw_dataset(
 
 
 def load_vector_db(
-    collection_name: str,
+    vector_db_metadata: dict,
     openai_api_key: str,
-) -> Chroma:
-    """Loads collection from vector db corresponding to given task_id.
+) -> Pinecone:
+    """Loads namespace for the task from vector db.
 
     Args:
-        collection_name (str): name of vector db collection.
+        vector_db_metadata (dict): metadata about vector db usage for this task.
         openai_api_key (str): OpenAI API key to use for embeddings.
 
     Returns:
-        Chroma: vector db with selected collection.
+        Pinecone: vector db with selected namespace.
     """
-    embedding = OpenAIEmbeddings(openai_api_key=openai_api_key)
-    vector_db = Chroma(
-        collection_name=collection_name,
-        embedding_function=embedding,
-        persist_directory=VECTOR_DB_PERSIST_DIRECTORY,
+    embedding_function = OpenAIEmbeddings(openai_api_key=openai_api_key).embed_query
+
+    vector_db = Pinecone(
+        index=pinecone_index,
+        embedding_function=embedding_function,
+        text_key="text",
+        namespace=vector_db_metadata["namespace"],
+        input_variables=vector_db_metadata["input_variables"],
+        num_unique_data=vector_db_metadata["num_unique_data"],
     )
-
-    # Check that collection previously existed by testing if it already has items
-    # If not, delete newly created collection and throw error
-    if vector_db._collection.count() == 0:
-        vector_db.delete_collection()
-        raise ValueError(
-            "Collection did not previously exist for this task id (since there were no pre-existing items)"
-        )
-
     return vector_db
 
 
-def delete_vector_db_collection(collection_name: str) -> None:
-    """Deletes given collection from vector db.
+def delete_vector_db(vector_db_metadata: dict) -> None:
+    """Deletes namespace for this task from vector db.
 
     Args:
-        collection_name (str): name of collection to delete.
+        vector_db_metadata (dict): metadata about vector db usage for this task.
     """
-    vector_db = Chroma(
-        collection_name=collection_name,
-        persist_directory=VECTOR_DB_PERSIST_DIRECTORY,
+    embedding_function = OpenAIEmbeddings(openai_api_key="NOT_NEEDED").embed_query
+
+    # Delete namespace from vector db
+    vector_db = Pinecone(
+        index=pinecone_index,
+        embedding_function=embedding_function,
+        text_key="text",
+        namespace=vector_db_metadata["namespace"],
     )
-    vector_db.delete_collection()
+    vector_db.delete_namespace()

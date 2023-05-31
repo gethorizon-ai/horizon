@@ -6,6 +6,13 @@ import os
 import csv
 import re
 import pandas as pd
+from typing import List
+from langchain.text_splitter import (
+    RecursiveCharacterTextSplitter,
+)
+
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 0
 
 
 def check_evaluation_dataset_and_data_length(
@@ -136,7 +143,9 @@ def check_evaluation_dataset(
 
 
 def get_evaluation_dataset(
-    dataset_file_path: str, escape_curly_braces: bool = True
+    dataset_file_path: str,
+    escape_curly_braces: bool = True,
+    input_variables_to_chunk: List[str] = None,
 ) -> pd.DataFrame:
     """Convert evaluation dataset csv into DataFrame.
 
@@ -176,6 +185,27 @@ def get_evaluation_dataset(
 
     # Add evaluation_data_id column
     evaluation_dataset["evaluation_data_id"] = evaluation_dataset.index
+
+    # Chunk input variables if required
+    if input_variables_to_chunk:
+        # Ensure that input_variables_to_chunk are all valid columns in raw_dataset
+        assert all(
+            var in evaluation_dataset.columns.to_list()
+            for var in input_variables_to_chunk
+        )
+
+        # Setup text splitter
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
+        )
+
+        # Chunk each input variable
+        for var in input_variables_to_chunk:
+            evaluation_dataset[var] = evaluation_dataset[var].apply(
+                lambda x: text_splitter.split_text(x)
+            )
+            evaluation_dataset = evaluation_dataset.explode(var)
+            evaluation_dataset = evaluation_dataset.reset_index(drop=True)
 
     # Return processed evaluation dataset
     return evaluation_dataset

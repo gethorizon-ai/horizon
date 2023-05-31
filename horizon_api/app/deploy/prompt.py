@@ -79,9 +79,9 @@ def deploy_prompt(
         )
     elif template_type == "fewshot":
         # Try to fetch vector db
-        if task.evaluation_dataset_vector_db_collection_name:
+        if task.vector_db_metadata:
             evaluation_dataset_vector_db = vector_db.load_vector_db(
-                collection_name=task.evaluation_dataset_vector_db_collection_name,
+                vector_db_metadata=json.loads(task.vector_db_metadata),
                 openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             )
 
@@ -89,19 +89,12 @@ def deploy_prompt(
         elif task.evaluation_dataset:
             evaluation_dataset_vector_db = (
                 vector_db.initialize_vector_db_from_raw_dataset(
-                    task_id=task_id,
+                    task_id=task.id,
                     raw_dataset_s3_key=task.evaluation_dataset,
                     openai_api_key=Config.HORIZON_OPENAI_API_KEY,
                     input_variables_to_chunk=task.input_variables_to_chunk,
                 )
             )
-
-            # Store vector db in task record for future deployments
-            evaluation_dataset_vector_db.persist()
-            task.evaluation_dataset_vector_db_collection_name = (
-                evaluation_dataset_vector_db.get_collection_name()
-            )
-            db.session.commit()
 
         # Throw error if no raw or vector db version of evaluation dataset
         else:

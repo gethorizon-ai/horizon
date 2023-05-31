@@ -27,7 +27,6 @@ from config import Config
 import pandas as pd
 import json
 import copy
-import gc
 
 
 def generate_prompt_model_configuration(
@@ -64,30 +63,37 @@ def generate_prompt_model_configuration(
     task.objective = user_objective
 
     # Try loading evaluation dataset from vector db if available
-    if task.evaluation_dataset_vector_db_collection_name:
+    if task.vector_db_metadata:
         task_request = TaskRequest(
+            raw_dataset_s3_key=task.evaluation_dataset,
             task_id=task.id,
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+            vector_db_metadata=json.loads(task.vector_db_metadata),
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
             num_test_data_input=3,  # TODO: remove,
         )
 
-    # Otherwise, load vector db from raw evaluation dataset if provided
+    # Otherwise, load vector db from raw evaluation dataset
     elif task.evaluation_dataset:
         task_request = TaskRequest(
+            raw_dataset_s3_key=task.evaluation_dataset,
             task_id=task.id,
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-            raw_dataset_s3_key=task.evaluation_dataset,
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
             num_test_data_input=3,  # TODO: remove
             # input_variables_to_chunk=TODO:
         )
-        task_request.evaluation_dataset_vector_db.persist()
-        task.evaluation_dataset_vector_db_collection_name = (
-            task_request.evaluation_dataset_vector_db.get_collection_name()
-        )
+
+        # Store vector db metadata in task object and commit changes to db
+        vector_db_metadata = {
+            "namespace": task_request.evaluation_dataset_vector_db.get_namespace(),
+            "input_variables": task_request.evaluation_dataset_vector_db.get_input_variables(),
+            "num_unique_data": task_request.evaluation_dataset_vector_db.get_num_unique_data(),
+        }
+        task.vector_db_metadata = json.dumps(vector_db_metadata)
+        db.session.commit()
 
     # Throw error if no raw or vector db version of evaluation dataset
     else:

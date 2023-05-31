@@ -3,13 +3,13 @@ from app.models.example_selector.max_marginal_relevance_example_selector import 
     MaxMarginalRelevanceExampleSelector,
 )
 from app.models.prompt import prompt
-from app.models.vector_stores.chroma import Chroma
+from app.models.vector_stores.pinecone import Pinecone
 from langchain.prompts.few_shot import FewShotPromptTemplate as FewShotPromptOriginal
 
 
 class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
     def reconstruct_from_stored_data(
-        evaluation_dataset_vector_db: Chroma, template_data: dict
+        evaluation_dataset_vector_db: Pinecone, template_data: dict
     ) -> "FewshotPromptTemplate":
         """Reconstructs a few shot prompt object from data stored.
 

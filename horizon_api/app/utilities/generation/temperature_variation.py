@@ -1,8 +1,6 @@
 """Generate prompt-model candidates that vary model temperature of provided prompt-model candidates."""
 
 from app.models.component.prompt_model_candidates import PromptModelCandidates
-from app.models.llm.open_ai import OpenAI, ChatOpenAI
-from app.models.llm.anthropic import ChatAnthropic
 import numpy as np
 import copy
 
@@ -37,8 +35,7 @@ def prompt_generation_temperature_variation(
             prompt_model_id_list.append(starting_prompt_model_id)
             starting_prompt_model_id += 1
             generation_id_list.append(row["generation_id"] + "_[temperature_variation]")
-            # WARNING: Not copying prompt object since that throws an error with example selector using Chroma db
-            prompt_object_list.append(row["prompt_object"])
+            prompt_object_list.append(copy.deepcopy(["prompt_object"]))
             prompt_prefix_list.append(copy.deepcopy(row["prompt_prefix"]))
 
             selected_model = row["model_object"]
