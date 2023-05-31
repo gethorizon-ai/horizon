@@ -138,7 +138,7 @@ class Chroma(BaseVectorStore, ChromaOriginal):
                         include=include_statement,
                     )
                 except Exception as e:
-                    print(f"Error: {str(e)}")
+                    print(f"Error: {e}")
                     raise RuntimeError
                 print(f"Made it after pulling from db")
                 combined_ids.extend(db_result["ids"][0])
