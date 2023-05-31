@@ -36,12 +36,6 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         self._collection.add(metadatas=metadatas, embeddings=embeddings, ids=ids)
         return ids
 
-    def reset_connection_with_collections(self) -> None:
-        self._collection = self._client.get_or_create_collection(
-            name=self.get_collection_name(),
-            embedding_function=self._embedding_function.embed_documents,
-        )
-
     def get_collection_name(self) -> str:
         """Returns collection name.
 
@@ -128,18 +122,12 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         for id in evaluation_data_id_list:
             if query:
                 print(f"Made it just before pulling from db")
-                self.reset_connection_with_collections()
-                print(f"Reset connection with collection")
-                try:
-                    db_result = self._collection.query(
-                        query_embeddings=[query_embedding],
-                        n_results=1,
-                        where={"evaluation_data_id": id},
-                        include=include_statement,
-                    )
-                except Exception as e:
-                    print(f"Error: {e}")
-                    raise RuntimeError
+                db_result = self._collection.query(
+                    query_embeddings=[query_embedding],
+                    n_results=1,
+                    where={"evaluation_data_id": id},
+                    include=include_statement,
+                )
                 print(f"Made it after pulling from db")
                 combined_ids.extend(db_result["ids"][0])
                 if include_embeddings:
