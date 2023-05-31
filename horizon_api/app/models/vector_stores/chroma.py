@@ -101,7 +101,6 @@ class Chroma(BaseVectorStore, ChromaOriginal):
         Returns:
             dict: consolidated list of chroma ids, metadatas, and embeddings.
         """
-        print(f"HI FROM INFERENCE!")
         # Embed query if provided
         if query:
             print(f"Embedding function used: {self._embedding_function}")
@@ -121,16 +120,20 @@ class Chroma(BaseVectorStore, ChromaOriginal):
             include_statement.append("metadatas")
             combined_metadatas = []
 
+        print(f"MADE IT THIS FAR")
+
         # Fetch db record for each evaluation data id that is most similar to query, then add to combined list
         # If no query string is provided, then fetch first db record for each of the provided evaluation data ids
         for id in evaluation_data_id_list:
             if query:
+                print(f"Made it just before pulling from db")
                 db_result = self._collection.query(
                     query_embeddings=[query_embedding],
                     n_results=1,
                     where={"evaluation_data_id": id},
                     include=include_statement,
                 )
+                print(f"Made it after pulling from db")
                 combined_ids.extend(db_result["ids"][0])
                 if include_embeddings:
                     combined_embeddings.extend(db_result["embeddings"][0])
