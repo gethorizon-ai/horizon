@@ -43,6 +43,8 @@ def deploy_prompt(
     Returns:
         str: The output or completion of the deployed prompt.
     """
+    time1 = time.time()
+
     # Get task
     task_id = prompt.task_id
     task = Task.query.get(task_id)
@@ -125,6 +127,8 @@ def deploy_prompt(
     for variable, value in input_values.items():
         processed_input_values["var_" + variable] = value
 
+    time2 = time.time()
+
     # Format prompt by substituting input values
     original_formatted_prompt = prompt_instance.format(**processed_input_values)
 
@@ -184,5 +188,13 @@ def deploy_prompt(
             completion_cost=completion_cost,
             total_inference_cost=prompt_cost + completion_cost,
         )
+
+    final = time.time()
+
+    print(f"Setup interval: {time2 - time1}")
+    print(f"Vector db retrival: {inference_start_time - time2}")
+    print(f"Inference latency: {inference_end_time - inference_start_time}")
+    print(f"Residual time: {final - inference_end_time}")
+    print(f"Total time: {final - time1}")
 
     return output
