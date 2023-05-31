@@ -40,7 +40,7 @@ def run_inference(
                 evaluation_data_id_list=task_request.train_data_id_list,
                 query=task_request.user_objective,
                 include_embeddings=False,
-                include_ground_truth_in_metadatas=False,
+                include_ground_truth_in_metadata=False,
             )
         )
     elif train_or_test_dataset == "test":
@@ -49,7 +49,7 @@ def run_inference(
                 evaluation_data_id_list=task_request.test_data_id_list,
                 query=task_request.user_objective,
                 include_embeddings=False,
-                include_ground_truth_in_metadatas=False,
+                include_ground_truth_in_metadata=False,
             )
         )
     else:

@@ -29,7 +29,7 @@ def cluster_shortlist_data(
             task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
                 evaluation_data_id_list=task_request.train_data_id_list,
                 query=task_request.user_objective,
-                include_evaluation_data_id_in_metadatas=False,
+                include_evaluation_data_id_in_metadata=False,
             )
         )
     elif train_or_test_dataset == "test":
@@ -37,7 +37,7 @@ def cluster_shortlist_data(
             task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
                 evaluation_data_id_list=task_request.test_data_id_list,
                 query=task_request.user_objective,
-                include_evaluation_data_id_in_metadatas=False,
+                include_evaluation_data_id_in_metadata=False,
             )
         )
     embeddings = db_results["embeddings"]
