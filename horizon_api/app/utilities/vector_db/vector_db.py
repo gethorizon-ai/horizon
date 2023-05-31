@@ -7,9 +7,6 @@ from config import Config
 import pandas as pd
 import pinecone
 
-pinecone.init(api_key=Config.PINECONE_API_KEY, environment=Config.PINECONE_ENVIRONMENT)
-pinecone_index = pinecone.Index(Config.PINECONE_INDEX)
-
 
 VECTOR_DB_NAMESPACE_FORMAT_STRING = "task_id_{task_id}"
 
@@ -30,6 +27,10 @@ def initialize_vector_db_from_dataset(
     Returns:
         Pinecone: _description_
     """
+    pinecone.init(
+        api_key=Config.PINECONE_API_KEY, environment=Config.PINECONE_ENVIRONMENT
+    )
+    pinecone_index = pinecone.Index(Config.PINECONE_INDEX)
 
     num_unique_data = len(evaluation_dataset)
     input_variables = input_variable_naming.get_input_variables(
@@ -81,6 +82,11 @@ def load_vector_db(
     Returns:
         Pinecone: vector db with selected namespace.
     """
+    pinecone.init(
+        api_key=Config.PINECONE_API_KEY, environment=Config.PINECONE_ENVIRONMENT
+    )
+    pinecone_index = pinecone.Index(Config.PINECONE_INDEX)
+
     embedding_function = OpenAIEmbeddings(openai_api_key=openai_api_key).embed_query
 
     vector_db = Pinecone(
@@ -100,6 +106,11 @@ def delete_vector_db(vector_db_metadata: dict) -> None:
     Args:
         vector_db_metadata (dict): metadata about vector db usage for this task.
     """
+    pinecone.init(
+        api_key=Config.PINECONE_API_KEY, environment=Config.PINECONE_ENVIRONMENT
+    )
+    pinecone_index = pinecone.Index(Config.PINECONE_INDEX)
+
     embedding_function = OpenAIEmbeddings(openai_api_key="NOT_NEEDED").embed_query
 
     # Delete namespace from vector db
