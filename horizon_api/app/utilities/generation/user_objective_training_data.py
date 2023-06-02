@@ -35,7 +35,7 @@ def prompt_generation_user_objective_training_data(
     # Get metaprompt and format it
     few_shot_metaprompt = (
         prompt_generation_metaprompts.get_metaprompt_user_objective_training_data(
-            task_request=task_request, openai_api_key=openai_api_key
+            task_request=task_request
         )
     )
     formatted_metaprompt = few_shot_metaprompt.format(

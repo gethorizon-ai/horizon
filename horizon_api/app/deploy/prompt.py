@@ -9,13 +9,16 @@ from app.models.llm.open_ai import ChatOpenAI
 from app.models.llm.anthropic import ChatAnthropic
 from app.models.prompt.factory import PromptTemplateFactory
 from app.models.prompt.chat import HumanMessage
+from app.utilities.dataset_processing import data_check
+from app.utilities.logging.task_logger import TaskLogger
+from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
+from app.utilities.vector_db import vector_db
+from config import Config
 from config import Config
 import json
-from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
-import os
-from app.utilities.logging.task_logger import TaskLogger
 from datetime import datetime
 import time
+import os
 
 
 def deploy_prompt(
@@ -77,30 +80,54 @@ def deploy_prompt(
             template_type, **template_data
         )
     elif template_type == "fewshot":
-        # If few shot, get evaluation dataset from task
-        dataset_s3_key = task.evaluation_dataset
+        # Try to fetch vector db
+        if task.vector_db_metadata:
+            evaluation_dataset_vector_db = vector_db.load_vector_db(
+                vector_db_metadata=json.loads(task.vector_db_metadata),
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+            )
 
-        # Download the dataset from S3 and save it locally
-        dataset_file_path = download_file_from_s3_and_save_locally(dataset_s3_key)
+        # If vector db does not exist, set it up from raw evaluation dataset
+        elif task.evaluation_dataset:
+            # Get raw dataset
+            raw_dataset_file_path = download_file_from_s3_and_save_locally(
+                task.evaluation_dataset
+            )
+            evaluation_dataset_dataframe = data_check.get_evaluation_dataset(
+                dataset_file_path=raw_dataset_file_path,
+                escape_curly_braces=True,
+            )
+            os.remove(raw_dataset_file_path)
+
+            # Initialize vector db
+            evaluation_dataset_vector_db = vector_db.initialize_vector_db_from_dataset(
+                task_id=task.id,
+                evaluation_dataset=evaluation_dataset_dataframe,
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+            )
+
+            # Store vector db metadata in task object and commit changes to db
+            task.store_vector_db_metadata(vector_db=evaluation_dataset_vector_db)
+
+        # Throw error if no raw or vector db version of evaluation dataset
+        else:
+            raise ValueError("No vector db or evaluation dataset present")
+
         prompt_instance = PromptTemplateFactory.reconstruct_prompt_object(
             template_type=template_type,
-            dataset_file_path=dataset_file_path,
+            evaluation_dataset_vector_db=evaluation_dataset_vector_db,
             template_data=template_data,
-            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
 
-        # Delete the dataset file from the local file system
-        os.remove(dataset_file_path)
+    # Prepend "var_" to input variable names as done in Task generation (to prevent collisions with internal variable names)
+    processed_input_values = {}
+    for variable, value in input_values.items():
+        processed_input_values["var_" + variable] = value
 
-    # Modify input variables by prepending "var_" as done in Task creation process (to prevent names from matching internal horizonai
-    # variable names)
-    for input_variable in list(input_values.keys()):
-        input_values["var_" + input_variable] = input_values.pop(input_variable)
+    # Format prompt by substituting input values
+    original_formatted_prompt = prompt_instance.format(**processed_input_values)
 
-    # Format the prompt
-    original_formatted_prompt = prompt_instance.format(**input_values)
-
-    # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
+    # If model is ChatOpenAI or ChatAnthropic, wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
         formatted_prompt_for_llm = [HumanMessage(content=original_formatted_prompt)]
         prompt_for_data_analysis = formatted_prompt_for_llm
@@ -110,7 +137,7 @@ def deploy_prompt(
 
     inference_start_time = time.time()
 
-    # Generate the output
+    # Generate output
     llm_result = model_instance.generate([formatted_prompt_for_llm])
     output = llm_result.generations[0][0].text.strip()
 

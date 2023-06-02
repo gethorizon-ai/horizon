@@ -4,8 +4,8 @@ import pandas as pd
 from typing import List
 
 
-def get_input_variables(evaluation_dataset: pd.DataFrame) -> List[str]:
-    """Get input variables from evaluation dataset.
+def get_input_variables(dataset_fields: List[str]) -> List[str]:
+    """Get input variables from evaluation dataset columns / fields.
 
     Assumes evaluation dataset has been checked and processed appropriately.
 
@@ -17,19 +17,19 @@ def get_input_variables(evaluation_dataset: pd.DataFrame) -> List[str]:
     """
     input_variables = [
         input_var
-        for input_var in evaluation_dataset.columns.to_list()
+        for input_var in dataset_fields
         if input_var not in ["evaluation_data_id", "ground_truth"]
     ]
     return input_variables
 
 
-def get_normalized_input_variables(evaluation_dataset: pd.DataFrame) -> List[str]:
-    """Get input variables from evaluation dataset without "var_" prepended to them.
+def get_normalized_input_variables(processed_input_variables: List[str]) -> List[str]:
+    """Normalizes processed input variables by removing "var_" string prepended to them.
 
     Assumes evaluation dataset has been checked and processed appropriately.
 
     Args:
-        evaluation_dataset (pd.DataFrame): checked and processed evaluation dataset.
+        processed_input_variables (List[str]): processed input variables.
 
     Raises:
         ValueError: checks that evaluation dataset has processed version of input variables with standard phrase prepended to them.
@@ -37,10 +37,6 @@ def get_normalized_input_variables(evaluation_dataset: pd.DataFrame) -> List[str
     Returns:
         List[str]: list of input variable names.
     """
-    processed_input_variables = get_input_variables(
-        evaluation_dataset=evaluation_dataset
-    )
-
     # Check that input variables have been processed with standard phrase prepended to them
     normalized_input_variables = []
     for input_var in processed_input_variables:

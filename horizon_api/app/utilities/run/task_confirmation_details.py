@@ -279,8 +279,9 @@ def get_task_confirmation_details(task: Task) -> dict:
 
     # Create TaskRequest instance
     task_request = TaskRequest(
-        dataset_s3_key=task.evaluation_dataset,
+        raw_dataset_s3_key=task.evaluation_dataset,
         allowed_models=json.loads(task.allowed_models),
+        use_vector_db=False,
     )
 
     # Get normalized input variables

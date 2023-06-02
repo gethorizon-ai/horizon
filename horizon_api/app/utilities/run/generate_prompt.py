@@ -6,6 +6,8 @@ from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.inference_evaluation_results import InferenceEvaluationResults
 from app.models.component.post_processing.post_processing import PostProcessing
+from app.models.component.prompt import Prompt
+from app.models.component.task import Task
 from app.utilities.generation import user_objective as prompt_generation_user_objective
 from app.utilities.generation import pattern_role_play
 from app.utilities.generation import user_objective_training_data
@@ -15,8 +17,6 @@ from app.utilities.generation import temperature_variation
 from app.utilities.clustering import cluster_prompts
 from app.utilities.inference import inference
 from app.utilities.evaluation import evaluation
-from app.models.component.prompt import Prompt
-from app.models.component.task import Task
 from app.utilities.adaptive_filtering import adaptive_filtering
 from app.utilities.shortlist import shortlist
 from app.utilities.run.prompt_generation_algorithm_parameters import (
@@ -62,16 +62,37 @@ def generate_prompt_model_configuration(
     # Log user objective with task
     task.objective = user_objective
 
-    # Get the evaluation dataset from the task. If there is no evaluation dataset, return an error
-    if not task.evaluation_dataset:
-        raise AssertionError("No evaluation dataset associated with this task")
+    # Try loading evaluation dataset from vector db if available
+    if task.vector_db_metadata:
+        task_request = TaskRequest(
+            raw_dataset_s3_key=task.evaluation_dataset,
+            task_id=task.id,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+            vector_db_metadata=json.loads(task.vector_db_metadata),
+            user_objective=task.objective,
+            allowed_models=json.loads(task.allowed_models),
+        )
 
-    # Create the TaskRequest instance
-    task_request = TaskRequest(
-        dataset_s3_key=task.evaluation_dataset,
-        user_objective=task.objective,
-        allowed_models=json.loads(task.allowed_models),
-    )
+    # Otherwise, load vector db from raw evaluation dataset
+    elif task.evaluation_dataset:
+        task_request = TaskRequest(
+            raw_dataset_s3_key=task.evaluation_dataset,
+            task_id=task.id,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+            user_objective=task.objective,
+            allowed_models=json.loads(task.allowed_models),
+        )
+
+        # Store vector db metadata in task object and commit changes to db
+        task.store_vector_db_metadata(
+            vector_db=task_request.evaluation_dataset_vector_db
+        )
+
+    # Throw error if no raw or vector db version of evaluation dataset
+    else:
+        raise AssertionError(
+            "No raw or vector db version of evaluation dataset associated with this task"
+        )
 
     # Check that relevant API keys are provided for each allowed model and are valid
     task_request.check_relevant_api_keys(
@@ -282,7 +303,6 @@ def generate_prompt_model_configuration(
                 task_request=task_request,
                 prompt_model_candidates=prompt_model_candidates_stage_1_shortlisted,
                 starting_prompt_model_id=starting_prompt_model_id,
-                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
                 post_processing=post_processing,
             )
             starting_prompt_model_id += PROMPT_GENERATION_ALGORITHM_PARAMETERS[

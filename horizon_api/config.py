@@ -22,6 +22,11 @@ class Config:
     HORIZON_OPENAI_API_KEY = os.environ.get("HORIZON_OPENAI_API_KEY")
     HORIZON_ANTHROPIC_API_KEY = os.environ.get("HORIZON_ANTHROPIC_API_KEY")
 
+    # Pinecone vector db details
+    PINECONE_API_KEY = os.environ.get("PINECONE_API_KEY")
+    PINECONE_ENVIRONMENT = os.environ.get("PINECONE_ENVIRONMENT")
+    PINECONE_INDEX = "horizonai"
+
     # Horizon AI test details
     HORIZON_TEST_EMAIL = os.environ.get("HORIZON_TEST_EMAIL")
     HORIZON_TEST_PASSWORD = os.environ.get("HORIZON_TEST_PASSWORD")

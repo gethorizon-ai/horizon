@@ -53,9 +53,10 @@ def generate_synthetic_data(
 
     # Create the TaskRequest instance
     task_request = TaskRequest(
-        dataset_s3_key=dataset_s3_key,
+        raw_dataset_s3_key=dataset_s3_key,
         user_objective=user_objective,
         allowed_models=ALLOWED_MODELS,
+        use_vector_db=False,
     )
 
     if task_request.applicable_llms["text-davinci-003"]["max_few_shots"] == 0:
@@ -68,9 +69,11 @@ def generate_synthetic_data(
 
     # Create list of dicts for each evaluation data point (i.e., JSON format)
     # Use min of number of data points and synthetic data points requested
-    num_data_points = min(len(task_request.evaluation_dataset), num_synthetic_data)
+    num_data_points = min(
+        len(task_request.evaluation_dataset_dataframe), num_synthetic_data
+    )
     evaluation_data_dict = (
-        task_request.evaluation_dataset.drop("evaluation_data_id", axis=1)
+        task_request.evaluation_dataset_dataframe.drop("evaluation_data_id", axis=1)
         .head(num_data_points)
         .to_dict(orient="records")
     )
@@ -132,7 +135,7 @@ def generate_synthetic_data(
     )
 
     num_few_shots = min(
-        len(task_request.evaluation_dataset),
+        len(task_request.evaluation_dataset_dataframe),
         task_request.applicable_llms["text-davinci-003"]["max_few_shots"],
         5,
     )

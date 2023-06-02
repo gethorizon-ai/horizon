@@ -7,9 +7,11 @@ from app.models.component.prompt import Prompt
 from app.models.component.task_deployment_log.task_deployment_log import (
     TaskDeploymentLog,
 )
+from app.models.vector_stores.pinecone import Pinecone
+from app.utilities.S3.s3_util import delete_file_from_s3
+from app.utilities.vector_db import vector_db
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import event
-from app.utilities.S3.s3_util import delete_file_from_s3
 
 
 class TaskStatus(Enum):
@@ -26,6 +28,7 @@ class Task(db.Model):
     objective = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
     evaluation_dataset = db.Column(db.Text, nullable=True)
+    vector_db_metadata = db.Column(db.Text, nullable=True)
     output_schema = db.Column(db.Text, nullable=True)
     pydantic_model = db.Column(db.Text, nullable=True)
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
@@ -62,6 +65,7 @@ class Task(db.Model):
             "objective": self.objective,
             "task_type": self.task_type,
             "evaluation_dataset": self.evaluation_dataset,
+            "vector_db_metadata": self.vector_db_metadata,
             "output_schema": os.path.basename(self.output_schema)
             if (self.output_schema is not None)
             else "Undefined",
@@ -103,16 +107,33 @@ class Task(db.Model):
 
         return filtered_dict
 
+    def store_vector_db_metadata(self, vector_db: Pinecone) -> None:
+        vector_db_metadata = {
+            "namespace": vector_db.get_namespace(),
+            "input_variables": vector_db.get_input_variables(),
+            "num_unique_data": vector_db.get_num_unique_data(),
+        }
+        self.vector_db_metadata = json.dumps(vector_db_metadata)
+        db.session.commit()
+
 
 @event.listens_for(Task, "before_delete")
 def _clean_up_and_remove_dependencies(mapper, connection, target):
-    # Delete evaluation dataset from S3, if it exists
+    # Delete raw evaluation dataset from S3, if it exists
     if target.evaluation_dataset is not None:
         try:
             delete_file_from_s3(target.evaluation_dataset)
         except:
             pass
         target.evaluation_dataset = None
+
+    # Delete evaluation dataset from vector db, if it exists
+    if target.vector_db_metadata is not None:
+        try:
+            vector_db.delete_vector_db(json.loads(target.vector_db_metadata))
+        except:
+            pass
+        target.vector_db_metadata = None
 
     # Delete output schema from S3, if it exists
     if target.output_schema is not None:
@@ -140,6 +161,7 @@ def _clean_up_and_remove_dependencies(mapper, connection, target):
         .where(target.__table__.c.id == target.id)
         .values(
             evaluation_dataset=target.evaluation_dataset,
+            vector_db_metadata=target.vector_db_metadata,
             output_schema=target.output_schema,
             pydantic_model=target.pydantic_model,
             active_prompt_id=target.active_prompt_id,

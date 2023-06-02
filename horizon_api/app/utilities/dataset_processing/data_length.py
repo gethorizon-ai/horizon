@@ -27,8 +27,8 @@ def get_evaluation_data_length(
     evaluation_dataset_analysis = evaluation_dataset.drop("evaluation_data_id", axis=1)
 
     # Separate input and ground truth data
-    input_data_analysis = evaluation_dataset_analysis.iloc[:, :-1]
-    ground_truth_data_analysis = evaluation_dataset_analysis.iloc[:, -1:]
+    input_data_analysis = evaluation_dataset_analysis.drop("ground_truth", axis=1)
+    ground_truth_data_analysis = evaluation_dataset_analysis[["ground_truth"]]
 
     # Calculate data length used for input values and ground truth for each row based on
     # count of tokens and characters. Use max value of different encodings to be conservative
