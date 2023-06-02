@@ -48,7 +48,7 @@ class LLMFactory:
         "tokens_per_character": 0.3,  # assumes 0.75 words / token and 4.7 characters / word
         "instruction_tokens": 250,
         "instruction_characters": 250 / 0.3,
-        "input_output_multiplier": 1.25,  # multiplier for input and output data length as buffer
+        "input_output_multiplier": 1.1,  # multiplier for input and output data length as buffer
         "buffer_tokens": 250,
         "buffer_characters": 250 / 0.3,
         "min_max_output_tokens": 250,  # min value for max output tokens
