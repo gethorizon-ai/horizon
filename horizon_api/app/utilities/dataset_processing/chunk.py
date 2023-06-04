@@ -67,7 +67,7 @@ def chunk_and_embed_data(
             evaluation_dataset = evaluation_dataset.explode(var)
             evaluation_dataset = evaluation_dataset.reset_index(drop=True)
 
-    print(f"Made it just before filtering chunks")
+    print(f"Made it just before filtering chunks")  # TODO: remove
 
     # Filter chunks to remove potentially irrelevant chunks (i.e., ones without relevant data to generate ground truth) and generate
     # embeddings of user objective and each data point in evaluation dataset
@@ -76,6 +76,8 @@ def chunk_and_embed_data(
         evaluation_dataset=evaluation_dataset,
         openai_api_key=openai_api_key,
     )
+
+    print(f"Made it just after filtering chunks")  # TODO: remove
 
     # Add chunk length
     filtered_evaluation_dataset_and_embeddings["chunk_length"] = chunk_length
@@ -203,6 +205,7 @@ def filter_and_embed_chunks(
 
     # Add embedding of user objective plus ground truth as reference column
     # Iterate across each evaluation data id to avoid duplicate embedding calls over same ground truth values
+    evaluation_dataset["reference_embedding"] = 0.0
     for id in evaluation_data_ids:
         # Get ground truth value
         row_ground_truth = evaluation_dataset.loc[
@@ -218,6 +221,8 @@ def filter_and_embed_chunks(
         evaluation_dataset.loc[
             evaluation_dataset["evaluation_data_id"] == id, "reference_embedding"
         ] = reference_embedding
+
+    print(f"Made it after calculating reference column")  # TODO: remove
 
     # Add column that calculates cosine similarity between data and reference embeddings
     evaluation_dataset["cosine_similarity"] = evaluation_dataset.apply(
