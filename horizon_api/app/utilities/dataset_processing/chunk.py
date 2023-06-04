@@ -218,7 +218,7 @@ def filter_and_embed_chunks(
             )
         )
     else:
-        evaluation_dataset["reference_embedding"] = user_objective_embedding
+        evaluation_dataset["reference_embedding"] = [user_objective_embedding]
 
     # Add column that calculates cosine similarity between data and reference embeddings
     evaluation_dataset["cosine_similarity"] = evaluation_dataset.apply(
