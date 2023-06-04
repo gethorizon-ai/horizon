@@ -137,6 +137,8 @@ def deploy_prompt(
         original_input_values=input_values
     )
 
+    print(f"About to chunk")
+
     # Chunk input values if required
     if task.input_variables_to_chunk:
         processed_input_variables_to_chunk = (
@@ -152,8 +154,12 @@ def deploy_prompt(
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
 
+    print(f"Finished chunking")
+
     # Format prompt by substituting input values
     original_formatted_prompt = prompt_instance.format(**processed_input_values)
+
+    print(f"Prompt to LLM: {original_formatted_prompt}")
 
     # If model is ChatOpenAI or ChatAnthropic, wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
