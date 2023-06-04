@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from fuzzywuzzy import fuzz
 
-MIN_CHUNK_LENGTH = 500
+MIN_CHUNK_LENGTH = 1000
 MAX_GROUND_TRUTH_LENGTH_MULTIPLIER = 1.5
 MAX_NUM_CHUNKS_PER_EVALUATION_DATA_ID = 3
 
@@ -111,11 +111,11 @@ def split_text(
     if task_type == "text_extraction":
         best_match = None
         best_score = 0
-        threshold = 0.8
+        threshold = 80
 
         for i in range(len(text) - chunk_length + 1):
             substring = text[i : i + chunk_length]
-            match_score = fuzz.ratio(substring, ground_truth)
+            match_score = fuzz.partial_ratio(substring, ground_truth)
 
             if match_score > best_score and match_score >= threshold:
                 best_match = substring
@@ -178,26 +178,34 @@ def filter_and_embed_chunks(
     # Embed user objective
     user_objective_embedding = embedding_function(user_objective)
 
-    # Add data embeddings as column to evaluation dataset
+    # Add data embeddings as column to evaluation dataset. Note that ground truth value is not incorporated in embedding
     evaluation_dataset["data_embedding"] = evaluation_dataset.apply(
         lambda row: embedding_function(
             "\n".join(
                 [
                     f"<{column}>: {row[column]}"
                     for column in evaluation_dataset.columns
-                    if column != "evaluation_data_id"
+                    if column not in ["evaluation_data_id", "ground_truth"]
                 ]
             )
         ),
         axis=1,
     )
 
+    # Add embedding of user objective plus ground truth as reference column
+    evaluation_dataset["reference_embedding"] = evaluation_dataset.apply(
+        lambda row: embedding_function(
+            "\n".join([f"{user_objective}\n<OUTPUT>: {row['ground_truth']}"])
+        ),
+        axis=1,
+    )
+
     # Add column that calculates cosine similarity to embedding of user objective
     evaluation_dataset["cosine_similarity"] = evaluation_dataset.apply(
-        lambda row: np.dot(row["data_embedding"], user_objective_embedding)
+        lambda row: np.dot(row["data_embedding"], row["reference_embedding"])
         / (
             np.linalg.norm(row["data_embedding"])
-            * np.linalg.norm(user_objective_embedding)
+            * np.linalg.norm(row["reference_embedding"])
         ),
         axis=1,
     )
@@ -234,9 +242,12 @@ def filter_and_embed_chunks(
     # Extract embeddings of filtered dataframe
     filtered_data_embedding = filtered_evaluation_dataset["data_embedding"].to_list()
 
-    # Drop the "data_embedding" and "cosine_similarity" columns from the filtered dataframe
+    # Drop the calculation columns from the filtered dataframe
     filtered_evaluation_dataset = filtered_evaluation_dataset.drop(
         "data_embedding", axis=1
+    )
+    filtered_evaluation_dataset = filtered_evaluation_dataset.drop(
+        "reference_embedding", axis=1
     )
     filtered_evaluation_dataset = filtered_evaluation_dataset.drop(
         "cosine_similarity", axis=1
