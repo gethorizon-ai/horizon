@@ -133,9 +133,11 @@ def deploy_prompt(
         )
 
     # Process input variable names
+    print(f"Original input values: {input_values}")
     processed_input_values = input_variable_naming.process_input_values(
         original_input_values=input_values
     )
+    print(f"Processed input values: {processed_input_values}")
 
     print(f"About to chunk")
 
