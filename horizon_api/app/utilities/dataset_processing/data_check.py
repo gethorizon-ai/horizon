@@ -42,11 +42,14 @@ def check_evaluation_dataset_and_data_length(
         synthetic_data_generation=synthetic_data_generation,
     )
 
-    if input_variables_to_chunk:
+    if synthetic_data_generation:
+        chunk_or_embed = False
+    elif input_variables_to_chunk:
         assert user_objective and openai_api_key and task_type
         chunk_or_embed = True
     else:
-        chunk_or_embed = False
+        assert openai_api_key
+        chunk_or_embed = True
 
     # Get evaluation dataset
     evaluation_dataset_and_embeddings = get_evaluation_dataset_and_embedding(
@@ -75,6 +78,7 @@ def check_evaluation_dataset_and_data_length(
         max_ground_truth_tokens=max_ground_truth_tokens,
         max_input_characters=max_input_characters,
         max_ground_truth_characters=max_ground_truth_characters,
+        stuffing_multiple_chunks=(input_variables_to_chunk is not None),
     )
 
     # Check that at least one llm is applicable
