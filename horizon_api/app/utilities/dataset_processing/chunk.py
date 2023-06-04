@@ -208,7 +208,7 @@ def filter_and_embed_chunks(
         axis=1,
     )
 
-    # Create reference embedding column
+    # Create reference embedding column by embedding the user objective with each unique ground truth value
     if include_ground_truth_in_reference_embedding:
         evaluation_dataset["reference_embedding"] = evaluation_dataset.groupby(
             "evaluation_data_id"
@@ -217,8 +217,11 @@ def filter_and_embed_chunks(
                 "\n".join([f"{user_objective}\n<OUTPUT>: {group.iloc[0]}"])
             )
         )
+    # Otherwise, set reference embedding column to be the embedding of the user objective for all rows
     else:
-        evaluation_dataset["reference_embedding"] = [user_objective_embedding]
+        evaluation_dataset["reference_embedding"] = [user_objective_embedding] * len(
+            evaluation_dataset
+        )
 
     # Add column that calculates cosine similarity between data and reference embeddings
     evaluation_dataset["cosine_similarity"] = evaluation_dataset.apply(
