@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from fuzzywuzzy import fuzz
 
-MIN_CHUNK_LENGTH = 1000
+MIN_CHUNK_LENGTH = 500
 MAX_GROUND_TRUTH_LENGTH_MULTIPLIER = 1.5
 MAX_NUM_CHUNKS_PER_EVALUATION_DATA_ID = 3
 
