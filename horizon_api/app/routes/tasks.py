@@ -510,7 +510,7 @@ class UploadEvaluationDatasetsAPI(Resource):
         if "input_variables_to_chunk" not in json_data:
             input_variables_to_chunk = None
         else:
-            input_variables_to_chunk = json_data["input_variables_to_chunk"]
+            input_variables_to_chunk = json.loads(json_data["input_variables_to_chunk"])
 
         evaluation_dataset = request.files["evaluation_dataset"]
 

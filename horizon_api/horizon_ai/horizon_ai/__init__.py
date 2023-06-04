@@ -2,6 +2,7 @@
 
 import requests
 from urllib.parse import urljoin
+import json
 
 # Base url for API calls
 base_url = "http://127.0.0.1:5000"
@@ -315,7 +316,7 @@ def upload_evaluation_dataset(
     headers = {"X-Api-Key": api_key}
     payload = {
         "objective": objective,
-        "input_variables_to_chunk": input_variables_to_chunk,
+        "input_variables_to_chunk": json.dumps(input_variables_to_chunk),
     }
     with open(file_path, "rb") as f:
         response = _post(
