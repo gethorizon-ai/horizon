@@ -61,6 +61,7 @@ def generate_prompt_model_configuration(
             vector_db_metadata=json.loads(task.vector_db_metadata),
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
+            num_test_data_input=3,  # TODO: remove
             stuffing_multiple_chunks=(task.input_variables_to_chunk is not None),
         )
 
