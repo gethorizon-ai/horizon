@@ -178,7 +178,9 @@ def filter_and_embed_chunks(
     # Embed user objective
     user_objective_embedding = embedding_function(user_objective)
 
-    # Add data embeddings as column to evaluation dataset. Note that ground truth value is not incorporated in embedding
+    # Add data embeddings as column to evaluation dataset
+    # Ground truth value is not incorporated in embedding to prevent overlap with reference embedding column and create
+    # apples-to-apples comparison with input values during deployment
     evaluation_dataset["data_embedding"] = evaluation_dataset.apply(
         lambda row: embedding_function(
             "\n".join(
@@ -200,7 +202,7 @@ def filter_and_embed_chunks(
         axis=1,
     )
 
-    # Add column that calculates cosine similarity to embedding of user objective
+    # Add column that calculates cosine similarity between data and reference embeddings
     evaluation_dataset["cosine_similarity"] = evaluation_dataset.apply(
         lambda row: np.dot(row["data_embedding"], row["reference_embedding"])
         / (
@@ -242,7 +244,7 @@ def filter_and_embed_chunks(
     # Extract embeddings of filtered dataframe
     filtered_data_embedding = filtered_evaluation_dataset["data_embedding"].to_list()
 
-    # Drop the calculation columns from the filtered dataframe
+    # Drop calculation columns from filtered dataframe
     filtered_evaluation_dataset = filtered_evaluation_dataset.drop(
         "data_embedding", axis=1
     )
