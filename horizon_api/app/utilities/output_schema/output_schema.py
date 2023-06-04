@@ -182,6 +182,7 @@ def check_evaluation_dataset_aligns_with_pydantic_model(
     pydantic_model_file_path: str,
     vector_db_metadata: dict,
     openai_api_key: str,
+    unescape_curly_braces: bool = True,
 ) -> None:
     """Checks that each ground truth element in evaluation dataset can be parsed as an instance of the Pydantic model for the given
         output schema.
@@ -190,6 +191,7 @@ def check_evaluation_dataset_aligns_with_pydantic_model(
         pydantic_model_file_path (str): file path to pydantic model.
         vector_db_metadata (dict): metadata about vector db usage for this task.
         openai_api_key (str): OpenAI API key to use for embeddings.
+        unescape_curly_braces (bool, optional): whether to unescape curly braces when getting data lengths. Defaults to True.
 
     Raises:
         ValueError: ground truth element cannot be parsed as JSON object.
@@ -201,6 +203,12 @@ def check_evaluation_dataset_aligns_with_pydantic_model(
         openai_api_key=openai_api_key,
     )
     evaluation_dataset = evaluation_dataset_vector_db.get_metadata_as_dataframe()
+
+    # Unescape curly braces
+    if unescape_curly_braces:
+        evaluation_dataset = evaluation_dataset.applymap(
+            lambda x: x.replace("{{", "{").replace("}}", "}")
+        )
 
     # Get Pydantic object
     pydantic_object = get_pydantic_object_from_file_path(
