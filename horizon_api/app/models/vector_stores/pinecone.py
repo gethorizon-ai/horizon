@@ -32,8 +32,8 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
 
     def add_text_embeddings_and_metadata(
         self,
+        metadata: List[dict],
         texts: Iterable[str] = None,
-        metadata: List[dict] = None,
         data_embedding: List[List[float]] = None,
         ids: List[str] = None,
         batch_size: int = 32,
@@ -43,8 +43,8 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         Not adding texts reduces memory required. This is useful when all the data in the text is captured in the metadata.
 
         Args:
+            metadata (List[dict]): list of metadata.
             texts (Iterable[str], optional): Texts to add to the vectorstore. Defaults to None.
-            metadata (List[dict], optional): Optional list of metadata.
             data_embedding (List[List[float]], optional): pre-computed list of embeddings for each row of evaluation dataset.
                 Defaults to None.
             ids (List[str], optional): list of ids to use for each vector upload. Defaults to None.
@@ -56,20 +56,20 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         Returns:
             List[str]: List of IDs of the added texts.
         """
-        if not text and not data_embedding:
+        if not texts and not data_embedding:
             raise ValueError(
                 "Must provide list of texts for embedding or pre-computed embeddings"
             )
 
         # Organize data for upserting to vector data
         docs = []
-        ids = ids or [str(uuid.uuid4()) for _ in texts]
-        for i, text in enumerate(texts):
+        ids = ids or [str(uuid.uuid4()) for _ in metadata]
+        for i in range(len(metadata)):
             # Use provided embeddings for each metadata item if provided, otherwise embed text
             if data_embedding:
                 embedding = data_embedding[i]
             else:
-                embedding = self._embedding_function(text)
+                embedding = self._embedding_function(texts[i])
             metadata_item = metadata[i] if metadata else {}
 
             # Do not upload the actual text since all the data is in the metadata
