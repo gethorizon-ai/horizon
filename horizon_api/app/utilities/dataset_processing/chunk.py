@@ -163,6 +163,7 @@ def filter_and_embed_chunks(
     evaluation_dataset: pd.DataFrame,
     openai_api_key: str,
     filter_to_top_quartile: bool = True,
+    include_ground_truth_in_reference_embedding: bool = True,
 ) -> dict:
     """Filters chunked evaluation dataset by selecting chunks from each original evaluation data point from the top quartile of
     cosine similarity compared to the user objective.
@@ -171,6 +172,10 @@ def filter_and_embed_chunks(
         user_objective (str): user-provided objective statement.
         evaluation_dataset (pd.DataFrame): chunked evaluation dataset.
         openai_api_key (str): OpenAI API key to use for embeddings.
+        filter_to_top_quartile (bool, optional): whether to filter chunks to those in top quartile of cosine similarity. Defaults to
+            True.
+        include_ground_truth_in_reference_embedding (bool, optional): whether to include ground truth value when computing reference
+            embedding. If False, only uses user objective in reference embedding. Defaults to True.
 
     Returns:
         dict: filtered evaluation dataset, along with embeddings of user objective statement and each data chunk for reuse.
@@ -203,22 +208,17 @@ def filter_and_embed_chunks(
         axis=1,
     )
 
-    # Add embedding of user objective plus ground truth as reference column
-    # TODO: Iterate across each evaluation data id to avoid duplicate embedding calls over same ground truth values
-    evaluation_dataset["reference_embedding"] = evaluation_dataset.apply(
-        lambda row: embedding_function(
-            "\n".join([f"{user_objective}\n<OUTPUT>: {row['ground_truth']}"])
-        ),
-        axis=1,
-    )
-
-    evaluation_dataset["reference_embedding"] = evaluation_dataset.groupby(
-        "evaluation_data_id"
-    )["ground_truth"].transform(
-        lambda group: embedding_function(
-            "\n".join([f"{user_objective}\n<OUTPUT>: {group.iloc[0]}"])
+    # Create reference embedding column
+    if include_ground_truth_in_reference_embedding:
+        evaluation_dataset["reference_embedding"] = evaluation_dataset.groupby(
+            "evaluation_data_id"
+        )["ground_truth"].transform(
+            lambda group: embedding_function(
+                "\n".join([f"{user_objective}\n<OUTPUT>: {group.iloc[0]}"])
+            )
         )
-    )
+    else:
+        evaluation_dataset["reference_embedding"] = user_objective_embedding
 
     # Add column that calculates cosine similarity between data and reference embeddings
     evaluation_dataset["cosine_similarity"] = evaluation_dataset.apply(
@@ -323,6 +323,7 @@ def chunk_input_values(
         evaluation_dataset=input_dataset,
         openai_api_key=openai_api_key,
         filter_to_top_quartile=False,
+        include_ground_truth_in_reference_embedding=False,
     )
     chunked_dataset = filtered_dataset_and_embeddings["evaluation_dataset"]
     chunked_dataset = chunked_dataset.drop("evaluation_data_id", axis=1)
