@@ -554,7 +554,7 @@ class UploadEvaluationDatasetsAPI(Resource):
             upload_file_to_s3(temp_file, s3_key)
         os.remove(temp_file_path)
 
-        task.objective = json_data["user_objective"]
+        task.objective = json_data["objective"]
         task.evaluation_dataset = s3_key
         task.input_variables_to_chunk = json.loads(
             json_data["input_variables_to_chunk"]
