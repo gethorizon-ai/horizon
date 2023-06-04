@@ -217,6 +217,11 @@ def filter_and_embed_chunks(
             "\n".join([f"{user_objective}\n<OUTPUT>: {row_ground_truth}"])
         )
 
+        print(f"Reference embedding: {reference_embedding}")  # TODO: remove
+        print(
+            f"Type of reference embedding: {type(reference_embedding)}"
+        )  # TODO: remove
+
         # Assign reference embedding to all rows with the same ID
         evaluation_dataset.loc[
             evaluation_dataset["evaluation_data_id"] == id, "reference_embedding"
