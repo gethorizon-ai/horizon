@@ -560,7 +560,7 @@ class UploadEvaluationDatasetsAPI(Resource):
         task.objective = json_data["objective"]
         task.evaluation_dataset = s3_key
         task.input_variables_to_chunk = (
-            json.loads(input_variables_to_chunk) if input_variables_to_chunk else None
+            json.dumps(input_variables_to_chunk) if input_variables_to_chunk else None
         )
         task.chunk_length = evaluation_dataset_and_embeddings["chunk_length"]
         task.store_vector_db_metadata(vector_db=evaluation_dataset_vector_db)
