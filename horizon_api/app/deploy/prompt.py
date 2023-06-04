@@ -76,8 +76,6 @@ def deploy_prompt(
     # Get the template_data from the prompt
     template_data = json.loads(prompt.template_data)
 
-    print(f"MADE IT JUST BEFORE PROMPT CONSTRUCTION")
-
     # Create prompt instance based on if object is zero-shot or few-shot
     if template_type == "prompt":
         prompt_instance = PromptTemplateFactory.reconstruct_prompt_object(
@@ -90,7 +88,6 @@ def deploy_prompt(
                 vector_db_metadata=json.loads(task.vector_db_metadata),
                 openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             )
-            print(f"SETUP VECTOR DB")
 
         # If vector db does not exist, set it up from raw evaluation dataset
         elif task.evaluation_dataset:

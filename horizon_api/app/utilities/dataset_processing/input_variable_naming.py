@@ -41,7 +41,7 @@ def process_input_values(original_input_values: dict) -> dict:
         processed_input_variable = process_input_variables(
             original_input_variables=[variable]
         )
-        processed_input_values[processed_input_variable] = value
+        processed_input_values[processed_input_variable[0]] = value
 
 
 def normalize_input_variable_list(processed_input_variables: List[str]) -> List[str]:
