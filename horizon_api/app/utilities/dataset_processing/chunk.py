@@ -182,6 +182,9 @@ def filter_and_embed_chunks(
     # Embed user objective
     user_objective_embedding = embedding_function(user_objective)
 
+    # Create a list of unique evaluation data ids
+    evaluation_data_ids = evaluation_dataset["evaluation_data_id"].unique()
+
     # Add data embeddings as column to evaluation dataset
     # Ground truth value is not incorporated in embedding to prevent overlap with reference embedding column and create
     # apples-to-apples comparison with input values during deployment
@@ -199,12 +202,22 @@ def filter_and_embed_chunks(
     )
 
     # Add embedding of user objective plus ground truth as reference column
-    evaluation_dataset["reference_embedding"] = evaluation_dataset.apply(
-        lambda row: embedding_function(
-            "\n".join([f"{user_objective}\n<OUTPUT>: {row['ground_truth']}"])
-        ),
-        axis=1,
-    )
+    # Iterate across each evaluation data id to avoid duplicate embedding calls over same ground truth values
+    for id in evaluation_data_ids:
+        # Get ground truth value
+        row_ground_truth = evaluation_dataset.loc[
+            evaluation_dataset["evaluation_data_id"] == id, "ground_truth"
+        ].iloc[0]
+
+        # Calculate reference embedding
+        reference_embedding = embedding_function(
+            "\n".join([f"{user_objective}\n<OUTPUT>: {row_ground_truth}"])
+        )
+
+        # Assign reference embedding to all rows with the same ID
+        evaluation_dataset.loc[
+            evaluation_dataset["evaluation_data_id"] == id, "reference_embedding"
+        ] = reference_embedding
 
     # Add column that calculates cosine similarity between data and reference embeddings
     evaluation_dataset["cosine_similarity"] = evaluation_dataset.apply(
@@ -215,9 +228,6 @@ def filter_and_embed_chunks(
         ),
         axis=1,
     )
-
-    # Create a list of unique evaluation data ids
-    evaluation_data_ids = evaluation_dataset["evaluation_data_id"].unique()
 
     # Filter dataframe by top quartile cosine similarity for each evaluation data id
     filtered_evaluation_dataset = pd.DataFrame()
