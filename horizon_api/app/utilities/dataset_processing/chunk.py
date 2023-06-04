@@ -51,6 +51,8 @@ def chunk_and_embed_data(
             max_ground_truth_length * MAX_GROUND_TRUTH_LENGTH_MULTIPLIER,
         )
 
+        print(f"Made it just before splitting text")
+
         # Chunk each input variable, then separate chunks into different rows
         for var in input_variables_to_chunk:
             evaluation_dataset[var] = evaluation_dataset.apply(
@@ -64,6 +66,8 @@ def chunk_and_embed_data(
             )
             evaluation_dataset = evaluation_dataset.explode(var)
             evaluation_dataset = evaluation_dataset.reset_index(drop=True)
+
+    print(f"Made it just before filtering chunks")
 
     # Filter chunks to remove potentially irrelevant chunks (i.e., ones without relevant data to generate ground truth) and generate
     # embeddings of user objective and each data point in evaluation dataset

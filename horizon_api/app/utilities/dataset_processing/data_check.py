@@ -237,6 +237,8 @@ def get_evaluation_dataset_and_embedding(
                 original_input_variables=input_variables_to_chunk
             )
 
+        print(f"Made it right before chunking")  # TODO: remove
+
         evaluation_dataset_and_embeddings = chunk.chunk_and_embed_data(
             user_objective=user_objective,
             evaluation_dataset=evaluation_dataset,

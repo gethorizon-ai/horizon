@@ -523,6 +523,9 @@ class UploadEvaluationDatasetsAPI(Resource):
 
         try:
             # Chunk and process evaluation dataset, then validate it satisfies requirements (e.g., token limits)
+            print(
+                f"Input variables to chunk: {input_variables_to_chunk}"
+            )  # TODO: remove
             evaluation_dataset_and_embeddings = (
                 data_check.check_evaluation_dataset_and_data_length(
                     dataset_file_path=temp_file_path,
