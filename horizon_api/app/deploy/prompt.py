@@ -150,6 +150,7 @@ def deploy_prompt(
             user_objective=task.objective,
             input_values=processed_input_values,
             processed_input_variables_to_chunk=processed_input_variables_to_chunk,
+            chunk_length=task.chunk_length,
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
         )
 
