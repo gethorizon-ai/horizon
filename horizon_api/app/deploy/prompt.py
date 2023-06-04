@@ -147,7 +147,7 @@ def deploy_prompt(
             )
         )
         processed_input_values = chunk.chunk_input_values(
-            user_objective=task.user_objective,
+            user_objective=task.objective,
             input_values=processed_input_values,
             processed_input_variables_to_chunk=processed_input_variables_to_chunk,
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
