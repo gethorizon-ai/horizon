@@ -111,7 +111,7 @@ def split_text(
     if task_type == "text_extraction":
         best_match = None
         best_score = 0
-        threshold = 80
+        threshold = 95
 
         for i in range(len(text) - chunk_length + 1):
             substring = text[i : i + chunk_length]
