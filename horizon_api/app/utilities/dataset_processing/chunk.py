@@ -59,7 +59,8 @@ def chunk_and_embed_data(
                     chunk_length=chunk_length,
                     task_type=task_type,
                     ground_truth=row["ground_truth"],
-                )
+                ),
+                axis=1,
             )
             evaluation_dataset = evaluation_dataset.explode(var)
             evaluation_dataset = evaluation_dataset.reset_index(drop=True)
@@ -187,7 +188,8 @@ def filter_and_embed_chunks(
                     if column != "evaluation_data_id"
                 ]
             )
-        )
+        ),
+        axis=1,
     )
 
     # Add column that calculates cosine similarity to embedding of user objective
@@ -277,7 +279,8 @@ def chunk_input_values(
             lambda row: split_text(
                 text=row[var],
                 chunk_length=chunk_length,
-            )
+            ),
+            axis=1,
         )
         input_dataset = input_dataset.explode(var)
         input_dataset = input_dataset.reset_index(drop=True)

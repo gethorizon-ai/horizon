@@ -48,7 +48,7 @@ def check_evaluation_dataset_and_data_length(
         assert user_objective and openai_api_key and task_type
         chunk_or_embed = True
     else:
-        assert openai_api_key
+        assert user_objective and openai_api_key
         chunk_or_embed = True
 
     # Get evaluation dataset
