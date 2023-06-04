@@ -90,6 +90,7 @@ def deploy_prompt(
                 vector_db_metadata=json.loads(task.vector_db_metadata),
                 openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             )
+            print(f"SETUP VECTOR DB")
 
         # If vector db does not exist, set it up from raw evaluation dataset
         elif task.evaluation_dataset:
