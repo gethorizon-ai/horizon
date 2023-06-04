@@ -76,6 +76,8 @@ def deploy_prompt(
     # Get the template_data from the prompt
     template_data = json.loads(prompt.template_data)
 
+    print(f"MADE IT JUST BEFORE PROMPT CONSTRUCTION")
+
     # Create prompt instance based on if object is zero-shot or few-shot
     if template_type == "prompt":
         prompt_instance = PromptTemplateFactory.reconstruct_prompt_object(
