@@ -115,7 +115,7 @@ def split_text(
 
         for i in range(len(text) - chunk_length + 1):
             substring = text[i : i + chunk_length]
-            match_score = fuzz.WRatio(substring, ground_truth)
+            match_score = fuzz.token_sort_ratio(substring, ground_truth)
 
             if match_score > best_score and match_score >= threshold:
                 best_match = substring
