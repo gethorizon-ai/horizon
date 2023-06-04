@@ -294,7 +294,7 @@ def chunk_input_values(
     Returns:
         dict: chunked input values.
     """
-    print(f"Starting to chunk")
+    print(f"Starting to chunk with input values: {input_values}")
 
     # Convert input values into dataframe
     input_dataset = pd.DataFrame(input_values, index=[0])
