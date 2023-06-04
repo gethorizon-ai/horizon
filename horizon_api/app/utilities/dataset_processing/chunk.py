@@ -316,6 +316,8 @@ def chunk_input_values(
     print(f"Finished chunking: {input_dataset}")
 
     # Filter to chunks based on cosine similarity to user objective statement
+    # Add dummy evaluation_data_id column, then drop after
+    input_dataset["evaluation_data_id"] = -1
     filtered_dataset_and_embeddings = filter_and_embed_chunks(
         user_objective=user_objective,
         evaluation_dataset=input_dataset,
@@ -323,6 +325,7 @@ def chunk_input_values(
         filter_to_top_quartile=False,
     )
     chunked_dataset = filtered_dataset_and_embeddings["evaluation_dataset"]
+    chunked_dataset = chunked_dataset.drop("evaluation_data_id", axis=1)
 
     print(f"Finished filtering: {chunked_dataset}")
 
