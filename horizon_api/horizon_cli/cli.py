@@ -275,7 +275,9 @@ def generate_task():
     # Get task type
     task_type = click.prompt(
         "Task type",
-        click.Choice(["text_extraction", "text_classification", "text_generation"]),
+        type=click.Choice(
+            ["text_extraction", "text_classification", "text_generation"]
+        ),
     )
 
     # Get evaluation dataset
