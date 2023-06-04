@@ -202,7 +202,9 @@ def check_evaluation_dataset_aligns_with_pydantic_model(
         vector_db_metadata=vector_db_metadata,
         openai_api_key=openai_api_key,
     )
-    evaluation_dataset = evaluation_dataset_vector_db.get_metadata_as_dataframe()
+    evaluation_dataset = evaluation_dataset_vector_db.get_metadata_as_dataframe(
+        include_evaluation_data_id_in_metadata=False
+    )
 
     # Unescape curly braces
     if unescape_curly_braces:

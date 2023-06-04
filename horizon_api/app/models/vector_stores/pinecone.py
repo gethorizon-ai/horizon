@@ -205,12 +205,21 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         return combined_db_result
 
     def get_metadata_as_dataframe(
-        self, evaluation_data_id_list: List[str] = None
+        self,
+        evaluation_data_id_list: List[str] = None,
+        include_evaluation_data_id_in_metadata: bool = True,
+        include_input_variables_in_metadata: bool = True,
+        include_ground_truth_in_metadata: bool = True,
     ) -> pd.DataFrame:
         """Gets metadata for provided evaluation data ids (defaults to all evaluation data ids if none specified).
 
         Args:
             evaluation_data_id_list (List[str], optional): list of evaluation data ids for which to fetch metadata. Defaults to None.
+            include_evaluation_data_id_in_metadata (bool, optional): whether to include "evaluation_data_id" key in metadata.
+                Defaults to True.
+            include_input_variables_in_metadata (bool, optional): whether to include input variable keys in metadata. Defaults to
+                True.
+            include_ground_truth_in_metadata (bool, optional): whether to include "ground_truth" key in metadata. Defaults to True.
 
         Returns:
             pd.DataFrame: metadata as dataframe.
@@ -225,9 +234,27 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
             top_k_per_data_id=chunk.MAX_NUM_CHUNKS_PER_EVALUATION_DATA_ID,
             include_embeddings=False,
         )
+        combined_metadata = db_results["metadata"]
+
+        # Remove evaluation_data_id key in metadata if requested
+        if not include_evaluation_data_id_in_metadata:
+            for metadata in combined_metadata:
+                del metadata["evaluation_data_id"]
+
+        # Remove input values in metadata if requested
+        if not include_input_variables_in_metadata:
+            input_variables = self.get_input_variables()
+            for metadata in combined_metadata:
+                for var in input_variables:
+                    del metadata[var]
+
+        # Remove ground truth in metadata if requested
+        if not include_ground_truth_in_metadata:
+            for metadata in combined_metadata:
+                del metadata["ground_truth"]
 
         # Return metadata as DataFrame
-        metadata_as_dataframe = pd.DataFrame(db_results["metadata"])
+        metadata_as_dataframe = pd.DataFrame(combined_metadata)
         return metadata_as_dataframe
 
     def max_marginal_relevance_search(

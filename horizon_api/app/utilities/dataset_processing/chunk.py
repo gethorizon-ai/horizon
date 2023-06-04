@@ -252,14 +252,10 @@ def filter_and_embed_chunks(
     filtered_data_embedding = filtered_evaluation_dataset["data_embedding"].to_list()
 
     # Drop calculation columns from filtered dataframe
-    filtered_evaluation_dataset = filtered_evaluation_dataset.drop(
-        "data_embedding", axis=1
-    )
-    filtered_evaluation_dataset = filtered_evaluation_dataset.drop(
-        "reference_embedding", axis=1
-    )
-    filtered_evaluation_dataset = filtered_evaluation_dataset.drop(
-        "cosine_similarity", axis=1
+    filtered_evaluation_dataset = (
+        filtered_evaluation_dataset.drop("data_embedding", axis=1)
+        .drop("reference_embedding", axis=1)
+        .drop("cosine_similarity", axis=1)
     )
 
     return {
