@@ -309,6 +309,8 @@ def chunk_input_values(
         input_dataset = input_dataset.explode(var)
         input_dataset = input_dataset.reset_index(drop=True)
 
+    print(f"Finished chunking: {input_dataset}")
+
     # Filter to chunks based on cosine similarity to user objective statement
     filtered_dataset_and_embeddings = filter_and_embed_chunks(
         user_objective=user_objective,
@@ -318,6 +320,8 @@ def chunk_input_values(
     )
     chunked_dataset = filtered_dataset_and_embeddings["evaluation_dataset"]
 
+    print(f"Finished filtering: {chunked_dataset}")
+
     # Concatenate chunks for input values that were chunked
     collapsed_dataset = pd.DataFrame()
     for var in chunked_dataset.columns:
@@ -325,6 +329,8 @@ def chunk_input_values(
             collapsed_dataset[var] = ["\n".join(chunked_dataset[var].tolist())]
         else:
             collapsed_dataset[var] = [chunked_dataset[var][0]]
+
+    print(f"Finished collapsing: {collapsed_dataset}")
 
     # Return back in dict form
     chunked_and_collapsed_values = collapsed_dataset.to_dict(orient="records")[0]
