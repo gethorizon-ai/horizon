@@ -508,7 +508,9 @@ class UploadEvaluationDatasetsAPI(Resource):
                 "error": "Must provide objective statement with at most 500 characters."
             }, 400
         if "input_variables_to_chunk" not in json_data:
-            return {"error": "Input variables to chunk is required"}, 400
+            input_variables_to_chunk = None
+        else:
+            input_variables_to_chunk = json_data["input_variables_to_chunk"]
 
         evaluation_dataset = request.files["evaluation_dataset"]
 
@@ -524,7 +526,7 @@ class UploadEvaluationDatasetsAPI(Resource):
             evaluation_dataset_and_embeddings = (
                 data_check.check_evaluation_dataset_and_data_length(
                     dataset_file_path=temp_file_path,
-                    input_variables_to_chunk=json_data["input_variables_to_chunk"],
+                    input_variables_to_chunk=input_variables_to_chunk,
                     user_objective=json_data["objective"],
                     openai_api_key=Config.HORIZON_OPENAI_API_KEY,
                     task_type=task.task_type,
