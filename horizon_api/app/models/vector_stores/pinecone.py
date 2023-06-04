@@ -1,10 +1,12 @@
 """Wrapper around LangChain Pinecone vector db object."""
 
 from .base import BaseVectorStore
+from app.utilities.dataset_processing import chunk
 from langchain.vectorstores import Pinecone as PineconeOriginal
 from langchain.vectorstores.utils import maximal_marginal_relevance
 from typing import Any, Iterable, List, Optional, Dict
 import uuid
+import pandas as pd
 import numpy as np
 
 VECTOR_DIMENSIONS = 1536
@@ -30,9 +32,10 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
 
     def add_text_embeddings_and_metadata(
         self,
-        texts: Iterable[str],
-        metadata: Optional[List[dict]] = None,
-        ids: Optional[List[str]] = None,
+        texts: Iterable[str] = None,
+        metadata: List[dict] = None,
+        data_embedding: List[List[float]] = None,
+        ids: List[str] = None,
         batch_size: int = 32,
     ) -> List[str]:
         """Embed texts and add associated ids, embeddings, and metadata to vectorstore without adding texts themselves.
@@ -40,20 +43,36 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         Not adding texts reduces memory required. This is useful when all the data in the text is captured in the metadata.
 
         Args:
-            texts (Iterable[str]): Texts to add to the vectorstore.
-            metadata (Optional[List[dict]], optional): Optional list of metadata.
-            ids (Optional[List[str]], optional): Optional list of IDs.
+            texts (Iterable[str], optional): Texts to add to the vectorstore. Defaults to None.
+            metadata (List[dict], optional): Optional list of metadata.
+            data_embedding (List[List[float]], optional): pre-computed list of embeddings for each row of evaluation dataset.
+                Defaults to None.
+            ids (List[str], optional): list of ids to use for each vector upload. Defaults to None.
             batch_size (int, optional): batch size for upserting vectors. Defaults to 32.
+
+        Raises:
+            ValueError: checks if either texts or pre-computed embedding is provided.
 
         Returns:
             List[str]: List of IDs of the added texts.
         """
-        # Embed and create the documents. Do not upload the actual text since all the data is in the metadata
+        if not text and not data_embedding:
+            raise ValueError(
+                "Must provide list of texts for embedding or pre-computed embeddings"
+            )
+
+        # Organize data for upserting to vector data
         docs = []
         ids = ids or [str(uuid.uuid4()) for _ in texts]
         for i, text in enumerate(texts):
-            embedding = self._embedding_function(text)
+            # Use provided embeddings for each metadata item if provided, otherwise embed text
+            if data_embedding:
+                embedding = data_embedding[i]
+            else:
+                embedding = self._embedding_function(text)
             metadata_item = metadata[i] if metadata else {}
+
+            # Do not upload the actual text since all the data is in the metadata
             docs.append((ids[i], embedding, metadata_item))
 
         # upsert to Pinecone
@@ -64,8 +83,8 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         )
         return ids
 
-    def get_namespace(self) -> str:
-        """Returns namespace.
+    def get_data_namespace(self) -> str:
+        """Returns namespace where evaluation data are stored.
 
         Returns:
             str: namespace.
@@ -92,23 +111,27 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         self,
         evaluation_data_id_list: List[int],
         query: str = None,
+        query_embedding: List[float] = None,
+        top_k_per_data_id: int = 1,
         include_embeddings: bool = True,
         include_metatata: bool = True,
         include_evaluation_data_id_in_metadata: bool = True,
         include_input_variables_in_metadata: bool = True,
         include_ground_truth_in_metadata: bool = True,
     ) -> dict:
-        """Fetches db record for each of the provided evaluation data ids that is most similar to given query string, then returns
+        """Fetches db records for each of the provided evaluation data ids that is most similar to given query string, then returns
         consolidated list of db ids, metadata, and embeddings across all the fetched records.
 
-        If query string is not provided, then just fetches first db record for each of the provided evaluation data ids. This can be
-        used to get the ground truth for each evaluation data id (which should be the same across all chunks).
+        If query string is not provided, then just fetches random db records associated with each of the provided evaluation data
+        ids. This can be used to get the ground truth for each evaluation data id (which should be the same across all chunks).
 
-        Options to exclude to metadata or embeddings for increased efficiency.
+        Options to exclude metadata or embeddings for increased efficiency.
 
         Args:
-            query (str): query to find most similar db entry.
-            evaluation_data_id_list (List[int]): list of evaluation data ids for which to fetch one db record each.
+            evaluation_data_id_list (List[int]): list of evaluation data ids for which to fetch data.
+            query (str, optional): query to find most similar db entry. Defaults to None.
+            query_embedding (List[float], optional): pre-computed embedding of query string. Defaults to None.
+            top_k_per_data_id (int, optional): max number of results to try to fetch per evaluation data id. Defaults to 1.
             include_embeddings (bool, optional): whether to fetch embeddings from vector db. Defaults to True.
             include_metadata (bool, optional): whether to fetch metadata from vector db. Defaults to True.
             include_evaluation_data_id_in_metadata (bool, optional): whether to include "evaluation_data_id" key in metadata.
@@ -120,12 +143,14 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         Returns:
             dict: consolidated list of db ids, metadata, and embeddings.
         """
-        # Embed query if provided
-        if query:
-            query_embedding = self._embedding_function(query)
-        # Otherwise, use zero vector
-        else:
-            query_embedding = [0] * VECTOR_DIMENSIONS
+        # Prepare query_embedding if not provided
+        if not query_embedding:
+            # Embed query if provided
+            if query:
+                query_embedding = self._embedding_function(query)
+            # Otherwise, use zero vector
+            else:
+                query_embedding = [0] * VECTOR_DIMENSIONS
 
         # Create lists to store combined results from db pull
         combined_ids = []
@@ -135,23 +160,22 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
             combined_metadata = []
 
         # Fetch db record for each evaluation data id that is most similar to query, then add to combined list
-        # If no query string is provided, then fetch first db record for each of the provided evaluation data ids
         for id in evaluation_data_id_list:
             db_result = self._index.query(
                 vector=query_embedding,
                 filter={"evaluation_data_id": id},
-                top_k=1,
+                top_k=top_k_per_data_id,
                 namespace=self._namespace,
                 include_values=include_embeddings,
                 include_metadata=include_metatata,
             )
-            fetched_data = db_result["matches"][0]
 
-            combined_ids.append(fetched_data["id"])
-            if include_embeddings:
-                combined_embeddings.append(fetched_data["values"])
-            if include_metatata:
-                combined_metadata.append(fetched_data["metadata"])
+            for fetched_data in db_result["matches"]:
+                combined_ids.append(fetched_data["id"])
+                if include_embeddings:
+                    combined_embeddings.append(fetched_data["values"])
+                if include_metatata:
+                    combined_metadata.append(fetched_data["metadata"])
 
         if include_metatata:
             # Remove evaluation_data_id key in metadata if requested
@@ -179,6 +203,32 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
             combined_db_result["metadata"] = combined_metadata
 
         return combined_db_result
+
+    def get_metadata_as_dataframe(
+        self, evaluation_data_id_list: List[str] = None
+    ) -> pd.DataFrame:
+        """Gets metadata for provided evaluation data ids (defaults to all evaluation data ids if none specified).
+
+        Args:
+            evaluation_data_id_list (List[str], optional): list of evaluation data ids for which to fetch metadata. Defaults to None.
+
+        Returns:
+            pd.DataFrame: metadata as dataframe.
+        """
+        # If evaluation_data_id_list is not provided, then get data for all evaluation data ids
+        if not evaluation_data_id_list:
+            evaluation_data_id_list = range(self.num_unique_data)
+
+        # Fetch metadata
+        db_results = self.get_data_per_evaluation_data_id(
+            evaluation_data_id_list=range(self.num_unique_data),
+            top_k_per_data_id=chunk.MAX_NUM_CHUNKS_PER_EVALUATION_DATA_ID,
+            include_embeddings=False,
+        )
+
+        # Return metadata as DataFrame
+        metadata_as_dataframe = pd.DataFrame(db_results["metadata"])
+        return metadata_as_dataframe
 
     def max_marginal_relevance_search(
         self,
@@ -242,7 +292,8 @@ class Pinecone(BaseVectorStore, PineconeOriginal):
         return selected_results
 
     def delete_namespace(self) -> None:
-        """Deletes all vectors and metadata in namespace."""
+        """Deletes all vectors and metadata in associated namespaces."""
+        # Delete namespace with evaluation dataset embeddings
         self._index.delete(
             deleteAll=True,
             namespace=self._namespace,

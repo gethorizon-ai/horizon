@@ -272,8 +272,27 @@ def generate_task():
     # Get objective
     objective = click.prompt("Task objective")
 
+    # Get task type
+    task_type = click.prompt(
+        "Task type (pick from 'text_extraction', 'text_classification', or 'text_generation')",
+        click.Choice(["text_extraction", "text_classification", "text_generation"]),
+    )
+
     # Get evaluation dataset
     dataset_file_path = click.prompt("Evaluation dataset file path (.csv)")
+
+    # Get input variables to chunk, if applicable
+    input_variables_to_chunk = None
+    if click.confirm("Chunk input variables?"):
+        raw_input_variables_to_chunk = click.prompt(
+            text="Input variables to chunk (comma-separated)"
+        )
+        try:
+            input_variables_to_chunk = [
+                item.strip() for item in raw_input_variables_to_chunk.split(",")
+            ]
+        except Exception as e:
+            raise Exception("Must specify input variables as comma-separated list")
 
     # Get output schema, if applicable
     output_schema_file_path = None
@@ -315,7 +334,10 @@ def generate_task():
     # Create task record
     try:
         task_creation_response = horizon_ai.create_task(
-            name=task_name, project_id=project_id, allowed_models=allowed_models
+            name=task_name,
+            project_id=project_id,
+            allowed_models=allowed_models,
+            task_type=task_type,
         )
         task_id = task_creation_response["task"]["id"]
     except Exception as e:
@@ -326,7 +348,7 @@ def generate_task():
     # Upload evaluation dataset
     try:
         upload_dataset_response = horizon_ai.upload_evaluation_dataset(
-            task_id, dataset_file_path
+            task_id, dataset_file_path, objective, input_variables_to_chunk
         )
     except Exception as e:
         # If uploading evaluation dataset fails, then delete previously created task
@@ -395,7 +417,7 @@ def generate_task():
     # Given user's confirmation, continue with task creation
     try:
         click.echo("Proceeding with task generation...")
-        generate_response = horizon_ai.generate_task(task_id, objective)
+        generate_response = horizon_ai.generate_task(task_id)
         formatted_output = json.dumps(generate_response, indent=4)
         click.echo(formatted_output)
     except Exception as e:

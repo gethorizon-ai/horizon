@@ -10,6 +10,7 @@ from app.utilities.run import task_confirmation_details
 from app.utilities.dataset_processing import data_check
 from app.utilities.output_schema import output_schema as output_schema_util
 from app.utilities.email_notifications import email_notifications
+from app.utilities.vector_db import vector_db
 from app.deploy.prompt import deploy_prompt
 from app.models.llm.factory import LLMFactory
 from app.utilities.S3.s3_util import (
@@ -18,6 +19,7 @@ from app.utilities.S3.s3_util import (
     download_file_from_s3_and_save_locally,
     delete_file_from_s3,
 )
+from config import Config
 import os
 import json
 import logging
@@ -301,7 +303,6 @@ class GetTaskConfirmationDetailsAPI(Resource):
 
 @shared_task(ignore_result=True)
 def process_generate_prompt_model_configuration(
-    user_objective: str,
     task_id: int,
     prompt_id: int,
     openai_api_key: str = None,
@@ -331,7 +332,6 @@ def process_generate_prompt_model_configuration(
 
         # Attempt prompt-model configuration algorithm
         task_configuration_dict = generate_prompt.generate_prompt_model_configuration(
-            user_objective=user_objective,
             task=task,
             prompt=prompt,
             openai_api_key=openai_api_key,
@@ -363,9 +363,6 @@ class GenerateTaskAPI(Resource):
         parser = reqparse.RequestParser()
         parser.add_argument(
             "task_id", type=int, required=True, help="Task ID is required"
-        )
-        parser.add_argument(
-            "objective", type=str, required=True, help="Objective is required"
         )
         parser.add_argument(
             "openai_api_key",
@@ -402,7 +399,6 @@ class GenerateTaskAPI(Resource):
         # Call the process_generate_prompt_model_configuration function as a background job with the provided details
         try:
             result_id = process_generate_prompt_model_configuration.delay(
-                user_objective=args["objective"],
                 task_id=task.id,
                 prompt_id=prompt.id,
                 openai_api_key=args["openai_api_key"],
@@ -502,6 +498,18 @@ class UploadEvaluationDatasetsAPI(Resource):
         if "evaluation_dataset" not in request.files:
             return {"error": f"No file provided"}, 400
 
+        json_data = request.form.to_dict()
+        if (
+            "objective" not in json_data
+            or len(json_data["objective"]) == 0
+            or len(json_data["objective"]) > 500
+        ):
+            return {
+                "error": "Must provide objective statement with at most 500 characters."
+            }, 400
+        if "input_variables_to_chunk" not in json_data:
+            return {"error": "Input variables to chunk is required"}, 400
+
         evaluation_dataset = request.files["evaluation_dataset"]
 
         if not allowed_evaluation_dataset_file(evaluation_dataset.filename):
@@ -512,8 +520,25 @@ class UploadEvaluationDatasetsAPI(Resource):
             evaluation_dataset.save(temp_file_path)
 
         try:
-            data_check.check_evaluation_dataset_and_data_length(
-                dataset_file_path=temp_file_path
+            # Chunk and process evaluation dataset, then validate it satisfies requirements (e.g., token limits)
+            evaluation_dataset_and_embeddings = (
+                data_check.check_evaluation_dataset_and_data_length(
+                    dataset_file_path=temp_file_path,
+                    input_variables_to_chunk=json_data["input_variables_to_chunk"],
+                    user_objective=json_data["objective"],
+                    openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+                    task_type=task.task_type,
+                )
+            )
+
+            # Setup vector db
+            evaluation_dataset_vector_db = vector_db.initialize_vector_db_from_dataset(
+                task_id=task_id,
+                data_embedding=evaluation_dataset_and_embeddings["data_embedding"],
+                evaluation_dataset=evaluation_dataset_and_embeddings[
+                    "evaluation_dataset"
+                ],
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             )
         except Exception as e:
             logging.error(
@@ -527,7 +552,13 @@ class UploadEvaluationDatasetsAPI(Resource):
             upload_file_to_s3(temp_file, s3_key)
         os.remove(temp_file_path)
 
+        task.objective = json_data["user_objective"]
         task.evaluation_dataset = s3_key
+        task.input_variables_to_chunk = json.loads(
+            json_data["input_variables_to_chunk"]
+        )
+        task.chunk_length = evaluation_dataset_and_embeddings["chunk_length"]
+        task.store_vector_db_metadata(vector_db=evaluation_dataset_vector_db)
 
         try:
             db.session.commit()
@@ -619,9 +650,9 @@ class UploadOutputSchemasAPI(Resource):
         if "output_schema" not in request.files:
             return {"error": f"No file provided"}, 400
 
-        if not task.evaluation_dataset:
+        if not task.vector_db_metadata:
             return {
-                "error": "Evaluation dataset must be uploaded before output schema"
+                "error": "Evaluation dataset must be uploaded into vector db before output schema is uploaded"
             }, 404
 
         output_schema = request.files["output_schema"]
@@ -660,14 +691,15 @@ class UploadOutputSchemasAPI(Resource):
                 "error": f"UploadOutputSchemasAPI: Invalid output schema - {str(e)}"
             }, 400
 
-        # Check ground truth in evaluation dataset matches output schema
+        # Check ground truth in evaluation dataset conforms to output schema
         try:
             dataset_file_path = download_file_from_s3_and_save_locally(
                 key=task.evaluation_dataset
             )
             output_schema_util.check_evaluation_dataset_aligns_with_pydantic_model(
-                dataset_file_path=dataset_file_path,
+                vector_db_metadata=json.loads(task.vector_db_metadata),
                 pydantic_model_file_path=pydantic_model_temp_file_path,
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             )
             os.remove(path=dataset_file_path)
         except Exception as e:

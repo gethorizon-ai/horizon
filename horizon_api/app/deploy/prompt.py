@@ -9,7 +9,9 @@ from app.models.llm.open_ai import ChatOpenAI
 from app.models.llm.anthropic import ChatAnthropic
 from app.models.prompt.factory import PromptTemplateFactory
 from app.models.prompt.chat import HumanMessage
+from app.utilities.dataset_processing import chunk
 from app.utilities.dataset_processing import data_check
+from app.utilities.dataset_processing import input_variable_naming
 from app.utilities.logging.task_logger import TaskLogger
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 from app.utilities.vector_db import vector_db
@@ -93,16 +95,27 @@ def deploy_prompt(
             raw_dataset_file_path = download_file_from_s3_and_save_locally(
                 task.evaluation_dataset
             )
-            evaluation_dataset_dataframe = data_check.get_evaluation_dataset(
-                dataset_file_path=raw_dataset_file_path,
-                escape_curly_braces=True,
+            # Assumed that no chunking is required (otherwise would have already been stored in vector db)
+            evaluation_dataset_and_embeddings = (
+                data_check.get_evaluation_dataset_and_embedding(
+                    dataset_file_path=raw_dataset_file_path,
+                    escape_curly_braces=True,
+                    chunk_or_embed=True,
+                    input_variables_to_chunk=json.loads(task.input_variables_to_chunk),
+                    user_objective=task.objective,
+                    openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+                    task_type=task.task_type,
+                )
             )
             os.remove(raw_dataset_file_path)
 
             # Initialize vector db
             evaluation_dataset_vector_db = vector_db.initialize_vector_db_from_dataset(
                 task_id=task.id,
-                evaluation_dataset=evaluation_dataset_dataframe,
+                data_embedding=evaluation_dataset_and_embeddings["data_embedding"],
+                evaluation_dataset=evaluation_dataset_and_embeddings[
+                    "evaluation_dataset"
+                ],
                 openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             )
 
@@ -119,10 +132,24 @@ def deploy_prompt(
             template_data=template_data,
         )
 
-    # Prepend "var_" to input variable names as done in Task generation (to prevent collisions with internal variable names)
-    processed_input_values = {}
-    for variable, value in input_values.items():
-        processed_input_values["var_" + variable] = value
+    # Process input variable names
+    processed_input_values = input_variable_naming.process_input_values(
+        original_input_values=input_values
+    )
+
+    # Chunk input values if required
+    if task.input_variables_to_chunk:
+        processed_input_variables_to_chunk = (
+            input_variable_naming.process_input_variables(
+                original_input_variables=json.loads(task.input_variables_to_chunk)
+            )
+        )
+        processed_input_values = chunk.chunk_input_values(
+            user_objective=task.user_objective,
+            input_values=processed_input_values,
+            processed_input_variables_to_chunk=processed_input_variables_to_chunk,
+            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+        )
 
     # Format prompt by substituting input values
     original_formatted_prompt = prompt_instance.format(**processed_input_values)

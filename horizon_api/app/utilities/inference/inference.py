@@ -38,7 +38,7 @@ def run_inference(
         db_results = (
             task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
                 evaluation_data_id_list=task_request.train_data_id_list,
-                query=task_request.user_objective,
+                query_embedding=task_request.user_objective_embedding,
                 include_embeddings=False,
                 include_ground_truth_in_metadata=False,
             )
@@ -47,7 +47,7 @@ def run_inference(
         db_results = (
             task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
                 evaluation_data_id_list=task_request.test_data_id_list,
-                query=task_request.user_objective,
+                query_embedding=task_request.user_objective_embedding,
                 include_embeddings=False,
                 include_ground_truth_in_metadata=False,
             )

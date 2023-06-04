@@ -1,32 +1,40 @@
 """Contains helper functions to process and extract info from evaluation dataset."""
 
+from . import chunk
 from . import data_length
+from . import input_variable_naming
 from . import llm_applicability
 import os
 import csv
 import re
 import pandas as pd
 from typing import List
-from langchain.text_splitter import (
-    RecursiveCharacterTextSplitter,
-)
-
-# CHUNK_SIZE = 1000
-# CHUNK_OVERLAP = 0
 
 
 def check_evaluation_dataset_and_data_length(
-    dataset_file_path: str, synthetic_data_generation: bool = False
-) -> None:
+    dataset_file_path: str,
+    synthetic_data_generation: bool = False,
+    input_variables_to_chunk: List[str] = None,
+    user_objective: str = None,
+    openai_api_key: str = None,
+    task_type: str = None,
+) -> dict:
     """Checks contents of evaluation dataset for potential errors and if data lengths meet llm token limits.
 
     Args:
         dataset_file_path (str): file path to evaluation dataset.
         synthetic_data_generation (bool, optional): whether this task request is to generate synthetic data. Defaults to False.
+        input_variables_to_chunk (List[str], optional): _description_. Defaults to None.
+        user_objective (str, optional): user-provided objective statement. Defaults to None.
+        openai_api_key (str, optional): OpenAI API key to use for embeddings. Defaults to None.
+        task_type (str, optional): task type / use case. Defaults to None.
 
     Raises:
         AssertionError: checks if input and output data lengths exceed token limits of available llms.
         AssertionError: checks if input and output data lengths exceed token limits of available llms.
+
+    Returns:
+        dict: processed evaluation dataset, along with embeddings of user objective statement and each data chunk (if requested).
     """
     # Check contents of evaluation dataset for potential errors
     check_evaluation_dataset(
@@ -34,10 +42,23 @@ def check_evaluation_dataset_and_data_length(
         synthetic_data_generation=synthetic_data_generation,
     )
 
+    if input_variables_to_chunk:
+        assert user_objective and openai_api_key and task_type
+        chunk_or_embed = True
+    else:
+        chunk_or_embed = False
+
     # Get evaluation dataset
-    evaluation_dataset = get_evaluation_dataset(
-        dataset_file_path=dataset_file_path, escape_curly_braces=True
+    evaluation_dataset_and_embeddings = get_evaluation_dataset_and_embedding(
+        dataset_file_path=dataset_file_path,
+        escape_curly_braces=True,
+        chunk_or_embed=chunk_or_embed,
+        input_variables_to_chunk=input_variables_to_chunk,
+        user_objective=user_objective,
+        openai_api_key=openai_api_key,
+        task_type=task_type,
     )
+    evaluation_dataset = evaluation_dataset_and_embeddings["evaluation_dataset"]
 
     # Check that evaluation data lengths are appropriate
     evaluation_data_length = data_length.get_evaluation_data_length(
@@ -67,6 +88,8 @@ def check_evaluation_dataset_and_data_length(
         raise AssertionError(
             "Input and output data length exceed context length of available LLMs needed for prompt generation."
         )
+
+    return evaluation_dataset_and_embeddings
 
 
 def check_evaluation_dataset(
@@ -142,30 +165,47 @@ def check_evaluation_dataset(
             seen_rows.add(row_csv)
 
 
-def get_evaluation_dataset(
+def get_evaluation_dataset_and_embedding(
     dataset_file_path: str,
     escape_curly_braces: bool = True,
+    chunk_or_embed: bool = False,
     input_variables_to_chunk: List[str] = None,
-) -> pd.DataFrame:
-    """Convert evaluation dataset csv into DataFrame.
+    user_objective: str = None,
+    openai_api_key: str = None,
+    task_type: str = None,
+) -> dict:
+    """Process evaluation dataset csv into DataFrame, including chunking input variables if requested.
 
     Assumes evaluation dataset has been checked appropriately. Escapes curly braces for use with format strings by adding extra curly
         brace (e.g., converts '{'  to '{{').
 
+    Returns dict with embeddings if created for reuse.
+
     Args:
         dataset_file_path (str): file path to evaluation dataset.
         escape_curly_braces (bool, optional): whether to escape curly braces when getting data lengths. Defaults to True.
+        chunk_or_embed (bool, optional): _description_. Defaults to False.
+        input_variables_to_chunk (List[str], optional): list of original input variable names to chunk. Defaults to None.
+        user_objective (str, optional): user-provided objective statement. Defaults to None.
+        openai_api_key (str, optional): OpenAI API key to use for embeddings. Defaults to None.
+        task_type (str, optional): task type / use case. Defaults to None.
 
     Returns:
-        pd.DataFrame: processed evaluation dataset.
+        dict: processed evaluation dataset, along with embeddings of user objective statement and each data chunk (if requested).
     """
+    # If chunking and embedding requested, must provide user objective statement and OpenAI API key
+    if chunk_or_embed:
+        assert user_objective and openai_api_key
+
     # Import evaluation dataset
     csvfile = open(dataset_file_path, newline="")
     data = list(csv.reader(csvfile))
 
-    # Rename each input variable by prepending "var_" (to avoid duplicating with columns names in internal DataFrames)
+    # Process each input variable name
     columns = data[0]
-    columns[:-1] = [f"var_{input_var}" for input_var in columns[:-1]]
+    columns[:-1] = input_variable_naming.process_input_variables(
+        original_input_variables=columns[:-1]
+    )
 
     # Rename last column to "ground_truth" in case it is not already named as such
     columns[-1] = "ground_truth"
@@ -186,29 +226,25 @@ def get_evaluation_dataset(
     # Add evaluation_data_id column
     evaluation_dataset["evaluation_data_id"] = evaluation_dataset.index
 
-    # Chunk input variables if required
-    if input_variables_to_chunk:
-        pass
+    # Chunk and embed input variables if requested
+    if chunk_or_embed:
+        if input_variables_to_chunk:
+            input_variables_to_chunk = input_variable_naming.process_input_variables(
+                original_input_variables=input_variables_to_chunk
+            )
 
-        # # TODO:
-        # # Ensure that input_variables_to_chunk are all valid columns in raw_dataset
-        # assert all(
-        #     var in evaluation_dataset.columns.to_list()
-        #     for var in input_variables_to_chunk
-        # )
-
-        # # Setup text splitter
-        # text_splitter = RecursiveCharacterTextSplitter(
-        #     chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
-        # )
-
-        # # Chunk each input variable
-        # for var in input_variables_to_chunk:
-        #     evaluation_dataset[var] = evaluation_dataset[var].apply(
-        #         lambda x: text_splitter.split_text(x)
-        #     )
-        #     evaluation_dataset = evaluation_dataset.explode(var)
-        #     evaluation_dataset = evaluation_dataset.reset_index(drop=True)
-
-    # Return processed evaluation dataset
-    return evaluation_dataset
+        evaluation_dataset_and_embeddings = chunk.chunk_and_embed_data(
+            user_objective=user_objective,
+            evaluation_dataset=evaluation_dataset,
+            openai_api_key=openai_api_key,
+            input_variables_to_chunk=input_variables_to_chunk,
+            task_type=task_type,
+        )
+        return evaluation_dataset_and_embeddings
+    else:
+        return {
+            "user_objective_embedding": None,
+            "data_embedding": None,
+            "chunk_length": None,
+            "evaluation_dataset": evaluation_dataset,
+        }

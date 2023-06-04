@@ -2,6 +2,7 @@
 
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 from app.utilities.dataset_processing import data_check
+from app.utilities.vector_db import vector_db
 from pydantic import BaseModel
 import json
 import os
@@ -178,23 +179,28 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
 
 
 def check_evaluation_dataset_aligns_with_pydantic_model(
-    dataset_file_path: str, pydantic_model_file_path: str
+    pydantic_model_file_path: str,
+    vector_db_metadata: dict,
+    openai_api_key: str,
 ) -> None:
     """Checks that each ground truth element in evaluation dataset can be parsed as an instance of the Pydantic model for the given
         output schema.
 
     Args:
-        dataset_file_path (str): file path to evaluation dataset.
         pydantic_model_file_path (str): file path to pydantic model.
+        vector_db_metadata (dict): metadata about vector db usage for this task.
+        openai_api_key (str): OpenAI API key to use for embeddings.
 
     Raises:
         ValueError: ground truth element cannot be parsed as JSON object.
         ValueError: ground truth element cannot be parsed as instance of the Pydantic model for the given output schema.
     """
     # Get evaluation dataset
-    evaluation_dataset = data_check.get_evaluation_dataset(
-        dataset_file_path=dataset_file_path, escape_curly_braces=False
+    evaluation_dataset_vector_db = vector_db.load_vector_db(
+        vector_db_metadata=vector_db_metadata,
+        openai_api_key=openai_api_key,
     )
+    evaluation_dataset = evaluation_dataset_vector_db.get_metadata_as_dataframe()
 
     # Get Pydantic object
     pydantic_object = get_pydantic_object_from_file_path(

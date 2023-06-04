@@ -5,6 +5,7 @@ from app.utilities.run.prompt_generation_algorithm_parameters import (
     PROMPT_GENERATION_ALGORITHM_PARAMETERS,
 )
 from app.utilities.adaptive_filtering import adaptive_filtering
+from config import Config
 import math
 import json
 
@@ -273,15 +274,17 @@ def get_task_confirmation_details(task: Task) -> dict:
     Returns:
         dict: information to confirm with user (e.g., estimated cost).
     """
-    # Get evaluation dataset from task. If there is no evaluation dataset, raise error
-    if not task.evaluation_dataset:
+    # Get evaluation dataset from vector db. If there is no evaluation dataset, raise error
+    if not task.vector_db_metadata:
         raise AssertionError("No evaluation_dataset file associated with this task")
 
     # Create TaskRequest instance
     task_request = TaskRequest(
-        raw_dataset_s3_key=task.evaluation_dataset,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+        vector_db_metadata=json.loads(task.vector_db_metadata),
+        user_objective=task.objective,
         allowed_models=json.loads(task.allowed_models),
-        use_vector_db=False,
+        stuffing_multiple_chunks=(task.input_variables_to_chunk is not None),
     )
 
     # Get normalized input variables
@@ -291,4 +294,7 @@ def get_task_confirmation_details(task: Task) -> dict:
     cost_estimate = estimate_task_creation_cost(task_request=task_request)
 
     # Return key information
-    return {"input_variables": input_variables, "cost_estimate": cost_estimate}
+    return {
+        "input_variables": input_variables,
+        "cost_estimate": cost_estimate,
+    }

@@ -1,6 +1,7 @@
 """Defines helper methods to determine applicable llms for task."""
 
 from app.models.llm.factory import LLMFactory
+from app.utilities.dataset_processing import chunk
 
 
 def get_applicable_llms(
@@ -8,6 +9,7 @@ def get_applicable_llms(
     max_ground_truth_tokens: int,
     max_input_characters: int,
     max_ground_truth_characters: int,
+    stuffing_multiple_chunks: bool = False,
 ) -> dict:
     """Determines applicable models and associated parameters for given evaluation data.
 
@@ -16,6 +18,7 @@ def get_applicable_llms(
         max_ground_truth_tokens (int): max number of tokens used for ground truth data in evaluation dataset.
         max_input_characters (int): max number of characters used for input data in evaluation dataset.
         max_ground_truth_characters (int): max number of characters used for ground truth data in evaluation dataset.
+        stuffing_multiple_chunks (bool, optional): whether multiple chunks will be stuffed into prompt context. Defaults to False.
 
     Raises:
         AssertionError: task_request must have evaluation dataset length statistics.
@@ -50,12 +53,18 @@ def get_applicable_llms(
     )
 
     # Determine data length of zero-shot prompt, including llm output
+    # If stuffing multiple chunks, then conservatively inflate input tokens in zero shot prompt
     zero_shot_tokens = int(
         LLMFactory.llm_data_assumptions["buffer_tokens"]
         + LLMFactory.llm_data_assumptions["instruction_tokens"]
         + (
             max_input_tokens
             * LLMFactory.llm_data_assumptions["input_output_multiplier"]
+            * (
+                chunk.MAX_NUM_CHUNKS_PER_EVALUATION_DATA_ID
+                if stuffing_multiple_chunks == True
+                else 1
+            )
         )
         + max_output_tokens
     )
@@ -65,6 +74,11 @@ def get_applicable_llms(
         + (
             max_input_characters
             * LLMFactory.llm_data_assumptions["input_output_multiplier"]
+            * (
+                chunk.MAX_NUM_CHUNKS_PER_EVALUATION_DATA_ID
+                if stuffing_multiple_chunks == True
+                else 1
+            )
         )
         + max_output_characters
     )

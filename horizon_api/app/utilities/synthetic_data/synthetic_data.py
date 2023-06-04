@@ -1,6 +1,7 @@
 """Generates synthetic data for the user to curate and edit to enlarge their dataset."""
 
 from app.models.component.task_request import TaskRequest
+from app.utilities.dataset_processing import input_variable_naming
 from app.utilities.synthetic_data import prompts
 from app.utilities.synthetic_data import models
 from app.utilities.S3.s3_util import upload_file_to_s3
@@ -56,7 +57,6 @@ def generate_synthetic_data(
         raw_dataset_s3_key=dataset_s3_key,
         user_objective=user_objective,
         allowed_models=ALLOWED_MODELS,
-        use_vector_db=False,
     )
 
     if task_request.applicable_llms["text-davinci-003"]["max_few_shots"] == 0:
@@ -182,8 +182,10 @@ def generate_synthetic_data(
     # Convert synthetic data examples to DataFrame
     synthetic_data = pd.DataFrame(synthetic_data_generations)
 
-    # Remove "var_" prepending each input variable name
-    new_columns = [input_variable[4:] for input_variable in synthetic_data.columns[:-1]]
+    # Normalize input variable names
+    new_columns = input_variable_naming.normalize_input_variable_list(
+        processed_input_variables=synthetic_data.columns[:-1]
+    )
     new_columns.extend(synthetic_data.columns[-1:])
     synthetic_data.columns = new_columns
 

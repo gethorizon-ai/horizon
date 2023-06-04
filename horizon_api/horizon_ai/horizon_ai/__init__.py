@@ -275,14 +275,13 @@ def get_task_confirmation_details(task_id):
 
 
 # Generate a task
-def generate_task(task_id, objective):
+def generate_task(task_id):
     global api_key, openai_api_key, anthropic_api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
     payload = {
         "task_id": task_id,
-        "objective": objective,
         "openai_api_key": openai_api_key,
         "anthropic_api_key": anthropic_api_key,
     }
@@ -307,15 +306,22 @@ def deploy_task(task_id, inputs, log_deployment=False):
     return response
 
 
-def upload_evaluation_dataset(task_id, file_path):
+def upload_evaluation_dataset(
+    task_id, file_path, objective, input_variables_to_chunk=None
+):
     global api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
     headers = {"X-Api-Key": api_key}
+    payload = {
+        "objective": objective,
+        "input_variables_to_chunk": input_variables_to_chunk,
+    }
     with open(file_path, "rb") as f:
         response = _post(
             endpoint=f"/api/tasks/{task_id}/upload_evaluation_dataset",
             files={"evaluation_dataset": f},
+            data=payload,
             headers=headers,
         )
         return response

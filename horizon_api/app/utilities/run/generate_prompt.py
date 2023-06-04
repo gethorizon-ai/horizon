@@ -30,7 +30,6 @@ import copy
 
 
 def generate_prompt_model_configuration(
-    user_objective: str,
     task: Task,
     prompt: Prompt,
     openai_api_key: str = None,
@@ -41,7 +40,6 @@ def generate_prompt_model_configuration(
     Horizon's OpenAI API key is used for prompt generation and embeddings (user's API LLM API keys still used for inference).
 
     Args:
-        user_objective (str): objective of the use case.
         task (Task): db record corresponding to task.
         prompt (Prompt): db record corresponding to prompt.
         openai_api_key (str, optional): OpenAI API key to use if wanting to consider OpenAI models. Defaults to None.
@@ -56,42 +54,20 @@ def generate_prompt_model_configuration(
     Returns:
         dict: overview of task and generated prompt-model candidate.
     """
-    if user_objective == None or len(user_objective) == 0:
-        raise ValueError("Must provide user objective")
-
-    # Log user objective with task
-    task.objective = user_objective
-
     # Try loading evaluation dataset from vector db if available
     if task.vector_db_metadata:
         task_request = TaskRequest(
-            raw_dataset_s3_key=task.evaluation_dataset,
-            task_id=task.id,
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             vector_db_metadata=json.loads(task.vector_db_metadata),
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
+            stuffing_multiple_chunks=(task.input_variables_to_chunk is not None),
         )
 
-    # Otherwise, load vector db from raw evaluation dataset
-    elif task.evaluation_dataset:
-        task_request = TaskRequest(
-            raw_dataset_s3_key=task.evaluation_dataset,
-            task_id=task.id,
-            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-            user_objective=task.objective,
-            allowed_models=json.loads(task.allowed_models),
-        )
-
-        # Store vector db metadata in task object and commit changes to db
-        task.store_vector_db_metadata(
-            vector_db=task_request.evaluation_dataset_vector_db
-        )
-
-    # Throw error if no raw or vector db version of evaluation dataset
+    # Throw error if vector db is not setup
     else:
         raise AssertionError(
-            "No raw or vector db version of evaluation dataset associated with this task"
+            "No vector db version of evaluation dataset associated with this task"
         )
 
     # Check that relevant API keys are provided for each allowed model and are valid

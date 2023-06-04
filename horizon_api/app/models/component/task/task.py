@@ -31,6 +31,8 @@ class Task(db.Model):
     vector_db_metadata = db.Column(db.Text, nullable=True)
     output_schema = db.Column(db.Text, nullable=True)
     pydantic_model = db.Column(db.Text, nullable=True)
+    input_variables_to_chunk = db.Column(db.Text, nullable=True)
+    chunk_length = db.Column(db.Integer, nullable=True)
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
     create_timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
@@ -72,6 +74,10 @@ class Task(db.Model):
             "pydantic_model": os.path.basename(self.pydantic_model)
             if (self.pydantic_model is not None)
             else "Undefined",
+            "input_variables_to_chunk": json.loads(self.input_variables_to_chunk)
+            if (self.input_variables_to_chunk is not None)
+            else "Undefined",
+            "chunk_length": self.chunk_length,
             "status": self.status,
             "create_timestamp": datetime.isoformat(self.create_timestamp),
             "project_id": self.project_id,
@@ -92,6 +98,7 @@ class Task(db.Model):
             "name",
             "objective",
             "output_schema",
+            "input_variables_to_chunk",
             "project_id",
             "allowed_models",
             "active_prompt_id",
@@ -109,7 +116,7 @@ class Task(db.Model):
 
     def store_vector_db_metadata(self, vector_db: Pinecone) -> None:
         vector_db_metadata = {
-            "namespace": vector_db.get_namespace(),
+            "data_namespace": vector_db.get_data_namespace(),
             "input_variables": vector_db.get_input_variables(),
             "num_unique_data": vector_db.get_num_unique_data(),
         }

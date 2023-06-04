@@ -4,6 +4,7 @@ Class organizes information around Task request, including objective, input vari
 """
 
 from app.models.llm.factory import LLMFactory
+from app.models.embedding.open_ai import OpenAIEmbeddings
 from app.models.schema import HumanMessage
 from app.utilities.dataset_processing import input_variable_naming
 from app.utilities.dataset_processing import data_check
@@ -22,14 +23,12 @@ class TaskRequest:
     def __init__(
         self,
         raw_dataset_s3_key: str,
-        task_id: int = None,
         openai_api_key: str = None,
         vector_db_metadata: dict = None,
         user_objective: str = None,
         allowed_models: list = None,
         num_test_data_input: int = None,
-        input_variables_to_chunk: List[str] = None,
-        use_vector_db: bool = True,
+        stuffing_multiple_chunks: bool = False,
     ):
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
@@ -42,8 +41,7 @@ class TaskRequest:
             allowed_models (list, optional): list of allowed models for this task. Defaults to None.
             num_test_data_input (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
                 assignment of test data points. Defaults to None.
-            input_variables_to_chunk (List[str], optional): list of input variables to chunk. Defaults to None.
-            use_vector_db (bool, optional): whether to store data in vector db. If False, stores data in DataFrame. Defaults to True.
+            stuffing_multiple_chunks (bool, optional): whether multiple chunks will be stuffed into prompt context. Defaults to False.
 
         Raises:
             ValueError: checks that user objective is provided and has >0 characters.
@@ -53,9 +51,12 @@ class TaskRequest:
             ValueError: checks if vector db or raw dataset and task id passed if proceeding with vector db.
         """
         self.user_objective = user_objective
+        self.user_objective_embedding = None
         self.input_variables = None
         self.evaluation_dataset_dataframe = None
+        self.evaluation_dataset_embedding = None
         self.evaluation_dataset_vector_db = None
+        self.num_unique_data = None
         self.num_train_data = None
         self.num_test_data = num_test_data_input
         self.train_data_id_list = None
@@ -67,24 +68,41 @@ class TaskRequest:
         self.allowed_models = allowed_models
         self.applicable_llms = None
 
-        if user_objective is not None and len(user_objective) > 500:
-            raise ValueError(
-                "User objective can be at most 500 characters to manage token limits."
+        # Proceed with vector db if available
+        if vector_db_metadata:
+            self.evaluation_dataset_vector_db = vector_db.load_vector_db(
+                vector_db_metadata=vector_db_metadata,
+                openai_api_key=openai_api_key,
             )
+            self.evaluation_dataset_dataframe = (
+                self.evaluation_dataset_vector_db.get_metadata_as_dataframe()
+            )
+            self.user_objective_embedding = OpenAIEmbeddings(
+                openai_api_key=openai_api_key
+            ).embed_query(user_objective)
 
-        if not raw_dataset_s3_key:
-            raise ValueError("Must pass raw dataset")
+        # If not using vector db, proceed with raw dataset and no chunking
+        elif raw_dataset_s3_key:
+            raw_dataset_file_path = download_file_from_s3_and_save_locally(
+                raw_dataset_s3_key
+            )
+            evaluation_dataset_and_embeddings = (
+                data_check.get_evaluation_dataset_and_embedding(
+                    dataset_file_path=raw_dataset_file_path,
+                    escape_curly_braces=True,
+                    chunk_or_embed=False,
+                )
+            )
+            os.remove(raw_dataset_file_path)
+            self.evaluation_dataset_dataframe = evaluation_dataset_and_embeddings[
+                "evaluation_dataset"
+            ]
 
-        # Get raw dataset
-        raw_dataset_file_path = download_file_from_s3_and_save_locally(
-            raw_dataset_s3_key
-        )
-        self.evaluation_dataset_dataframe = data_check.get_evaluation_dataset(
-            dataset_file_path=raw_dataset_file_path,
-            escape_curly_braces=True,
-            input_variables_to_chunk=input_variables_to_chunk,
-        )
-        os.remove(raw_dataset_file_path)
+        # Throw error if no raw or vector db version of evaluation dataset
+        else:
+            raise ValueError(
+                "Must provide either vector db or raw dataset and task id."
+            )
 
         # Set input variables
         self.input_variables = input_variable_naming.get_input_variables(
@@ -109,6 +127,7 @@ class TaskRequest:
             max_ground_truth_tokens=self.max_ground_truth_tokens,
             max_input_characters=self.max_input_characters,
             max_ground_truth_characters=self.max_ground_truth_characters,
+            stuffing_multiple_chunks=stuffing_multiple_chunks,
         )
 
         # Check that at least one llm is applicable
@@ -124,39 +143,17 @@ class TaskRequest:
             )
 
         # Get number of test and train data points, which will be used to index data points
+        self.num_unique_data = len(
+            self.evaluation_dataset_dataframe["evaluation_data_id"].unique().tolist()
+        )
         evaluation_dataset_segments = segment_data.segment_evaluation_dataset(
-            num_unique_data=len(self.evaluation_dataset_dataframe),
+            num_unique_data=self.num_unique_data,
             num_test_data_input=self.num_test_data,
         )
         self.num_train_data = evaluation_dataset_segments["num_train_data"]
         self.num_test_data = evaluation_dataset_segments["num_test_data"]
         self.train_data_id_list = evaluation_dataset_segments["train_data_id_list"]
         self.test_data_id_list = evaluation_dataset_segments["test_data_id_list"]
-
-        # Proceed with vector db if allowed
-        if use_vector_db:
-            # Load evaluation dataset from vector db if available
-            if vector_db_metadata:
-                self.evaluation_dataset_vector_db = vector_db.load_vector_db(
-                    vector_db_metadata=vector_db_metadata,
-                    openai_api_key=openai_api_key,
-                )
-
-            # Otherwise, load raw dataset and setup evaluation dataset in vector db
-            elif task_id:
-                self.evaluation_dataset_vector_db = (
-                    vector_db.initialize_vector_db_from_dataset(
-                        task_id=task_id,
-                        evaluation_dataset=self.evaluation_dataset_dataframe,
-                        openai_api_key=openai_api_key,
-                    )
-                )
-
-            # Throw error if no raw or vector db version of evaluation dataset
-            else:
-                raise ValueError(
-                    "Must provide either vector db or raw dataset and task id."
-                )
 
     def get_normalized_input_variables(self) -> List[str]:
         """Get input variables from evaluation dataset without "var_" prepended to them.
@@ -166,7 +163,7 @@ class TaskRequest:
         Returns:
             List[str]: list of input variable names.
         """
-        return input_variable_naming.get_normalized_input_variables(
+        return input_variable_naming.normalize_input_variable_list(
             processed_input_variables=self.input_variables
         )
 
