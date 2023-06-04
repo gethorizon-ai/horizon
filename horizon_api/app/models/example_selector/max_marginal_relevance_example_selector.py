@@ -30,6 +30,8 @@ class MaxMarginalRelevanceExampleSelector(
             [f"<{key}>: {value}" for key, value in input_variables.items()]
         )
 
+        print(f"About to get few shot examples with this query: {query}")
+
         # Get the examples from the metadata.
         # This assumes that examples are stored in metadata.
         examples = self.vectorstore.max_marginal_relevance_search(
@@ -38,6 +40,8 @@ class MaxMarginalRelevanceExampleSelector(
             fetch_k=self.fetch_k,
             filter_statement=self.filter_statement,
         )
+
+        print(f"Retrived {len(examples)} few shot examples")
 
         # If example keys are provided, filter examples to those keys.
         if self.example_keys:
