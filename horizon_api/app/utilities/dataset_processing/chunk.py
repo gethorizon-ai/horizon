@@ -204,25 +204,13 @@ def filter_and_embed_chunks(
     )
 
     # Add embedding of user objective plus ground truth as reference column
-    # Iterate across each evaluation data id to avoid duplicate embedding calls over same ground truth values
-    evaluation_dataset["reference_embedding"] = np.nan
-    for id in evaluation_data_ids:
-        # Get ground truth value
-        row_ground_truth = evaluation_dataset.loc[
-            evaluation_dataset["evaluation_data_id"] == id, "ground_truth"
-        ].iloc[0]
-
-        # Calculate reference embedding
-        reference_embedding = embedding_function(
-            "\n".join([f"{user_objective}\n<OUTPUT>: {row_ground_truth}"])
-        )
-
-        # Assign reference embedding to all rows with the same ID
-        evaluation_dataset["reference_embedding"] = evaluation_dataset.apply(
-            lambda row: reference_embedding
-            if row["evaluation_data_id"] == id
-            else row["reference_embedding"]
-        )
+    # TODO: Iterate across each evaluation data id to avoid duplicate embedding calls over same ground truth values
+    evaluation_dataset["reference_embedding"] = evaluation_dataset.apply(
+        lambda row: embedding_function(
+            "\n".join([f"{user_objective}\n<OUTPUT>: {row['ground_truth']}"])
+        ),
+        axis=1,
+    )
 
     # Add column that calculates cosine similarity between data and reference embeddings
     evaluation_dataset["cosine_similarity"] = evaluation_dataset.apply(
