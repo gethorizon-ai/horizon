@@ -101,6 +101,6 @@ def delete_vector_db(vector_db_metadata: dict) -> None:
         index=pinecone_index,
         embedding_function=embedding_function,
         text_key="text",
-        namespace=vector_db_metadata["namespace"],
+        namespace=vector_db_metadata["data_namespace"],
     )
     vector_db.delete_namespace()

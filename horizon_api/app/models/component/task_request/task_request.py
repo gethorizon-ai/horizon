@@ -22,7 +22,7 @@ class TaskRequest:
 
     def __init__(
         self,
-        raw_dataset_s3_key: str,
+        raw_dataset_s3_key: str = None,
         openai_api_key: str = None,
         vector_db_metadata: dict = None,
         user_objective: str = None,
@@ -33,7 +33,7 @@ class TaskRequest:
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
         Args:
-            raw_dataset_s3_key (str): s3 key for raw evaluation dataset.
+            raw_dataset_s3_key (str, optional): s3 key for raw evaluation dataset. Defaults to None.
             task_id (int, optional): id of task. Defaults to None.
             openai_api_key (str, optional): OpenAI API key to use for embeddings. Defaults to None.
             vector_db_metadata (dict): metadata about vector db usage for this task. Defaults to None.
