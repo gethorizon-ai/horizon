@@ -212,6 +212,14 @@ def filter_and_embed_chunks(
         axis=1,
     )
 
+    evaluation_dataset["reference_embedding"] = evaluation_dataset.groupby(
+        "evaluation_data_id"
+    )["ground_truth"].transform(
+        lambda group: embedding_function(
+            "\n".join([f"{user_objective}\n<OUTPUT>: {group.iloc[0]}"])
+        )
+    )
+
     # Add column that calculates cosine similarity between data and reference embeddings
     evaluation_dataset["cosine_similarity"] = evaluation_dataset.apply(
         lambda row: np.dot(row["data_embedding"], row["reference_embedding"])

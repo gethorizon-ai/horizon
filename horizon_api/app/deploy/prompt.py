@@ -137,6 +137,8 @@ def deploy_prompt(
         original_input_values=input_values
     )
 
+    print(f"MADE IT JUST BEFORE CHUNKING")  # TODO: remove
+
     # Chunk input values if required
     if task.input_variables_to_chunk:
         processed_input_variables_to_chunk = (
