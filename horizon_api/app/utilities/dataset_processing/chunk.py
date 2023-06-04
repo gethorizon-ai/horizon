@@ -299,7 +299,7 @@ def chunk_input_values(
     # Convert input values into dataframe
     input_dataset = pd.DataFrame(input_values, index=[0])
 
-    print(f"Setup dataframe")
+    print(f"Setup dataframe: {input_dataset}")
 
     # Chunk each input variable, then separate chunks into different rows
     for var in processed_input_variables_to_chunk:
