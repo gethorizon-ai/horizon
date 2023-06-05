@@ -70,7 +70,7 @@ function HorizonAppBar({ user = undefined, signOut = undefined }) {
           ))}
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton color="inherit" sx={{ color: '#1F2937' }} onClick={() => window.open('https://twitter.com', '_blank')}>
+          <IconButton color="inherit" sx={{ color: '#1F2937' }} onClick={() => window.open('https://twitter.com/HorizonAI_', '_blank')}>
             <TwitterIcon />
           </IconButton>
           <Button
