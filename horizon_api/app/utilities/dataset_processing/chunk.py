@@ -210,12 +210,11 @@ def filter_and_embed_chunks(
 
     # Create reference embedding column by embedding the user objective with each unique ground truth value
     if include_ground_truth_in_reference_embedding:
-        evaluation_dataset["reference_embedding"] = evaluation_dataset.groupby(
-            "evaluation_data_id"
-        )["ground_truth"].transform(
-            lambda group: embedding_function(
-                "\n".join([f"{user_objective}\n<OUTPUT>: {group.iloc[0]}"])
-            )
+        evaluation_dataset["reference_embedding"] = evaluation_dataset.apply(
+            lambda row: embedding_function(
+                "\n".join([f"{user_objective}\n<OUTPUT>: {row['ground_truth']}"])
+            ),
+            axis=1,
         )
     # Otherwise, set reference embedding column to be the embedding of the user objective for all rows
     else:
