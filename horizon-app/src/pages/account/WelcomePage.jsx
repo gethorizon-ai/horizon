@@ -108,7 +108,7 @@ function WelcomePage() {
                 marginRight: 4,
                 '&:hover': {
                   backgroundColor: '#E5E7EB',
-                  cursor: 'pointer',
+
                 },
                 '&:active': {
                   backgroundColor: '#CBD5E0',
@@ -130,6 +130,7 @@ function WelcomePage() {
               lineHeight: 1,
               alignItems: 'center',
               textDecoration: 'none',
+              borderRadius: '8px',
             }}>
               {items.map((item, index) => (
                 <Box
@@ -139,6 +140,7 @@ function WelcomePage() {
                     '&:hover': {
                       backgroundColor: '#E5E7EB',
                       cursor: 'pointer',
+                      borderRadius: '8px',
                     },
                     '&:active': {
                       backgroundColor: '#CBD5E0',
