@@ -83,6 +83,7 @@ function WelcomePage() {
       <HorizonAppBar user={state.user} signOut={signOut} />
       <Box component="main" sx={{ flexGrow: 1, mt: 3, mb: 5 }}>
         <Container maxWidth="xl">
+        <Box sx={{ height: '30px' }} />
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 5 }}>
             <Box sx={{ maxWidth: '60%', textAlign: 'center', px: { xs: 2, sm: 3, md: 10, mb: 20 } }}>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
