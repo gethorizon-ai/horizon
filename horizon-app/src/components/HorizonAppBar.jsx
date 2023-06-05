@@ -43,8 +43,18 @@ function HorizonAppBar({ user = undefined, signOut = undefined }) {
   };
 
   return (
-    <AppBar position="relative" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1, backgroundColor: '#F9FAFB' }}>
-      <Container maxWidth="100%" disableGutters sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2, px:2 }}>
+    <AppBar 
+      position="relative" 
+      sx={{ 
+        zIndex: (theme) => theme.zIndex.drawer + 1, 
+        backgroundColor: '#F9FAFB',
+        boxShadow: 'none',  // remove shadow
+        borderBottom: '1px solid lightgrey',  // add grey border at bottom
+        height: '57px',  // reduce height
+        padding: '0px'  // to align with reduced height
+      }}
+    >
+      <Container maxWidth="100%" disableGutters sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1, px:2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Typography
             variant="h5"
