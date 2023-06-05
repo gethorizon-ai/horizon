@@ -79,12 +79,12 @@ function WelcomePage() {
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'column', mb: 5 }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'column', mb: 10 }}>
       <HorizonAppBar user={state.user} signOut={signOut} />
       <Box component="main" sx={{ flexGrow: 1, mt: 3, mb: 5 }}>
         <Container maxWidth="xl">
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 5 }}>
-            <Box sx={{ maxWidth: '60%', textAlign: 'center', px: { xs: 2, sm: 3, md: 10, mb: 5 } }}>
+            <Box sx={{ maxWidth: '60%', textAlign: 'center', px: { xs: 2, sm: 3, md: 10, mb: 20 } }}>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
                 Welcome to Horizon AI
               </Typography>
