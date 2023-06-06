@@ -91,7 +91,7 @@ def check_evaluation_dataset(
         AssertionError: duplicate rows of data.
     """
     # Check that evaluation data is at most 1 MB file size
-    if os.path.getsize(dataset_file_path) > 1000000:
+    if os.path.getsize(dataset_file_path) > 50000000:
         raise AssertionError("Evaluation dataset can be at most 1 MB large.")
 
     # Try to import evaluation dataset
