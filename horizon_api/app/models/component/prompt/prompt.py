@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 def generate_user_specific_id(context) -> int:
     """Generate user-specific id.
 
-    Retrieves the maximum user-specific task id and returns one more than that. If there are no existing task records, returns 1.
+    Retrieves the maximum user-specific id and returns one more than that. If there are no existing task records, returns 1.
 
     Args:
         context: SQLAlchemy context object.
