@@ -1,6 +1,8 @@
 import json
 from app import db
-from app.models.component import User, Project, Task
+from app.models.component.user import User
+from app.models.component.project import Project
+from app.models.component.task import Task
 from app.utilities.dataset_processing import input_variable_naming
 from app.models.component.task_deployment_log.task_deployment_log import (
     TaskDeploymentLog,

@@ -3,7 +3,8 @@ from datetime import datetime
 from enum import Enum
 import json
 import os
-from app.models.component import User, Project
+from app.models.component.user import User
+from app.models.component.project import Project
 from app.models.component.prompt import Prompt
 from app.models.component.task_deployment_log.task_deployment_log import (
     TaskDeploymentLog,

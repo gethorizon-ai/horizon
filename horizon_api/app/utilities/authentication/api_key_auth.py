@@ -1,6 +1,6 @@
 """Provides function wrapper to verify Horizon API key provided by user."""
 
-from app.models.component import User
+from app.models.component.user import User
 from flask import request, g
 from functools import wraps
 import hashlib

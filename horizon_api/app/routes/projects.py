@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse
-from app.models.component import Project
+from app.models.component.project import Project
 from app.utilities.authentication.api_key_auth import api_key_required
 from app import db
 from sqlalchemy.exc import IntegrityError

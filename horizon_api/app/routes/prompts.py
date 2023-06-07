@@ -1,6 +1,8 @@
 from flask import g
 from flask_restful import Resource, reqparse
-from app.models.component import Prompt, Task, Project
+from app.models.component.project import Project
+from app.models.component.task import Task
+from app.models.component.prompt import Prompt
 from app import db
 from app.utilities.authentication.api_key_auth import api_key_required
 from app.utilities.run.generate_prompt import generate_prompt_model_configuration

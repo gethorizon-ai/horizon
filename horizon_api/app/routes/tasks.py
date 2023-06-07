@@ -1,8 +1,11 @@
 from flask import request, send_file, make_response, g, send_from_directory
 from flask_restful import Resource, reqparse
 from celery import shared_task
-from app.models.component import User, Task, Prompt, Project
-from app import db, api
+from app.models.component.user import User
+from app.models.component.task import Task
+from app.models.component.project import Project
+from app.models.component.prompt import Prompt
+from app import db
 from app.utilities.authentication.api_key_auth import api_key_required
 from app.utilities.authentication.cognito_auth import get_user_email
 from app.utilities.run import generate_prompt
