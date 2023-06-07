@@ -57,9 +57,13 @@ class ListTasksAPI(Resource):
             .all()
         )
 
+        sorted_tasks = sorted(
+            [task.to_dict_filtered() for task in tasks], key=lambda x: x["id"]
+        )
+
         return {
             "message": "Tasks retrieved successfully",
-            "tasks": [task.to_dict_filtered() for task in tasks],
+            "tasks": sorted_tasks,
         }, 200
 
 
