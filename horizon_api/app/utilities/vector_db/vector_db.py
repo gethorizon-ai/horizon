@@ -1,7 +1,5 @@
 """Defines helper methods for vector databases."""
 
-from app import db
-from app.models.component import User, Project, Task
 from app.models.embedding.open_ai import OpenAIEmbeddings
 from app.models.vector_stores.pinecone import Pinecone
 from app.utilities.dataset_processing import input_variable_naming
