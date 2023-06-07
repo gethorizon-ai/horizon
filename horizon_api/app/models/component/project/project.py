@@ -56,4 +56,8 @@ class Project(db.Model):
         ]
         full_dict = self.to_dict()
         filtered_dict = {key: full_dict[key] for key in filtered_keys}
+
+        # Rename "user_specific_id" to just "id"
+        filtered_dict["id"] = filtered_dict.pop("user_specific_id")
+
         return filtered_dict

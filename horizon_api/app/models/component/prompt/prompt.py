@@ -140,6 +140,9 @@ class Prompt(db.Model):
         full_dict = self.to_dict()
         filtered_dict = {key: full_dict[key] for key in filtered_keys}
 
+        # Rename "user_specific_id" to just "id"
+        filtered_dict["id"] = filtered_dict.pop("user_specific_id")
+
         if self.template_type is not None:
             # Refine data displayed for template data
             filtered_dict["template_data"] = {

@@ -16,7 +16,7 @@ def email_task_creation_success(user_email: str, task_details: dict) -> None:
     # Parse task details. Escape certain characters (e.g., angle brackets) for use with html
     name = html.escape(str(task_details["name"]))
     objective = html.escape(str(task_details["objective"]))
-    task_id = html.escape(str(task_details["user_specific_id"]))
+    task_id = html.escape(str(task_details["id"]))
     project_id = html.escape(str(task_details["project_id"]))
     output_schema = html.escape(str(task_details["output_schema"]))
     number_of_prompt_model_candidates = task_details["evaluation_statistics"][

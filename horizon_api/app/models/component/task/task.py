@@ -132,6 +132,9 @@ class Task(db.Model):
         full_dict = self.to_dict()
         filtered_dict = {key: full_dict[key] for key in filtered_keys}
 
+        # Rename "user_specific_id" to just "id"
+        filtered_dict["id"] = filtered_dict.pop("user_specific_id")
+
         # Update project id to user-specific id
         project = Project.query.get(filtered_dict["project_id"])
         filtered_dict["project_id"] = project.user_specific_id
