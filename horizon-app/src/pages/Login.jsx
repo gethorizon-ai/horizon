@@ -53,11 +53,8 @@ function Login() {
                         name: user.attributes.name, 
     
                         // Strongly recommended attributes
-                        // Timestamp when the user first signed up. You'll want to send it as seconds since the epoch.
+                        // Timestamp when the user first signed up as seconds
                         created_at: Math.floor(Date.now() / 1000), 
-    
-                        // Example attributes (you can name attributes what you wish)
-                        plan_name: 'premium' // Set this to your required value
                     });
                 }
             }).catch(err => {
