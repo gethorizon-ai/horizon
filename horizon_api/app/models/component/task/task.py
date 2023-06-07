@@ -88,6 +88,14 @@ class Task(db.Model):
         foreign_keys=[TaskDeploymentLog.task_id],
         passive_deletes=True,
     )
+    prompts = db.relationship(
+        "Prompt",
+        backref="task",
+        lazy="dynamic",
+        cascade="all, delete, delete-orphan",
+        foreign_keys=["task_id"],
+        passive_deletes=True,
+    )
 
     def to_dict(self):
         return {
