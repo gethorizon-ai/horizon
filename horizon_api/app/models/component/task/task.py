@@ -152,7 +152,7 @@ class Task(db.Model):
         filtered_dict["project_id"] = project.user_specific_id
 
         # Update active prompt id to user-specific id
-        prompt = Prompt.query.get(self.active_prompt_id)
+        prompt = Prompt.query.get(filtered_dict["active_prompt_id"])
         filtered_dict["active_prompt_id"] = prompt.user_specific_id
 
         # Add filtered values of prompts

@@ -144,6 +144,10 @@ class Prompt(db.Model):
         # Replace "id" with "user_specific_id"
         filtered_dict["id"] = filtered_dict.pop("user_specific_id")
 
+        # Update task id to user-specific id
+        task = Task.query.get(filtered_dict["task_id"])
+        filtered_dict["task_id"] = task.user_specific_id
+
         if self.template_type is not None:
             # Refine data displayed for template data
             filtered_dict["template_data"] = {
