@@ -5,7 +5,6 @@ import json
 import os
 from app.models.component.user import User
 from app.models.component.project import Project
-from app.models.component.prompt import Prompt
 from app.models.component.task_deployment_log.task_deployment_log import (
     TaskDeploymentLog,
 )
@@ -87,14 +86,6 @@ class Task(db.Model):
         lazy="dynamic",
         cascade="all, delete, delete-orphan",
         foreign_keys=[TaskDeploymentLog.task_id],
-        passive_deletes=True,
-    )
-    prompts = db.relationship(
-        "Prompt",
-        backref="task",
-        lazy="dynamic",
-        cascade="all, delete, delete-orphan",
-        foreign_keys=[Prompt.task_id],
         passive_deletes=True,
     )
 
