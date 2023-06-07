@@ -1,5 +1,7 @@
 """Defines helper methods for vector databases."""
 
+from app import db
+from app.models.component import User, Project, Task
 from app.models.embedding.open_ai import OpenAIEmbeddings
 from app.models.vector_stores.pinecone import Pinecone
 from app.utilities.dataset_processing import input_variable_naming
@@ -11,7 +13,7 @@ pinecone.init(api_key=Config.PINECONE_API_KEY, environment=Config.PINECONE_ENVIR
 pinecone_index = pinecone.Index(Config.PINECONE_INDEX)
 
 
-VECTOR_DB_NAMESPACE_FORMAT_STRING = "task_id_{task_id}"
+VECTOR_DB_NAMESPACE_FORMAT_STRING = "USER_ID_{user_id}_TASK_ID_{task_id}"
 
 
 def initialize_vector_db_from_dataset(
@@ -50,8 +52,17 @@ def initialize_vector_db_from_dataset(
     ]
 
     # Initialize vector db namespace for this task_id
+    user = (
+        User.query.join(Project, Project.user_id == User.id)
+        .join(Task, Task.project_id == Project.id)
+        .filter(Task.id == task_id)
+        .first()
+    )
     embedding_function = OpenAIEmbeddings(openai_api_key=openai_api_key).embed_query
-    namespace = VECTOR_DB_NAMESPACE_FORMAT_STRING.format(task_id=task_id)
+    namespace = VECTOR_DB_NAMESPACE_FORMAT_STRING.format(
+        user_id=user.id,
+        task_id=task_id,
+    )
     vector_db = Pinecone(
         index=pinecone_index,
         embedding_function=embedding_function,

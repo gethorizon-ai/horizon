@@ -45,14 +45,20 @@ class CreateProjectAPI(Resource):
 class ProjectAPI(Resource):
     @api_key_required
     def get(self, project_id):
-        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
+        project = Project.query.filter_by(
+            user_specific_id=project_id,
+            user_id=g.user.id,
+        ).first()
         if not project:
             return {"error": "Project not found or not associated with user"}, 404
-        return project.to_dict(), 200
+        return project.to_dict_filtered(), 200
 
     @api_key_required
     def put(self, project_id):
-        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
+        project = Project.query.filter_by(
+            user_specific_id=project_id,
+            user_id=g.user.id,
+        ).first()
         if not project:
             return {"error": "Project not found or not associated with user"}, 404
 
@@ -74,12 +80,15 @@ class ProjectAPI(Resource):
 
         return {
             "message": "Project updated successfully",
-            "project": project.to_dict(),
+            "project": project.to_dict_filtered(),
         }, 200
 
     @api_key_required
     def delete(self, project_id):
-        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
+        project = Project.query.filter_by(
+            user_specific_id=project_id,
+            user_id=g.user.id,
+        ).first()
         if not project:
             return {"error": "Project not found or not associated with user"}, 404
 

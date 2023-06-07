@@ -13,11 +13,11 @@ class ListPromptsAPI(Resource):
         # Fetch prompts associated with user
         prompts = (
             Prompt.query.join(Task, Task.id == Prompt.task_id)
-            .join(Project)
+            .join(Project, Project.id == Task.project_id)
             .filter(Project.user_id == g.user.id)
             .all()
         )
-        return {"prompts": [prompt.to_dict() for prompt in prompts]}, 200
+        return {"prompts": [prompt.to_dict_filtered() for prompt in prompts]}, 200
 
 
 class CreatePromptAPI(Resource):
@@ -35,14 +35,17 @@ class CreatePromptAPI(Resource):
         # Check that task exists and is associated with user
         task = (
             Task.query.join(Project)
-            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .filter(
+                Task.user_specific_id == args["task_id"],
+                Project.user_id == g.user.id,
+            )
             .first()
         )
         if not task:
             return {"error": "Task not found or not associated with user"}, 404
 
         # Create prompt and associate with given task id
-        prompt = Prompt(name=args["name"], task_id=args["task_id"])
+        prompt = Prompt(name=args["name"], task_id=task.id)
 
         try:
             db.session.add(prompt)
@@ -52,7 +55,7 @@ class CreatePromptAPI(Resource):
             return {"error": str(e)}, 400
         return {
             "message": "Prompt created successfully",
-            "prompt": prompt.to_dict(),
+            "prompt": prompt.to_dict_filtered(),
         }, 201
 
 
@@ -62,21 +65,21 @@ class PromptAPI(Resource):
         # Fetch prompt and check it is associated with user
         prompt = (
             Prompt.query.join(Task, Task.id == Prompt.task_id)
-            .join(Project)
-            .filter(Prompt.id == prompt_id, Project.user_id == g.user.id)
+            .join(Project, Project.id == Task.project_id)
+            .filter(Prompt.user_specific_id == prompt_id, Project.user_id == g.user.id)
             .first()
         )
         if not prompt:
             return {"error": "Prompt not found or not associated with user"}, 404
-        return prompt.to_dict(), 200
+        return prompt.to_dict_filtered(), 200
 
     @api_key_required
     def put(self, prompt_id):
         # Fetch prompt and check it is associated with user
         prompt = (
             Prompt.query.join(Task, Task.id == Prompt.task_id)
-            .join(Project)
-            .filter(Prompt.id == prompt_id, Project.user_id == g.user.id)
+            .join(Project, Project.id == Task.project_id)
+            .filter(Prompt.user_specific_id == prompt_id, Project.user_id == g.user.id)
             .first()
         )
         if not prompt:
@@ -127,7 +130,7 @@ class PromptAPI(Resource):
 
         return {
             "message": "Prompt updated successfully",
-            "prompt": prompt.to_dict(),
+            "prompt": prompt.to_dict_filtered(),
         }, 200
 
     @api_key_required
@@ -135,8 +138,8 @@ class PromptAPI(Resource):
         # Fetch prompt and check it is associated with user
         prompt = (
             Prompt.query.join(Task, Task.id == Prompt.task_id)
-            .join(Project)
-            .filter(Prompt.id == prompt_id, Project.user_id == g.user.id)
+            .join(Project, Project.id == Task.project_id)
+            .filter(Prompt.user_specific_id == prompt_id, Project.user_id == g.user.id)
             .first()
         )
         if not prompt:
@@ -181,8 +184,11 @@ class GeneratePromptAPI(Resource):
         # Fetch prompt and check it is associated with user
         prompt = (
             Prompt.query.join(Task, Task.id == Prompt.task_id)
-            .join(Project)
-            .filter(Prompt.id == args["prompt_id"], Project.user_id == g.user.id)
+            .join(Project, Project.id == Task.project_id)
+            .filter(
+                Prompt.user_specific_id == args["prompt_id"],
+                Project.user_id == g.user.id,
+            )
             .first()
         )
         if not prompt:
@@ -254,7 +260,10 @@ class DeployPromptAPI(Resource):
         prompt = (
             Prompt.query.join(Task, Task.id == Prompt.task_id)
             .join(Project, Project.id == Task.project_id)
-            .filter(Prompt.id == args["prompt_id"], Project.user_id == g.user.id)
+            .filter(
+                Prompt.user_specific_id == args["prompt_id"],
+                Project.user_id == g.user.id,
+            )
             .first()
         )
         if not prompt:
