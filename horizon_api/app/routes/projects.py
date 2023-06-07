@@ -14,7 +14,7 @@ class ListProjectsAPI(Resource):
         projects = Project.query.filter_by(user_id=g.user.id).all()
         return {
             "message": "Projects retrieved successfully",
-            "projects": [project.to_dict() for project in projects],
+            "projects": [project.to_dict_filtered() for project in projects],
         }, 200
 
 
@@ -38,7 +38,7 @@ class CreateProjectAPI(Resource):
 
         return {
             "message": "Project created successfully",
-            "project": project.to_dict(),
+            "project": project.to_dict_filtered(),
         }, 201
 
 
