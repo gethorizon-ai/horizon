@@ -93,7 +93,7 @@ class Task(db.Model):
         backref="task",
         lazy="dynamic",
         cascade="all, delete, delete-orphan",
-        foreign_keys=["task_id"],
+        foreign_keys=["prompt.task_id"],
         passive_deletes=True,
     )
 
