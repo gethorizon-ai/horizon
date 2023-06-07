@@ -11,7 +11,7 @@ pinecone.init(api_key=Config.PINECONE_API_KEY, environment=Config.PINECONE_ENVIR
 pinecone_index = pinecone.Index(Config.PINECONE_INDEX)
 
 
-VECTOR_DB_NAMESPACE_FORMAT_STRING = "TASK_ID_{task_id}"
+VECTOR_DB_NAMESPACE_FORMAT_STRING = "task_id_{task_id}"
 
 
 def initialize_vector_db_from_dataset(

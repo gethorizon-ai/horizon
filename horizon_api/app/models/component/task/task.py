@@ -22,7 +22,7 @@ class TaskStatus(Enum):
 
 
 def generate_user_specific_id(context) -> int:
-    """Generate auto-incrementing id per user.
+    """Generate user-specific id.
 
     Retrieves the maximum user-specific task id and returns one more than that. If there are no existing task records, returns 1.
 
