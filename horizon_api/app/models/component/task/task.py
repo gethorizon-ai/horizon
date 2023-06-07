@@ -12,7 +12,7 @@ from app.models.vector_stores.pinecone import Pinecone
 from app.utilities.S3.s3_util import delete_file_from_s3
 from app.utilities.vector_db import vector_db
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import event, column
+from sqlalchemy import event
 
 
 class TaskStatus(Enum):
@@ -126,6 +126,9 @@ class Task(db.Model):
         }
 
     def to_dict_filtered(self):
+        # Import Prompt class inside function to avoid circular import issues. Needed to get user-specific id of prompt object
+        from app.models.component.prompt import Prompt
+
         # Filter to subset of keys / columns
         filtered_keys = [
             "id",
@@ -147,6 +150,10 @@ class Task(db.Model):
         # Update project id to user-specific id
         project = Project.query.get(filtered_dict["project_id"])
         filtered_dict["project_id"] = project.user_specific_id
+
+        # Update active prompt id to user-specific id
+        prompt = Prompt.query.get(self.active_prompt_id)
+        filtered_dict["active_prompt_id"] = prompt.user_specific_id
 
         # Add filtered values of prompts
         filtered_dict["prompts"] = [
