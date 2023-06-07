@@ -9,6 +9,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import TwitterIcon from '@mui/icons-material/Twitter';
 
 function HorizonAppBar({ user = undefined, signOut = undefined }) {
+  console.log(signOut);
   const navigate = useNavigate();
   const location = useLocation().pathname;
 
@@ -84,19 +85,24 @@ function HorizonAppBar({ user = undefined, signOut = undefined }) {
             <TwitterIcon />
           </IconButton>
           <Button
-            onClick={settingsAndHandlers['Logout']}
-            sx={{
-              color: 'rgba(31, 41, 55, 0.5)',
-              ml: 2,
-              textTransform: 'none',
-              fontSize: '1rem',
-              '&:hover': {
-                backgroundColor: '#E5E7EB',
-              },
+            onClick={() => {
+                settingsAndHandlers['Logout']();
+                if (window._cio) {
+                    window._cio.reset();
+                }
             }}
-          >
+            sx={{
+                color: 'rgba(31, 41, 55, 0.5)',
+                ml: 2,
+                textTransform: 'none',
+                fontSize: '1rem',
+                '&:hover': {
+                    backgroundColor: '#E5E7EB',
+                },
+            }}
+        >
             Logout
-          </Button>
+        </Button>
         </Box>
       </Container>
     </AppBar>

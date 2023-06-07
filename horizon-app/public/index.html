@@ -25,6 +25,27 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Horizon AI</title>
+
+    <!-- Customer.io script -->
+    <script type="text/javascript">
+      var _cio = _cio || [];
+      (function() {
+          var a,b,c;a=function(f){return function(){_cio.push([f].
+          concat(Array.prototype.slice.call(arguments,0)))}};b=["load","identify",
+          "sidentify","track","page"];for(c=0;c<b.length;c++){_cio[b[c]]=a(b[c])};
+          var t = document.createElement('script'),
+              s = document.getElementsByTagName('script')[0];
+          t.async = true;
+          t.id    = 'cio-tracker';
+          t.setAttribute('data-site-id', '27552a43b73237d21dff');
+          t.setAttribute('data-base-url', 'https://customerioforms.com');
+          t.setAttribute('data-use-array-params', 'true');
+          t.src = 'https://assets.customer.io/assets/track.js';
+          s.parentNode.insertBefore(t, s);
+      })();
+    </script>
+    <!-- End of Customer.io script -->
+    
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

@@ -28,6 +28,7 @@ function Login() {
     };
 
     const [state, setState] = useState(initialState);
+
     useEffect(() => {
         async function checkUser() {
             await Auth.currentAuthenticatedUser({
@@ -39,7 +40,26 @@ function Login() {
                     isLoggedIn: true,
                     loading: false
                 });
-                console.log(user)
+    
+                console.log(user);
+    
+                // Call Customer.io SDK
+                // Ensure the user object contains the required data before calling _cio.identify
+                if (window._cio) {
+                    window._cio.identify({
+                        // Required attributes
+                        id: user.attributes.email,
+                        email: user.attributes.email,
+                        name: user.attributes.name, 
+    
+                        // Strongly recommended attributes
+                        // Timestamp when the user first signed up. You'll want to send it as seconds since the epoch.
+                        created_at: Math.floor(Date.now() / 1000), 
+    
+                        // Example attributes (you can name attributes what you wish)
+                        plan_name: 'premium' // Set this to your required value
+                    });
+                }
             }).catch(err => {
                 console.log(err);
                 setState({
@@ -52,6 +72,8 @@ function Login() {
         }
         checkUser();
     }, []);
+    
+    
     if (state.loading) {
         return (
             <div>
@@ -59,7 +81,7 @@ function Login() {
             </div>
         )
     }
-    if (state.isLoggedIn) {
+        if (state.isLoggedIn) {
         return <Navigate to="/" />
     }
     console.log("login page");
