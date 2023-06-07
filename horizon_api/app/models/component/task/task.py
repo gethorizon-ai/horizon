@@ -12,7 +12,7 @@ from app.models.vector_stores.pinecone import Pinecone
 from app.utilities.S3.s3_util import delete_file_from_s3
 from app.utilities.vector_db import vector_db
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import event
+from sqlalchemy import event, column
 
 
 class TaskStatus(Enum):
@@ -93,6 +93,7 @@ class Task(db.Model):
         backref="task",
         lazy="dynamic",
         cascade="all, delete, delete-orphan",
+        foreign_keys=[column("Prompt.task_id")],
         passive_deletes=True,
     )
 
