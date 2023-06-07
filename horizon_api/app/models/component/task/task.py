@@ -93,7 +93,6 @@ class Task(db.Model):
         backref="task",
         lazy="dynamic",
         cascade="all, delete, delete-orphan",
-        # foreign_keys=[column("Prompt.task_id")],
         primaryjoin="Task.id == Prompt.task_id",
         passive_deletes=True,
     )
@@ -129,6 +128,7 @@ class Task(db.Model):
     def to_dict_filtered(self):
         # Filter to subset of keys / columns
         filtered_keys = [
+            "id",
             "user_specific_id",
             "name",
             "objective",
@@ -141,7 +141,7 @@ class Task(db.Model):
         full_dict = self.to_dict()
         filtered_dict = {key: full_dict[key] for key in filtered_keys}
 
-        # Rename "user_specific_id" to just "id"
+        # Replace "id" with "user_specific_id"
         filtered_dict["id"] = filtered_dict.pop("user_specific_id")
 
         # Update project id to user-specific id
