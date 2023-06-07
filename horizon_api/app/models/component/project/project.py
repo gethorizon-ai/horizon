@@ -17,7 +17,7 @@ def generate_user_specific_id(context) -> int:
     max_user_specific_id = (
         db.session.query(db.func.max(Project.user_specific_id))
         .filter(Project.user_id == user_id)
-        .scaler()
+        .scalar()
     )
 
     # Return one more than the maximum user-specific id, or 1 if no existing records

@@ -42,7 +42,7 @@ def generate_user_specific_id(context) -> int:
         .join(Task, Task.id == Prompt.task_id)
         .join(Project, Project.id == Task.project_id)
         .filter(Project.user_id == user.id)
-        .scaler()
+        .scalar()
     )
 
     # Return one more than the maximum user-specific id, or 1 if no existing records
