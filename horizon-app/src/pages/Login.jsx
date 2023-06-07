@@ -28,88 +28,54 @@ function Login() {
   };
 
   const [state, setState] = useState(initialState);
-
   useEffect(() => {
     async function checkUser() {
-      await Auth.currentAuthenticatedUser({
-        bypassCache: false
-      })
-        .then((user) => {
-          setState({
-            ...initialState,
-            user: user,
-            isLoggedIn: true,
-            loading: false
-          });
-          console.log(user);
-        })
-        .catch((err) => {
-          console.log(err);
-          setState({
-            ...initialState,
-            user: undefined,
-            isLoggedIn: false,
-            loading: false
-          });
+      try {
+        const user = await Auth.currentAuthenticatedUser({ bypassCache: false });
+        setState({
+          ...initialState,
+          user: user,
+          isLoggedIn: true,
+          loading: false
         });
+        console.log(user);
+
+        // Send user information to Customer.io
+        const { name, email } = user.attributes;
+        const timestamp = new Date().toISOString();
+
+        // Replace the placeholders below with your actual code to send data to Customer.io
+        sendToCustomerIO(name, email, timestamp);
+      } catch (error) {
+        console.log(error);
+        setState({
+          ...initialState,
+          user: undefined,
+          isLoggedIn: false,
+          loading: false
+        });
+      }
     }
     checkUser();
   }, []);
-
-  const sendUserToCustomerIO = async (user) => {
-    if (window._cio) {
-      window._cio.identify({
-        // Required attributes
-        id: user.attributes.email,
-        email: user.attributes.email,
-        name: user.attributes.name,
-
-        // Strongly recommended attributes
-        // Timestamp when the user first signed up. You'll want to send it as seconds since the epoch.
-        created_at: Math.floor(Date.now() / 1000)
-      });
-    }
-  };
-
-  const handleSignUp = async (user) => {
-    // Call the function to send user information to Customer.io
-    sendUserToCustomerIO(user);
-
-    // Continue with the sign-up process
-    try {
-      await Auth.signUp({
-        username: user.username,
-        password: user.password,
-        attributes: {
-          email: user.attributes.email,
-          name: user.attributes.name
-        }
-      });
-      console.log('Sign-up successful');
-    } catch (error) {
-      console.log('Sign-up error:', error);
-    }
-  };
 
   if (state.loading) {
     return (
       <div>
         <p>Loading...</p>
       </div>
-    );
+    )
   }
-
   if (state.isLoggedIn) {
-    return <Navigate to="/" />;
+    return <Navigate to="/" />
   }
-
   console.log("login page");
   return (
     <div>
       <Box sx={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}>
-        <Authenticator components={components} onSignUp={handleSignUp}>
+        <Authenticator components={components}>
           {() => {
-            return <Navigate to="/" />;
+            return <Navigate to="/" />
           }}
         </Authenticator>
       </Box>
@@ -118,3 +84,36 @@ function Login() {
 }
 
 export default Login;
+
+function sendToCustomerIO(name, email, timestamp) {
+    const customerId = '27552a43b73237d21dff'; // Replace with your actual Customer.io customer ID
+    const apiKey = '48939982fc5e84e352f0'; // Replace with your actual Customer.io API key
+  
+    const data = {
+      id: email,
+      created_at: Math.floor(new Date(timestamp).getTime() / 1000),
+      name: name,
+    };
+  
+    const authHeader = `Basic ${Buffer.from(apiKey + ':').toString('base64')}`;
+  
+    fetch(`https://track.customer.io/api/v1/customers/${customerId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: authHeader
+      },
+      body: JSON.stringify(data)
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to send data to Customer.io');
+        }
+        console.log('Data sent to Customer.io successfully');
+      })
+      .catch(error => {
+        console.error('Error sending data to Customer.io:', error);
+      });
+  }
+  
+
