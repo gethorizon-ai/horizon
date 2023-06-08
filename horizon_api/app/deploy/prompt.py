@@ -152,6 +152,7 @@ def deploy_prompt(
                 output = post_processing.parse_and_retry_if_needed(
                     original_output=output, prompt_string=original_formatted_prompt
                 )
+                break
 
         except Exception as e:
             if i == max_retries - 1:
