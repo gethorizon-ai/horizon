@@ -70,6 +70,7 @@ class RetryOutputParser(BaseParser):
         try:
             print(f"Original completion: {completion}")
             parsed_completion = self.parser.parse(completion)
+            raise Exception("try again")
             return parsed_completion
 
         except OutputParserException as e:
