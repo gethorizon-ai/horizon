@@ -12,7 +12,7 @@ T = TypeVar("T")
 
 # Retry prompt that shows error and original output
 RETRY_WITH_ERROR_PROMPT = PromptTemplate.from_template(
-    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema while staying as close to the original output as possible.
+    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema.
 
 <ERROR>: {error}
 
@@ -23,7 +23,7 @@ RETRY_WITH_ERROR_PROMPT = PromptTemplate.from_template(
 
 # Retry prompt that shows JSON schema and original output
 RETRY_WITH_SCHEMA_PROMPT = PromptTemplate.from_template(
-    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema while staying as close to the original output as possible.
+    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema.
 
 <JSON SCHEMA>: {schema}
 
