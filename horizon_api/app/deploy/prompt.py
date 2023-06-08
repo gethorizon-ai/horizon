@@ -140,9 +140,8 @@ def deploy_prompt(
 
     # Generate output with up to 3 retries
     max_retries = 3
+    inference_start_time = time.time()
     for i in range(max_retries):
-        inference_start_time = time.time()
-
         try:
             llm_result = model_instance.generate([formatted_prompt_for_llm])
             output = llm_result.generations[0][0].text.strip()
@@ -163,7 +162,7 @@ def deploy_prompt(
             else:
                 continue
 
-        inference_end_time = time.time()
+    inference_end_time = time.time()
 
     # Log deployment if logging is enabled
     if log_deployment:

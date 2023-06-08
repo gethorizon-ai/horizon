@@ -97,9 +97,8 @@ def run_inference(
 
         # Generate output with up to 2 retries (fewer than used for deployment to minimize risk of task generation cost overage)
         max_retries = 2
+        start_time = time.time()
         for i in range(max_retries):
-            start_time = time.time()
-
             llm_result = model_object.generate([formatted_prompt_for_llm])
             output = llm_result.generations[0][0].text.strip()
 
@@ -119,8 +118,7 @@ def run_inference(
                     else:
                         continue
 
-            end_time = time.time()
-
+        end_time = time.time()
         inference_latency = end_time - start_time
 
         # Record output and inference latency

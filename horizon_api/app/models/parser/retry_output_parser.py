@@ -88,6 +88,7 @@ class RetryOutputParser(BaseParser):
                         )
                     print(f"New completion: {new_completion}")
                     parsed_completion = self.parser.parse(new_completion)
+                    break
 
                 except:
                     if i == max_retries - 1:
