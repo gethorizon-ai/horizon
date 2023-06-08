@@ -135,22 +135,31 @@ def deploy_prompt(
         formatted_prompt_for_llm = original_formatted_prompt
         prompt_for_data_analysis = [formatted_prompt_for_llm]
 
-    inference_start_time = time.time()
+    # Generate output with up to 3 retries
+    max_retries = 3
+    for i in range(max_retries):
+        inference_start_time = time.time()
 
-    # Generate output
-    llm_result = model_instance.generate([formatted_prompt_for_llm])
-    output = llm_result.generations[0][0].text.strip()
+        try:
+            llm_result = model_instance.generate([formatted_prompt_for_llm])
+            output = llm_result.generations[0][0].text.strip()
 
-    # Conduct post-processing of output, if applicable
-    if task.pydantic_model:
-        post_processing = PostProcessing(
-            pydantic_model_s3_key=task.pydantic_model, llm=model_instance
-        )
-        output = post_processing.parse_and_retry_if_needed(
-            original_output=output, prompt_string=original_formatted_prompt
-        )
+            # Conduct post-processing of output, if applicable
+            if task.pydantic_model:
+                post_processing = PostProcessing(
+                    pydantic_model_s3_key=task.pydantic_model, llm=model_instance
+                )
+                output = post_processing.parse_and_retry_if_needed(
+                    original_output=output, prompt_string=original_formatted_prompt
+                )
 
-    inference_end_time = time.time()
+        except Exception as e:
+            if i == max_retries - 1:
+                raise Exception(str(e))
+            else:
+                continue
+
+        inference_end_time = time.time()
 
     # Log deployment if logging is enabled
     if log_deployment:

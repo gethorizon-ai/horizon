@@ -11,11 +11,24 @@ import copy
 # Final output value if unable to align llm output with output schema requirements
 FINAL_ERROR_MESSAGE = "Failed to generate output satisfying output schema requirements."
 
-# Retry prompt that only shows error message, but not original prompt or completion. More useful in correcting JSON errors
+# Retry prompt that only shows JSON schema and original output
 RETRY_PROMPT = PromptTemplate.from_template(
     """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema.
 
 <JSON SCHEMA>: {schema}
+
+<ORIGINAL OUTPUT>: {completion}
+
+<CORRECTED JSON OUTPUT>:"""
+)
+
+# Retry prompt that only shows JSON schema, error, and original output
+RETRY_WITH_ERROR_PROMPT = PromptTemplate.from_template(
+    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema.
+
+<JSON SCHEMA>: {schema}
+
+<ERROR>: {error}
 
 <ORIGINAL OUTPUT>: {completion}
 
@@ -59,8 +72,8 @@ class PostProcessing:
         llm_copy.set_temperature(temperature=0)
 
         # Add retry_output_parser
-        self.retry_output_parser = RetryOutputParser.from_llm(
-            llm=llm_copy, parser=self.pydantic_output_parser, prompt=RETRY_PROMPT
+        self.retry_output_parser = RetryOutputParser(
+            llm=llm_copy, parser=self.pydantic_output_parser
         )
 
     def parse_and_retry_if_needed(
