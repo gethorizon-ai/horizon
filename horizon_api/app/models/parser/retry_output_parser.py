@@ -66,7 +66,6 @@ class RetryOutputParser(BaseParser):
         max_retries = 2
 
         try:
-            print(f"Original completion: {completion}")
             parsed_completion = self.parser.parse(completion)
 
         except OutputParserException as e:
@@ -83,7 +82,6 @@ class RetryOutputParser(BaseParser):
                             schema=self.schema,
                             completion=completion,
                         )
-                    print(f"New completion: {new_completion}")
                     parsed_completion = self.parser.parse(new_completion)
                     break
 
