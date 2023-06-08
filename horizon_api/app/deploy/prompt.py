@@ -138,10 +138,10 @@ def deploy_prompt(
         formatted_prompt_for_llm = original_formatted_prompt
         prompt_for_data_analysis = [formatted_prompt_for_llm]
 
-    # Generate output with up to 3 retries
-    max_retries = 3
+    # Generate output with up to 3 tries
+    max_tries = 3
     inference_start_time = time.time()
-    for i in range(max_retries):
+    for i in range(max_tries):
         try:
             llm_result = model_instance.generate([formatted_prompt_for_llm])
             output = llm_result.generations[0][0].text.strip()
@@ -157,7 +157,7 @@ def deploy_prompt(
                 break
 
         except Exception as e:
-            if i == max_retries - 1:
+            if i == max_tries - 1:
                 raise Exception(str(e))
             else:
                 continue

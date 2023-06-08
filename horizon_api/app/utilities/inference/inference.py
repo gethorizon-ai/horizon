@@ -95,10 +95,10 @@ def run_inference(
         if type(model_object) == ChatOpenAI or type(model_object) == ChatAnthropic:
             formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
 
-        # Generate output with up to 2 retries (fewer than used for deployment to minimize risk of task generation cost overage)
-        max_retries = 2
+        # Generate output with up to 2 tries (fewer than used for deployment to minimize risk of task generation cost overage)
+        max_tries = 2
         start_time = time.time()
-        for i in range(max_retries):
+        for i in range(max_tries):
             llm_result = model_object.generate([formatted_prompt_for_llm])
             output = llm_result.generations[0][0].text.strip()
 
@@ -111,7 +111,7 @@ def run_inference(
                     break
                 except:
                     # If output fails to satisfy output schema requirements after retries exhausted, continue with original output
-                    if i == max_retries - 1:
+                    if i == max_tries - 1:
                         print("-----FAILED IN INFERENCE-----")
                         print(f"Original output: {output}")
                         print("-----FAILED IN INFERENCE-----")
