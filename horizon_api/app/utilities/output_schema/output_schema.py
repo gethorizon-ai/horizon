@@ -16,6 +16,7 @@ VALID_JSON_KEYS_FOR_OUTPUT_SCHEMA = [
     "type",
     "properties",
     "description",
+    "maxLength",
     "enum",
     "items",
     "required",
@@ -130,7 +131,12 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
                 raise AssertionError(
                     f"Invalid field in output schema 'properties': '{key}'"
                 )
-            if key != "enum" and key != "items" and not isinstance(value, str):
+            if (
+                key != "enum"
+                and key != "items"
+                and key != "maxLength"
+                and not isinstance(value, str)
+            ):
                 raise AssertionError(
                     f"Invalid value in output schema (must be str): '{key}': '{value}'"
                 )
@@ -158,6 +164,10 @@ def check_and_process_output_schema(output_schema_file_path: str) -> None:
                         raise AssertionError(
                             f"Invalid value in output schema ('enum' must be list of str): '{key}': '{value}'"
                         )
+            if key == "maxLength" and not isinstance(value, int):
+                raise AssertionError(
+                    f"Invalid value in output schema ('maxLength' must be int): '{key}': '{value}'"
+                )
 
     # Check that any required fields are listed in properties
     if "required" in output_schema:
