@@ -35,10 +35,13 @@ def deploy_prompt(
         input_values (dict): dict of key-value pairs representing the input variables for prompt.
         openai_api_key (str): OpenAI API key to use if selected model is from OpenAI. Defaults to None.
         anthropic_api_key (str, optional): Anthropic API key to use if selected model is from Anthropic. Defaults to None.
+        log_deployment (bool, optional): whether to log the deployment. Defaults to False.
 
     Raises:
         ValueError: if selected model is from OpenAI, then need to provide OpenAI API key.
         ValueError: if selected model is from Anthropic, then need to provide Anthropic API key.
+        ValueError: no vector db or evaluation dataset present.
+        Exception: could not generate output that matches output schema.
 
     Returns:
         str: The output or completion of the deployed prompt.
@@ -135,20 +138,30 @@ def deploy_prompt(
         formatted_prompt_for_llm = original_formatted_prompt
         prompt_for_data_analysis = [formatted_prompt_for_llm]
 
+    # Generate output with up to 3 tries
+    max_tries = 3
     inference_start_time = time.time()
+    for i in range(max_tries):
+        try:
+            llm_result = model_instance.generate([formatted_prompt_for_llm])
+            output = llm_result.generations[0][0].text.strip()
 
-    # Generate output
-    llm_result = model_instance.generate([formatted_prompt_for_llm])
-    output = llm_result.generations[0][0].text.strip()
+            # Conduct post-processing of output, if applicable
+            if task.pydantic_model:
+                post_processing = PostProcessing(
+                    pydantic_model_s3_key=task.pydantic_model, llm=model_instance
+                )
+                output = post_processing.parse_and_retry_if_needed(
+                    original_output=output, prompt_string=original_formatted_prompt
+                )
 
-    # Conduct post-processing of output, if applicable
-    if task.pydantic_model:
-        post_processing = PostProcessing(
-            pydantic_model_s3_key=task.pydantic_model, llm=model_instance
-        )
-        output = post_processing.parse_and_retry_if_needed(
-            original_output=output, prompt_string=original_formatted_prompt
-        )
+            break
+
+        except Exception as e:
+            if i == max_tries - 1:
+                raise Exception(str(e))
+            else:
+                continue
 
     inference_end_time = time.time()
 
