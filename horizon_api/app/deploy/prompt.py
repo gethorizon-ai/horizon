@@ -144,6 +144,9 @@ def deploy_prompt(
             llm_result = model_instance.generate([formatted_prompt_for_llm])
             output = llm_result.generations[0][0].text.strip()
 
+            if i < 2:
+                raise Exception("try again")
+
             # Conduct post-processing of output, if applicable
             if task.pydantic_model:
                 post_processing = PostProcessing(
