@@ -1,8 +1,11 @@
 from flask import request, send_file, make_response, g, send_from_directory
 from flask_restful import Resource, reqparse
 from celery import shared_task
-from app.models.component import User, Task, Prompt, Project
-from app import db, api
+from app.models.component.user import User
+from app.models.component.task import Task
+from app.models.component.project import Project
+from app.models.component.prompt import Prompt
+from app import db
 from app.utilities.authentication.api_key_auth import api_key_required
 from app.utilities.authentication.cognito_auth import get_user_email
 from app.utilities.run import generate_prompt
@@ -54,9 +57,13 @@ class ListTasksAPI(Resource):
             .all()
         )
 
+        sorted_tasks = sorted(
+            [task.to_dict_filtered() for task in tasks], key=lambda x: x["id"]
+        )
+
         return {
             "message": "Tasks retrieved successfully",
-            "tasks": [task.to_dict_filtered() for task in tasks],
+            "tasks": sorted_tasks,
         }, 200
 
 
@@ -84,7 +91,7 @@ class CreateTaskAPI(Resource):
 
         # Check that project exists and is associated with user
         project = Project.query.filter_by(
-            id=args["project_id"], user_id=g.user.id
+            user_specific_id=args["project_id"], user_id=g.user.id
         ).first()
         if not project:
             return {"error": "Project not found or not associated with user"}, 400
@@ -102,7 +109,7 @@ class CreateTaskAPI(Resource):
         task = Task(
             name=args["name"],
             task_type=args["task_type"],
-            project_id=args["project_id"],
+            project_id=project.id,
             allowed_models=json.dumps(args["allowed_models"]),
         )
 
@@ -136,7 +143,7 @@ class TaskAPI(Resource):
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:
@@ -151,7 +158,7 @@ class TaskAPI(Resource):
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:
@@ -188,7 +195,7 @@ class TaskAPI(Resource):
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:
@@ -216,7 +223,10 @@ class GetCurrentPromptAPI(Resource):
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .filter(
+                Task.user_specific_id == args["task_id"],
+                Project.user_id == g.user.id,
+            )
             .first()
         )
         if not task:
@@ -245,7 +255,10 @@ class SetCurrentPromptAPI(Resource):
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .filter(
+                Task.user_specific_id == args["task_id"],
+                Project.user_id == g.user.id,
+            )
             .first()
         )
         if not task:
@@ -254,7 +267,7 @@ class SetCurrentPromptAPI(Resource):
         # Fetch task and check it is associated with task
         prompt = (
             Prompt.query.join(Task)
-            .filter(Prompt.id == args["prompt_id"], Task.id == task.id)
+            .filter(Prompt.user_specific_id == args["prompt_id"], Task.id == task.id)
             .first()
         )
         if not prompt:
@@ -279,7 +292,7 @@ class GetTaskConfirmationDetailsAPI(Resource):
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:
@@ -386,7 +399,9 @@ class GenerateTaskAPI(Resource):
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .filter(
+                Task.user_specific_id == args["task_id"], Project.user_id == g.user.id
+            )
             .first()
         )
         if not task:
@@ -456,7 +471,10 @@ class DeployTaskAPI(Resource):
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == args["task_id"], Project.user_id == g.user.id)
+            .filter(
+                Task.user_specific_id == args["task_id"],
+                Project.user_id == g.user.id,
+            )
             .first()
         )
         if not task:
@@ -493,7 +511,7 @@ class UploadEvaluationDatasetsAPI(Resource):
 
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:
@@ -550,7 +568,7 @@ class ViewEvaluationDatasetsAPI(Resource):
     def get(self, task_id):
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:
@@ -575,7 +593,7 @@ class DeleteEvaluationDatasetsAPI(Resource):
     def delete(self, task_id):
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:
@@ -610,7 +628,7 @@ class UploadOutputSchemasAPI(Resource):
 
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:
@@ -715,7 +733,7 @@ class DeleteOutputSchemasAPI(Resource):
     def delete(self, task_id):
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:
@@ -750,7 +768,7 @@ class ViewDeploymentLogsAPI(Resource):
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
-            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .filter(Task.user_specific_id == task_id, Project.user_id == g.user.id)
             .first()
         )
         if not task:

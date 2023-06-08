@@ -1,6 +1,6 @@
 """Provides function wrapper to authenticate user credentials through Cognito."""
 
-from app.models.component import User
+from app.models.component.user import User
 from app import db
 from flask import g
 from flask_restful import reqparse
@@ -36,7 +36,6 @@ def calculate_secret_hash(client_secret, email, client_id):
     return base64.b64encode(dig).decode()
 
 
-
 def get_user_email(username: str) -> str:
     """Gets user's email address from Cognito user pool.
 
@@ -55,7 +54,6 @@ def get_user_email(username: str) -> str:
             break
 
     return email
-
 
 
 def cognito_auth_required(f: Callable) -> Callable:

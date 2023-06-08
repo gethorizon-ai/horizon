@@ -3,7 +3,8 @@ from datetime import datetime
 from enum import Enum
 import json
 import os
-from app.models.component.prompt import Prompt
+from app.models.component.user import User
+from app.models.component.project import Project
 from app.models.component.task_deployment_log.task_deployment_log import (
     TaskDeploymentLog,
 )
@@ -20,10 +21,48 @@ class TaskStatus(Enum):
     COMPLETED = "completed"
 
 
+def generate_user_specific_id(context) -> int:
+    """Generate user-specific id.
+
+    Retrieves the maximum user-specific id and returns one more than that. If there are no existing task records, returns 1.
+
+    Args:
+        context: SQLAlchemy context object.
+
+    Returns:
+        int: one more than the maximum maximum user-specific task id, or 1 if no existing task records.
+    """
+    project_id = context.get_current_parameters()["project_id"]
+
+    # Find user
+    user = (
+        User.query.join(Project, Project.user_id == User.id)
+        .filter(Project.id == project_id)
+        .first()
+    )
+
+    # Fetch max value of user-specific task id
+    max_user_specific_id = (
+        db.session.query(db.func.max(Task.user_specific_id))
+        .join(Project, Project.id == Task.project_id)
+        .filter(Project.user_id == user.id)
+        .scalar()
+    )
+
+    # Return one more than the maximum user-specific id, or 1 if no existing records
+    if max_user_specific_id is None:
+        return 1
+    else:
+        return max_user_specific_id + 1
+
+
 class Task(db.Model):
     """Task model."""
 
     id = db.Column(db.Integer, primary_key=True)
+    user_specific_id = db.Column(
+        db.Integer, nullable=False, default=generate_user_specific_id
+    )
     name = db.Column(db.String(64), nullable=False)
     objective = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
@@ -54,13 +93,14 @@ class Task(db.Model):
         backref="task",
         lazy="dynamic",
         cascade="all, delete, delete-orphan",
-        foreign_keys=[Prompt.task_id],
+        primaryjoin="Task.id == Prompt.task_id",
         passive_deletes=True,
     )
 
     def to_dict(self):
         return {
             "id": self.id,
+            "user_specific_id": self.user_specific_id,
             "name": self.name,
             "objective": self.objective,
             "task_type": self.task_type,
@@ -86,9 +126,13 @@ class Task(db.Model):
         }
 
     def to_dict_filtered(self):
+        # Import Prompt class inside function to avoid circular import issues. Needed to get user-specific id of prompt object
+        from app.models.component.prompt import Prompt
+
         # Filter to subset of keys / columns
         filtered_keys = [
             "id",
+            "user_specific_id",
             "name",
             "objective",
             "output_schema",
@@ -99,6 +143,17 @@ class Task(db.Model):
         ]
         full_dict = self.to_dict()
         filtered_dict = {key: full_dict[key] for key in filtered_keys}
+
+        # Replace "id" with "user_specific_id"
+        filtered_dict["id"] = filtered_dict.pop("user_specific_id")
+
+        # Update project id to user-specific id
+        project = Project.query.get(filtered_dict["project_id"])
+        filtered_dict["project_id"] = project.user_specific_id
+
+        # Update active prompt id to user-specific id
+        prompt = Prompt.query.get(filtered_dict["active_prompt_id"])
+        filtered_dict["active_prompt_id"] = prompt.user_specific_id
 
         # Add filtered values of prompts
         filtered_dict["prompts"] = [

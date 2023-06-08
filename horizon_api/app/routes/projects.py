@@ -1,5 +1,5 @@
 from flask_restful import Resource, reqparse
-from app.models.component import Project
+from app.models.component.project import Project
 from app.utilities.authentication.api_key_auth import api_key_required
 from app import db
 from sqlalchemy.exc import IntegrityError
@@ -14,7 +14,7 @@ class ListProjectsAPI(Resource):
         projects = Project.query.filter_by(user_id=g.user.id).all()
         return {
             "message": "Projects retrieved successfully",
-            "projects": [project.to_dict() for project in projects],
+            "projects": [project.to_dict_filtered() for project in projects],
         }, 200
 
 
@@ -38,21 +38,27 @@ class CreateProjectAPI(Resource):
 
         return {
             "message": "Project created successfully",
-            "project": project.to_dict(),
+            "project": project.to_dict_filtered(),
         }, 201
 
 
 class ProjectAPI(Resource):
     @api_key_required
     def get(self, project_id):
-        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
+        project = Project.query.filter_by(
+            user_specific_id=project_id,
+            user_id=g.user.id,
+        ).first()
         if not project:
             return {"error": "Project not found or not associated with user"}, 404
-        return project.to_dict(), 200
+        return project.to_dict_filtered(), 200
 
     @api_key_required
     def put(self, project_id):
-        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
+        project = Project.query.filter_by(
+            user_specific_id=project_id,
+            user_id=g.user.id,
+        ).first()
         if not project:
             return {"error": "Project not found or not associated with user"}, 404
 
@@ -74,12 +80,15 @@ class ProjectAPI(Resource):
 
         return {
             "message": "Project updated successfully",
-            "project": project.to_dict(),
+            "project": project.to_dict_filtered(),
         }, 200
 
     @api_key_required
     def delete(self, project_id):
-        project = Project.query.filter_by(user_id=g.user.id, id=project_id).first()
+        project = Project.query.filter_by(
+            user_specific_id=project_id,
+            user_id=g.user.id,
+        ).first()
         if not project:
             return {"error": "Project not found or not associated with user"}, 404
 

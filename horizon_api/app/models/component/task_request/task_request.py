@@ -28,7 +28,6 @@ class TaskRequest:
         user_objective: str = None,
         allowed_models: list = None,
         num_test_data_input: int = None,
-        input_variables_to_chunk: List[str] = None,
         use_vector_db: bool = True,
     ):
         """Initializes task_request object based on provided user_objective and dataset_file_path.
@@ -42,7 +41,6 @@ class TaskRequest:
             allowed_models (list, optional): list of allowed models for this task. Defaults to None.
             num_test_data_input (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
                 assignment of test data points. Defaults to None.
-            input_variables_to_chunk (List[str], optional): list of input variables to chunk. Defaults to None.
             use_vector_db (bool, optional): whether to store data in vector db. If False, stores data in DataFrame. Defaults to True.
 
         Raises:
@@ -82,7 +80,6 @@ class TaskRequest:
         self.evaluation_dataset_dataframe = data_check.get_evaluation_dataset(
             dataset_file_path=raw_dataset_file_path,
             escape_curly_braces=True,
-            input_variables_to_chunk=input_variables_to_chunk,
         )
         os.remove(raw_dataset_file_path)
 

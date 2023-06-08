@@ -1,5 +1,8 @@
 import json
 from app import db
+from app.models.component.user import User
+from app.models.component.project import Project
+from app.models.component.task import Task
 from app.utilities.dataset_processing import input_variable_naming
 from app.models.component.task_deployment_log.task_deployment_log import (
     TaskDeploymentLog,
@@ -12,8 +15,48 @@ if TYPE_CHECKING:
     from app.models.component.prompt import BasePromptTemplate
 
 
+def generate_user_specific_id(context) -> int:
+    """Generate user-specific id.
+
+    Retrieves the maximum user-specific id and returns one more than that. If there are no existing task records, returns 1.
+
+    Args:
+        context: SQLAlchemy context object.
+
+    Returns:
+        int: one more than the maximum maximum user-specific task id, or 1 if no existing task records.
+    """
+    task_id = context.get_current_parameters()["task_id"]
+
+    # Find user
+    user = (
+        User.query.join(Project, Project.user_id == User.id)
+        .join(Task, Task.project_id == Project.id)
+        .filter(Task.id == task_id)
+        .first()
+    )
+
+    # Fetch records corresponding to user
+    max_user_specific_id = (
+        db.session.query(db.func.max(Prompt.user_specific_id))
+        .join(Task, Task.id == Prompt.task_id)
+        .join(Project, Project.id == Task.project_id)
+        .filter(Project.user_id == user.id)
+        .scalar()
+    )
+
+    # Return one more than the maximum user-specific id, or 1 if no existing records
+    if max_user_specific_id is None:
+        return 1
+    else:
+        return max_user_specific_id + 1
+
+
 class Prompt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    user_specific_id = db.Column(
+        db.Integer, nullable=False, default=generate_user_specific_id
+    )
     name = db.Column(db.String(50), nullable=False)
     task_id = db.Column(
         db.Integer, db.ForeignKey("task.id", ondelete="CASCADE"), nullable=False
@@ -52,6 +95,7 @@ class Prompt(db.Model):
     def to_dict(self):
         return {
             "id": self.id,
+            "user_specific_id": self.user_specific_id,
             "name": self.name,
             "task_id": self.task_id,
             "version": self.version,
@@ -78,6 +122,7 @@ class Prompt(db.Model):
         # Filter to subset of keys / columns
         filtered_keys = [
             "id",
+            "user_specific_id",
             "task_id",
             "template_type",
             "template_data",
@@ -95,6 +140,13 @@ class Prompt(db.Model):
 
         full_dict = self.to_dict()
         filtered_dict = {key: full_dict[key] for key in filtered_keys}
+
+        # Replace "id" with "user_specific_id"
+        filtered_dict["id"] = filtered_dict.pop("user_specific_id")
+
+        # Update task id to user-specific id
+        task = Task.query.get(filtered_dict["task_id"])
+        filtered_dict["task_id"] = task.user_specific_id
 
         if self.template_type is not None:
             # Refine data displayed for template data
