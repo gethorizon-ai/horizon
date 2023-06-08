@@ -5,7 +5,7 @@
         "responsibility": {
             "title": "Responsibility",
             "description": "responsibility of the job listing",
-            "maxLength": 1000,
+            "maxLength": 500,
             "type": "string"
         }
     },
