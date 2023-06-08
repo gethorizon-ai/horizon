@@ -1,5 +1,6 @@
 """Class to retry LLM if error occurs when parsing output."""
 
+from .base import BaseParser
 from langchain.base_language import BaseLanguageModel
 from langchain.chains.llm import LLMChain
 from langchain.prompts.prompt import PromptTemplate
@@ -34,7 +35,7 @@ RETRY_WITH_ERROR_PROMPT = PromptTemplate.from_template(
 )
 
 
-class RetryOutputParser:
+class RetryOutputParser(BaseParser):
     """Class to retry LLM if error occurs when parsing output."""
 
     def __init__(
