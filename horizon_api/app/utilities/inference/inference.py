@@ -95,27 +95,32 @@ def run_inference(
         if type(model_object) == ChatOpenAI or type(model_object) == ChatAnthropic:
             formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
 
-        start_time = time.time()
-        output = (
-            model_object.generate([formatted_prompt_for_llm])
-            .generations[0][0]
-            .text.strip()
-        )
+        # Generate output with up to 2 retries (fewer than used for deployment to minimize risk of task generation cost overage)
+        max_retries = 2
+        for i in range(max_retries):
+            start_time = time.time()
 
-        # Conduct post-processing if applicable
-        if post_processing:
-            try:
-                updated_output = post_processing.parse_and_retry_if_needed(
-                    original_output=output, prompt_string=original_formatted_prompt
-                )
-                output = updated_output
-            except:
-                # If output fails to satisfy output schema requirements, continue with original output
-                print("-----FAILED IN INFERENCE-----")
-                print(f"Original output: {output}")
-                print("-----FAILED IN INFERENCE-----")
+            llm_result = model_object.generate([formatted_prompt_for_llm])
+            output = llm_result.generations[0][0].text.strip()
 
-        end_time = time.time()
+            # Conduct post-processing if applicable
+            if post_processing:
+                try:
+                    output = post_processing.parse_and_retry_if_needed(
+                        original_output=output, prompt_string=original_formatted_prompt
+                    )
+                    break
+                except:
+                    # If output fails to satisfy output schema requirements after retries exhausted, continue with original output
+                    if i == max_retries - 1:
+                        print("-----FAILED IN INFERENCE-----")
+                        print(f"Original output: {output}")
+                        print("-----FAILED IN INFERENCE-----")
+                    else:
+                        continue
+
+            end_time = time.time()
+
         inference_latency = end_time - start_time
 
         # Record output and inference latency

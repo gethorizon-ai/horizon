@@ -70,7 +70,6 @@ class RetryOutputParser(BaseParser):
         try:
             print(f"Original completion: {completion}")
             parsed_completion = self.parser.parse(completion)
-            raise OutputParserException("try again")
 
         except OutputParserException as e:
             print(f"Error: {str(e)}")
@@ -81,7 +80,6 @@ class RetryOutputParser(BaseParser):
                             schema=self.schema,
                             completion=completion,
                         )
-                        raise Exception("try once more")
                     elif i == 1:
                         new_completion = self.retry_with_error_chain.run(
                             schema=self.schema,

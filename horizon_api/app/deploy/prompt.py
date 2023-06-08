@@ -35,10 +35,13 @@ def deploy_prompt(
         input_values (dict): dict of key-value pairs representing the input variables for prompt.
         openai_api_key (str): OpenAI API key to use if selected model is from OpenAI. Defaults to None.
         anthropic_api_key (str, optional): Anthropic API key to use if selected model is from Anthropic. Defaults to None.
+        log_deployment (bool, optional): whether to log the deployment. Defaults to False.
 
     Raises:
         ValueError: if selected model is from OpenAI, then need to provide OpenAI API key.
         ValueError: if selected model is from Anthropic, then need to provide Anthropic API key.
+        ValueError: no vector db or evaluation dataset present.
+        Exception: could not generate output that matches output schema.
 
     Returns:
         str: The output or completion of the deployed prompt.
@@ -143,9 +146,6 @@ def deploy_prompt(
         try:
             llm_result = model_instance.generate([formatted_prompt_for_llm])
             output = llm_result.generations[0][0].text.strip()
-
-            if i < 2:
-                raise Exception("try again")
 
             # Conduct post-processing of output, if applicable
             if task.pydantic_model:
