@@ -10,24 +10,37 @@ from typing import TypeVar
 
 T = TypeVar("T")
 
-# Retry prompt that only shows JSON schema and original output
-RETRY_WITHOUT_ERROR_PROMPT = PromptTemplate.from_template(
-    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema.
+# Retry prompt that shows original prompt (which presumably includes JSON schema), error, and original output
+RETRY_WITH_PROMPT_AND_ERROR_PROMPT = PromptTemplate.from_template(
+    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema specified in the prompt. Correct the output to conform to the JSON schema while staying as close to the original output as possible.
+
+<PROMPT>: {prompt}
+
+<ORIGINAL OUTPUT>: {completion}
+
+<ERROR>: {error}
+
+<CORRECTED JSON OUTPUT>:"""
+)
+
+# Retry prompt that shows JSON schema, error, and original output
+RETRY_WITH_ERROR_PROMPT = PromptTemplate.from_template(
+    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema while staying as close to the original output as possible.
 
 <JSON SCHEMA>: {schema}
 
 <ORIGINAL OUTPUT>: {completion}
 
+<ERROR>: {error}
+
 <CORRECTED JSON OUTPUT>:"""
 )
 
-# Retry prompt that only shows JSON schema, error, and original output
-RETRY_WITH_ERROR_PROMPT = PromptTemplate.from_template(
-    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema.
+# Retry prompt that shows JSON schema and original output
+RETRY_WITHOUT_ERROR_PROMPT = PromptTemplate.from_template(
+    """You are a JSON error correction bot. The following output caused an error because it did not satisfy the requirements of the JSON schema. Correct the output to conform to the JSON schema while staying as close to the original output as possible.
 
 <JSON SCHEMA>: {schema}
-
-<ERROR>: {error}
 
 <ORIGINAL OUTPUT>: {completion}
 
@@ -45,19 +58,26 @@ class RetryOutputParser(BaseParser):
     ) -> None:
         self.parser = parser
         self.schema = self.parser.get_format_instructions(schema_only=True)
-        self.retry_without_error_chain = LLMChain(
+        self.retry_with_prompt_and_error_chain = LLMChain(
             llm=llm,
-            prompt=RETRY_WITHOUT_ERROR_PROMPT,
+            prompt=RETRY_WITH_PROMPT_AND_ERROR_PROMPT,
         )
         self.retry_with_error_chain = LLMChain(
             llm=llm,
             prompt=RETRY_WITH_ERROR_PROMPT,
         )
+        self.retry_without_error_chain = LLMChain(
+            llm=llm,
+            prompt=RETRY_WITHOUT_ERROR_PROMPT,
+        )
 
-    def parse(self, completion: str) -> str:
-        """Tries to parse given completion and, if error, retries up to 2 times to correct JSON format.
+    def parse(self, completion: str, prompt_string: str) -> str:
+        """Tries to parse given completion and, if error, retries up to 3 times to correct JSON format.
 
-        Does not use error in retry prompt on first retry (to minimize prompt complexity), then uses error in second retry.
+        Each retry reduces prompt complexity:
+        - first retry includes original prompt, error, and completion
+        - second retry includes JSON schema from original prompt, error, and completion
+        - third retry includes JSON schema and completion
 
         Args:
             completion (str): original completion string.
@@ -65,7 +85,7 @@ class RetryOutputParser(BaseParser):
         Returns:
             str: completion string in correct JSON format.
         """
-        max_retries = 2
+        max_retries = 3
 
         try:
             print(f"Original completion: {completion}")
@@ -76,14 +96,20 @@ class RetryOutputParser(BaseParser):
             for i in range(max_retries):
                 try:
                     if i == 0:
-                        new_completion = self.retry_without_error_chain.run(
-                            schema=self.schema,
+                        new_completion = self.retry_with_prompt_and_error_chain.run(
+                            prompt=prompt_string,
+                            error=str(e),
                             completion=completion,
                         )
                     elif i == 1:
                         new_completion = self.retry_with_error_chain.run(
                             schema=self.schema,
                             error=str(e),
+                            completion=completion,
+                        )
+                    elif i == 2:
+                        new_completion = self.retry_without_error_chain.run(
+                            schema=self.schema,
                             completion=completion,
                         )
                     print(f"New completion: {new_completion}")
