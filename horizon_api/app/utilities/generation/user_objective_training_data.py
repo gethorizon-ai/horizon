@@ -1,6 +1,6 @@
 """Generates prompt candidates based on user-provided objective, input variables, and training data."""
 
-from app.models.prompt.prompt import PromptTemplate
+from app.models.prompt.factory import PromptTemplateFactory
 from app.models.llm.base import BaseLLM
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
@@ -59,7 +59,10 @@ def prompt_generation_user_objective_training_data(
         output_format_instructions = post_processing.output_format_instructions
 
     prompt_suffix = base.generate_prompt_suffix(
-        input_variables=task_request.input_variables
+        input_variables=task_request.input_variables,
+        include_context_from_data_repository=(
+            task_request.vector_db_data_repository is not None
+        ),
     )
 
     prompt_model_id_list = []
@@ -72,8 +75,11 @@ def prompt_generation_user_objective_training_data(
         prompt_prefix = responses[i].text.strip()
         prompt_template = prompt_prefix + output_format_instructions + prompt_suffix
         try:
-            generated_prompt = PromptTemplate(
-                template=prompt_template, input_variables=task_request.input_variables
+            generated_prompt = PromptTemplateFactory.create_prompt_template(
+                "prompt",
+                template=prompt_template,
+                input_variables=task_request.input_variables
+                + task_request.input_variable_context,
             )
         except:
             continue

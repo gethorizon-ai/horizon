@@ -27,6 +27,7 @@ import tempfile
 from app.utilities.logging.task_logger import TaskLogger
 
 ALLOWED_EVALUTION_DATASET_EXTENSIONS = {"csv"}
+ALLOWED_DATA_REPOSITORY_EXTENSIONS = {"txt"}
 ALLOWED_OUTPUT_SCHEMA_EXTENSIONS = {"json"}
 
 
@@ -34,6 +35,13 @@ def allowed_evaluation_dataset_file(filename):
     return (
         "." in filename
         and filename.rsplit(".", 1)[1].lower() in ALLOWED_EVALUTION_DATASET_EXTENSIONS
+    )
+
+
+def allowed_data_repository_file(filename):
+    return (
+        "." in filename
+        and filename.rsplit(".", 1)[1].lower() in ALLOWED_DATA_REPOSITORY_EXTENSIONS
     )
 
 
@@ -486,6 +494,61 @@ class DeployTaskAPI(Resource):
             return {"error": f"Failed with exception: {str(e)}"}, 400
 
 
+class UploadDataRepositoryAPI(Resource):
+    @api_key_required
+    def post(self, task_id):
+        logging.info("UploadDataRepositoryAPI: Start processing the request")
+
+        task = (
+            Task.query.join(Project, Project.id == Task.project_id)
+            .filter(Task.id == task_id, Project.user_id == g.user.id)
+            .first()
+        )
+        if not task:
+            return {"error": "Task not found or not associated with user"}, 404
+
+        if "data_repository" not in request.files:
+            return {"error": f"No file provided"}, 400
+
+        data_repository = request.files["data_repository"]
+
+        if not allowed_data_repository_file(data_repository.filename):
+            return {"error": "Invalid file type. Only TXT files are allowed."}, 400
+
+        with tempfile.NamedTemporaryFile(mode="wb", delete=False) as temp_file:
+            temp_file_path = temp_file.name
+            data_repository.save(temp_file_path)
+
+        if os.path.getsize(temp_file_path) > 1000000:
+            logging.error(
+                "UploadDataRepositoryAPI: Data repository can be at most 1 MB large."
+            )
+            os.remove(temp_file_path)  # Delete the temporary file
+            return {
+                "error": "UploadDataRepositoryAPI: Data repository can be at most 1 MB large."
+            }, 400
+
+        s3_key = f"data_repository/{task_id}/{data_repository.filename}"
+        with open(temp_file_path, "rb") as temp_file:
+            upload_file_to_s3(temp_file, s3_key)
+        os.remove(temp_file_path)
+
+        task.data_repository = s3_key
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            logging.error(f"UploadDataRepositoryAPI: Error during commit - {str(e)}")
+            db.session.rollback()
+            return {"error": str(e)}, 400
+
+        logging.info("UploadDataRepositoryAPI: Finished processing the request")
+        return {
+            "message": "Data repository uploaded successfully",
+            "task": task.to_dict_filtered(),
+        }, 200
+
+
 class UploadEvaluationDatasetsAPI(Resource):
     @api_key_required
     def post(self, task_id):
@@ -512,8 +575,11 @@ class UploadEvaluationDatasetsAPI(Resource):
             evaluation_dataset.save(temp_file_path)
 
         try:
+            # Check evaluation dataset and data length
+            # If task has data repository, check that evaluation dataset leaves enough tokens for context from data repository
             data_check.check_evaluation_dataset_and_data_length(
-                dataset_file_path=temp_file_path
+                dataset_file_path=temp_file_path,
+                include_context_from_data_repository=task.data_repository is not None,
             )
         except Exception as e:
             logging.error(
@@ -783,6 +849,9 @@ def register_routes(api):
     )
     api.add_resource(GenerateTaskAPI, "/api/tasks/generate")
     api.add_resource(DeployTaskAPI, "/api/tasks/deploy")
+    api.add_resource(
+        UploadDataRepositoryAPI, "/api/tasks/<int:task_id>/upload_data_repository"
+    )
     api.add_resource(
         UploadEvaluationDatasetsAPI,
         "/api/tasks/<int:task_id>/upload_evaluation_dataset",

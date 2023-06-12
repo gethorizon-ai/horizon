@@ -62,36 +62,33 @@ def generate_prompt_model_configuration(
     # Log user objective with task
     task.objective = user_objective
 
-    # Try loading evaluation dataset from vector db if available
-    if task.vector_db_metadata:
-        task_request = TaskRequest(
-            raw_dataset_s3_key=task.evaluation_dataset,
-            task_id=task.id,
-            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-            vector_db_metadata=json.loads(task.vector_db_metadata),
-            user_objective=task.objective,
-            allowed_models=json.loads(task.allowed_models),
-        )
+    # Setup TaskRequest object
+    task_request = TaskRequest(
+        raw_dataset_s3_key=task.evaluation_dataset,
+        data_repository_s3_key=task.data_repository,
+        task_id=task.id,
+        openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+        vector_db_metadata=json.loads(task.vector_db_metadata),
+        vector_db_data_repository_metadata=json.loads(
+            task.vector_db_data_repository_metadata
+        ),
+        user_objective=task.objective,
+        allowed_models=json.loads(task.allowed_models),
+    )
 
-    # Otherwise, load vector db from raw evaluation dataset
-    elif task.evaluation_dataset:
-        task_request = TaskRequest(
-            raw_dataset_s3_key=task.evaluation_dataset,
-            task_id=task.id,
-            openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-            user_objective=task.objective,
-            allowed_models=json.loads(task.allowed_models),
-        )
-
-        # Store vector db metadata in task object and commit changes to db
+    # Store vector db metadata for evaluation dataset in task object if not present
+    if not task.vector_db_metadata:
         task.store_vector_db_metadata(
-            vector_db=task_request.evaluation_dataset_vector_db
+            vector_db=task_request.vector_db_evaluation_dataset
         )
 
-    # Throw error if no raw or vector db version of evaluation dataset
-    else:
-        raise AssertionError(
-            "No raw or vector db version of evaluation dataset associated with this task"
+    # If applicable, store vector db metadata for data repository in task object if not present
+    if (
+        task_request.vector_db_data_repository
+        and not task.vector_db_data_repository_metadata
+    ):
+        task.store_vector_db_data_repository_metadata(
+            vector_db=task_request.vector_db_data_repository
         )
 
     # Check that relevant API keys are provided for each allowed model and are valid

@@ -3,6 +3,7 @@
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.post_processing.post_processing import PostProcessing
+from app.utilities.dataset_processing import chunk
 from app.models.prompt.factory import PromptTemplateFactory
 from app.models.example_selector.max_marginal_relevance_example_selector import (
     MaxMarginalRelevanceExampleSelector,
@@ -42,7 +43,11 @@ def prompt_generation_few_shots(
         output_format_instructions = post_processing.output_format_instructions
 
     suffix_request = base.generate_prompt_suffix(
-        input_variables=task_request.input_variables
+        input_variables=task_request.input_variables,
+        include_context_from_data_repository=(
+            task_request.vector_db_data_repository is not None
+        ),
+        few_shot_examples=True,
     ).strip()
 
     prompt_model_id_list = []
@@ -58,10 +63,22 @@ def prompt_generation_few_shots(
         )
         model_name = row["model_object"].get_model_name()
 
+        # If applicable, setup selector to retrieve context from data repository
+        context_selector = None
+        if task_request.vector_db_data_repository:
+            context_selector = MaxMarginalRelevanceExampleSelector(
+                vectorstore=task_request.vector_db_data_repository,
+                k=chunk.NUM_CHUNKS_TO_RETRIEVE_FOR_PROMPT_CONTEXT,
+                example_keys=["context"],
+                input_keys=task_request.input_variables,
+            )
+
+        # Setup selector to retrieve few shot examples from evaluation dataset
         example_selector = MaxMarginalRelevanceExampleSelector(
-            vectorstore=task_request.evaluation_dataset_vector_db,
+            vectorstore=task_request.vector_db_evaluation_dataset,
             k=task_request.applicable_llms[model_name]["max_few_shots"],
             example_keys=task_request.input_variables + ["ground_truth"],
+            input_keys=task_request.input_variables,
             filter_statement={
                 "evaluation_data_id": {"$lt": task_request.num_train_data}
             },
@@ -70,11 +87,13 @@ def prompt_generation_few_shots(
         # create the few shot prompt template
         few_shot_prompt = PromptTemplateFactory.create_prompt_template(
             "fewshot",
+            context_selector=context_selector,
             example_selector=example_selector,
             example_prompt=example_formatter_template,
             prefix=few_shot_prompt_prefix,
             suffix=suffix_request,
-            input_variables=task_request.input_variables,
+            input_variables=task_request.input_variables
+            + task_request.input_variable_context,
         )
 
         # add the few shot prompt to the prompt_candidates list

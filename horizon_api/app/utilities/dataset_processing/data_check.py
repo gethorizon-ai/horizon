@@ -7,22 +7,20 @@ import csv
 import re
 import pandas as pd
 from typing import List
-from langchain.text_splitter import (
-    RecursiveCharacterTextSplitter,
-)
-
-# CHUNK_SIZE = 1000
-# CHUNK_OVERLAP = 0
 
 
 def check_evaluation_dataset_and_data_length(
-    dataset_file_path: str, synthetic_data_generation: bool = False
+    dataset_file_path: str,
+    synthetic_data_generation: bool = False,
+    include_context_from_data_repository: bool = False,
 ) -> None:
     """Checks contents of evaluation dataset for potential errors and if data lengths meet llm token limits.
 
     Args:
         dataset_file_path (str): file path to evaluation dataset.
         synthetic_data_generation (bool, optional): whether this task request is to generate synthetic data. Defaults to False.
+        include_context_from_data_repository (bool, optional): whether to incorporate length of context from data repository.
+            Defaults to False
 
     Raises:
         AssertionError: checks if input and output data lengths exceed token limits of available llms.
@@ -41,7 +39,8 @@ def check_evaluation_dataset_and_data_length(
 
     # Check that evaluation data lengths are appropriate
     evaluation_data_length = data_length.get_evaluation_data_length(
-        evaluation_dataset=evaluation_dataset, unescape_curly_braces=True
+        evaluation_dataset=evaluation_dataset,
+        unescape_curly_braces=True,
     )
     max_input_tokens = evaluation_data_length["max_input_tokens"]
     max_ground_truth_tokens = evaluation_data_length["max_ground_truth_tokens"]
@@ -54,6 +53,7 @@ def check_evaluation_dataset_and_data_length(
         max_ground_truth_tokens=max_ground_truth_tokens,
         max_input_characters=max_input_characters,
         max_ground_truth_characters=max_ground_truth_characters,
+        include_context_from_data_repository=include_context_from_data_repository,
     )
 
     # Check that at least one llm is applicable
@@ -92,7 +92,7 @@ def check_evaluation_dataset(
     """
     # Check that evaluation data is at most 50 MB file size
     if os.path.getsize(dataset_file_path) > 50000000:
-        raise AssertionError("Evaluation dataset can be at most 1 MB large.")
+        raise AssertionError("Evaluation dataset can be at most 50 MB large.")
 
     # Try to import evaluation dataset
     try:
@@ -145,7 +145,6 @@ def check_evaluation_dataset(
 def get_evaluation_dataset(
     dataset_file_path: str,
     escape_curly_braces: bool = True,
-    input_variables_to_chunk: List[str] = None,
 ) -> pd.DataFrame:
     """Convert evaluation dataset csv into DataFrame.
 
@@ -185,30 +184,6 @@ def get_evaluation_dataset(
 
     # Add evaluation_data_id column
     evaluation_dataset["evaluation_data_id"] = evaluation_dataset.index
-
-    # Chunk input variables if required
-    if input_variables_to_chunk:
-        pass
-
-        # # TODO:
-        # # Ensure that input_variables_to_chunk are all valid columns in raw_dataset
-        # assert all(
-        #     var in evaluation_dataset.columns.to_list()
-        #     for var in input_variables_to_chunk
-        # )
-
-        # # Setup text splitter
-        # text_splitter = RecursiveCharacterTextSplitter(
-        #     chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP
-        # )
-
-        # # Chunk each input variable
-        # for var in input_variables_to_chunk:
-        #     evaluation_dataset[var] = evaluation_dataset[var].apply(
-        #         lambda x: text_splitter.split_text(x)
-        #     )
-        #     evaluation_dataset = evaluation_dataset.explode(var)
-        #     evaluation_dataset = evaluation_dataset.reset_index(drop=True)
 
     # Return processed evaluation dataset
     return evaluation_dataset

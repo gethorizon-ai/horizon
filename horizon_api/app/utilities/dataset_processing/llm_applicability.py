@@ -1,6 +1,7 @@
 """Defines helper methods to determine applicable llms for task."""
 
 from app.models.llm.factory import LLMFactory
+from app.utilities.dataset_processing import chunk
 
 
 def get_applicable_llms(
@@ -8,6 +9,7 @@ def get_applicable_llms(
     max_ground_truth_tokens: int,
     max_input_characters: int,
     max_ground_truth_characters: int,
+    include_context_from_data_repository: bool = False,
 ) -> dict:
     """Determines applicable models and associated parameters for given evaluation data.
 
@@ -16,6 +18,8 @@ def get_applicable_llms(
         max_ground_truth_tokens (int): max number of tokens used for ground truth data in evaluation dataset.
         max_input_characters (int): max number of characters used for input data in evaluation dataset.
         max_ground_truth_characters (int): max number of characters used for ground truth data in evaluation dataset.
+        include_context_from_data_repository (bool, optional): whether to incorporate length of context from data repository.
+            Defaults to False
 
     Raises:
         AssertionError: task_request must have evaluation dataset length statistics.
@@ -68,6 +72,14 @@ def get_applicable_llms(
         )
         + max_output_characters
     )
+
+    # If applicable, incorporate context from data repository for QA use case
+    if include_context_from_data_repository:
+        zero_shot_tokens += (
+            chunk.MAX_DATA_REPOSITORY_CONTEXT_LENGTH
+            * LLMFactory.llm_data_assumptions["tokens_per_character"]
+        )
+        zero_shot_characters += chunk.MAX_DATA_REPOSITORY_CONTEXT_LENGTH
 
     # Determine data length of single few shot example
     max_few_shot_example_tokens = int(

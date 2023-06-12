@@ -12,6 +12,7 @@ from app.utilities.dataset_processing import llm_applicability
 from app.utilities.dataset_processing import segment_data
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 from app.utilities.vector_db import vector_db
+from app.utilities.vector_db import vector_db_data_repository
 from typing import List
 import os
 
@@ -22,27 +23,30 @@ class TaskRequest:
     def __init__(
         self,
         raw_dataset_s3_key: str,
+        data_repository_s3_key: str = None,
         task_id: int = None,
         openai_api_key: str = None,
         vector_db_metadata: dict = None,
+        vector_db_data_repository_metadata: dict = None,
         user_objective: str = None,
         allowed_models: list = None,
         num_test_data_input: int = None,
-        input_variables_to_chunk: List[str] = None,
         use_vector_db: bool = True,
     ):
         """Initializes task_request object based on provided user_objective and dataset_file_path.
 
         Args:
             raw_dataset_s3_key (str): s3 key for raw evaluation dataset.
+            data_repository_s3_key (str, optional): s3 key for data repository. Defaults to None.
             task_id (int, optional): id of task. Defaults to None.
             openai_api_key (str, optional): OpenAI API key to use for embeddings. Defaults to None.
-            vector_db_metadata (dict): metadata about vector db usage for this task. Defaults to None.
-            user_objective (str, optional): objective of the use case.. Defaults to None.
+            vector_db_metadata (dict, optional): metadata about vector db for evaluation dataset for this task. Defaults to None.
+            vector_db_data_repository_metadata: (dict, optional): metadata about vector db for data repository for this task.
+                Defaults to None.
+            user_objective (str, optional): objective of the use case. Defaults to None.
             allowed_models (list, optional): list of allowed models for this task. Defaults to None.
             num_test_data_input (int, optional): how many test data points to use. Used if it does not exceed the algorithm's normal
                 assignment of test data points. Defaults to None.
-            input_variables_to_chunk (List[str], optional): list of input variables to chunk. Defaults to None.
             use_vector_db (bool, optional): whether to store data in vector db. If False, stores data in DataFrame. Defaults to True.
 
         Raises:
@@ -53,9 +57,11 @@ class TaskRequest:
             ValueError: checks if vector db or raw dataset and task id passed if proceeding with vector db.
         """
         self.user_objective = user_objective
-        self.input_variables = None
+        self.input_variables = []
+        self.input_variable_context = []
         self.evaluation_dataset_dataframe = None
-        self.evaluation_dataset_vector_db = None
+        self.vector_db_evaluation_dataset = None
+        self.vector_db_data_repository = None
         self.num_train_data = None
         self.num_test_data = num_test_data_input
         self.train_data_id_list = None
@@ -82,7 +88,6 @@ class TaskRequest:
         self.evaluation_dataset_dataframe = data_check.get_evaluation_dataset(
             dataset_file_path=raw_dataset_file_path,
             escape_curly_braces=True,
-            input_variables_to_chunk=input_variables_to_chunk,
         )
         os.remove(raw_dataset_file_path)
 
@@ -90,6 +95,16 @@ class TaskRequest:
         self.input_variables = input_variable_naming.get_input_variables(
             dataset_fields=self.evaluation_dataset_dataframe.columns.to_list()
         )
+
+        # Include context from data repository if provided
+        include_context_from_data_repository = (
+            data_repository_s3_key is not None
+            or vector_db_data_repository_metadata is not None
+        )
+
+        # Store prompt variable name for context from data repository, if applicable
+        if include_context_from_data_repository:
+            self.input_variable_context = ["context"]
 
         # Set evaluation data length
         evaluation_data_length = data_length.get_evaluation_data_length(
@@ -109,6 +124,7 @@ class TaskRequest:
             max_ground_truth_tokens=self.max_ground_truth_tokens,
             max_input_characters=self.max_input_characters,
             max_ground_truth_characters=self.max_ground_truth_characters,
+            include_context_from_data_repository=include_context_from_data_repository,
         )
 
         # Check that at least one llm is applicable
@@ -137,14 +153,14 @@ class TaskRequest:
         if use_vector_db:
             # Load evaluation dataset from vector db if available
             if vector_db_metadata:
-                self.evaluation_dataset_vector_db = vector_db.load_vector_db(
+                self.vector_db_evaluation_dataset = vector_db.load_vector_db(
                     vector_db_metadata=vector_db_metadata,
                     openai_api_key=openai_api_key,
                 )
 
             # Otherwise, load raw dataset and setup evaluation dataset in vector db
             elif task_id:
-                self.evaluation_dataset_vector_db = (
+                self.vector_db_evaluation_dataset = (
                     vector_db.initialize_vector_db_from_dataset(
                         task_id=task_id,
                         evaluation_dataset=self.evaluation_dataset_dataframe,
@@ -157,6 +173,27 @@ class TaskRequest:
                 raise ValueError(
                     "Must provide either vector db or raw dataset and task id."
                 )
+
+            # Load data repository from vector db if available
+            if vector_db_data_repository_metadata:
+                self.vector_db_data_repository = vector_db_data_repository.load_vector_db_data_repository(
+                    vector_db_data_repository_metadata=vector_db_data_repository_metadata,
+                    openai_api_key=openai_api_key,
+                )
+
+            # Otherwise, load data repository if provided and setup in vector db
+            elif data_repository_s3_key:
+                # Get data repository
+                data_repository_file_path = download_file_from_s3_and_save_locally(
+                    data_repository_s3_key
+                )
+                with open(data_repository_file_path, "r") as file:
+                    self.vector_db_data_repository = vector_db_data_repository.initialize_vector_db_data_repository_from_doc(
+                        task_id=task_id,
+                        doc=file.read(),
+                        openai_api_key=openai_api_key,
+                    )
+                os.remove(data_repository_file_path)
 
     def get_normalized_input_variables(self) -> List[str]:
         """Get input variables from evaluation dataset without "var_" prepended to them.

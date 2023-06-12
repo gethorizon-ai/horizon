@@ -51,7 +51,10 @@ def prompt_generation_variants(
         output_format_instructions = post_processing.output_format_instructions
 
     prompt_suffix = base.generate_prompt_suffix(
-        input_variables=task_request.input_variables
+        input_variables=task_request.input_variables,
+        include_context_from_data_repository=(
+            task_request.vector_db_data_repository is not None
+        ),
     )
 
     prompt_model_id_list = []
@@ -82,7 +85,8 @@ def prompt_generation_variants(
                 generated_prompt = PromptTemplateFactory.create_prompt_template(
                     "prompt",
                     template=prompt_template,
-                    input_variables=task_request.input_variables,
+                    input_variables=task_request.input_variables
+                    + task_request.input_variable_context,
                 )
             except:
                 continue

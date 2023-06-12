@@ -28,7 +28,9 @@ class Task(db.Model):
     objective = db.Column(db.Text, nullable=True)
     task_type = db.Column(db.String(64), nullable=False)
     evaluation_dataset = db.Column(db.Text, nullable=True)
+    data_repository = db.Column(db.Text, nullable=True)
     vector_db_metadata = db.Column(db.Text, nullable=True)
+    vector_db_data_repository_metadata = db.Column(db.Text, nullable=True)
     output_schema = db.Column(db.Text, nullable=True)
     pydantic_model = db.Column(db.Text, nullable=True)
     status = db.Column(SQLEnum(TaskStatus), nullable=False, default=TaskStatus.CREATED)
@@ -65,7 +67,11 @@ class Task(db.Model):
             "objective": self.objective,
             "task_type": self.task_type,
             "evaluation_dataset": self.evaluation_dataset,
+            "data_repository": self.data_repository
+            if (self.data_repository is not None)
+            else "Undefined",
             "vector_db_metadata": self.vector_db_metadata,
+            "vector_db_data_repository_metadata": self.vector_db_data_repository_metadata,
             "output_schema": os.path.basename(self.output_schema)
             if (self.output_schema is not None)
             else "Undefined",
@@ -91,6 +97,7 @@ class Task(db.Model):
             "id",
             "name",
             "objective",
+            "data_repository",
             "output_schema",
             "project_id",
             "allowed_models",
@@ -116,6 +123,15 @@ class Task(db.Model):
         self.vector_db_metadata = json.dumps(vector_db_metadata)
         db.session.commit()
 
+    def store_vector_db_data_repository_metadata(self, vector_db: Pinecone) -> None:
+        vector_db_data_repository_metadata = {
+            "namespace": vector_db.get_namespace(),
+        }
+        self.vector_db_data_repository_metadata = json.dumps(
+            vector_db_data_repository_metadata
+        )
+        db.session.commit()
+
 
 @event.listens_for(Task, "before_delete")
 def _clean_up_and_remove_dependencies(mapper, connection, target):
@@ -127,6 +143,14 @@ def _clean_up_and_remove_dependencies(mapper, connection, target):
             pass
         target.evaluation_dataset = None
 
+    # Delete data repository from S3, if it exists
+    if target.data_repository is not None:
+        try:
+            delete_file_from_s3(target.data_repository)
+        except:
+            pass
+        target.data_repository = None
+
     # Delete evaluation dataset from vector db, if it exists
     if target.vector_db_metadata is not None:
         try:
@@ -134,6 +158,16 @@ def _clean_up_and_remove_dependencies(mapper, connection, target):
         except:
             pass
         target.vector_db_metadata = None
+
+    # Delete data repository from vector db, if it exists
+    if target.vector_db_data_repository_metadata is not None:
+        try:
+            vector_db.delete_vector_db(
+                json.loads(target.vector_db_data_repository_metadata)
+            )
+        except:
+            pass
+        target.vector_db_data_repository_metadata = None
 
     # Delete output schema from S3, if it exists
     if target.output_schema is not None:
@@ -161,7 +195,9 @@ def _clean_up_and_remove_dependencies(mapper, connection, target):
         .where(target.__table__.c.id == target.id)
         .values(
             evaluation_dataset=target.evaluation_dataset,
+            data_repository=target.data_repository,
             vector_db_metadata=target.vector_db_metadata,
+            vector_db_data_repository_metadata=target.vector_db_data_repository_metadata,
             output_schema=target.output_schema,
             pydantic_model=target.pydantic_model,
             active_prompt_id=target.active_prompt_id,

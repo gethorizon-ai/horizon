@@ -40,11 +40,7 @@ class PromptTemplateFactory:
         if template_type not in PromptTemplateFactory.prompt_template_classes:
             raise ValueError(f"Invalid template_type: {template_type}")
 
-        if template_type == "prompt":
-            return PromptTemplateFactory.prompt_template_classes[template_type](
-                **kwargs
-            )
-        elif template_type == "fewshot":
+        if template_type == "prompt" or template_type == "fewshot":
             return PromptTemplateFactory.prompt_template_classes[
                 template_type
             ].reconstruct_from_stored_data(**kwargs)

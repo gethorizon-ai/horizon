@@ -26,7 +26,7 @@ def get_semantic_cosine_similarity_openAI(
 
     # Get ground truth data corresponding to each evaluation_data_id
     db_results = (
-        task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
+        task_request.vector_db_evaluation_dataset.get_data_per_evaluation_data_id(
             evaluation_data_id_list=inference_evaluation_results["evaluation_data_id"]
             .unique()
             .tolist(),

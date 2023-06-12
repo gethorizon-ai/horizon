@@ -1,6 +1,7 @@
 from app.models.llm.factory import LLMFactory
 from app.models.component.task import Task
 from app.models.component.task_request import TaskRequest
+from app.utilities.dataset_processing import chunk
 from app.utilities.run.prompt_generation_algorithm_parameters import (
     PROMPT_GENERATION_ALGORITHM_PARAMETERS,
 )
@@ -38,6 +39,12 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
         # Prepare necessary parameters (e.g., data length, number of few shots used, llm price)
         if LLMFactory.llm_classes[llm]["data_unit"] == "token":
             instruction_length = LLMFactory.llm_data_assumptions["instruction_tokens"]
+            context_length = 0
+            if len(task_request.input_variable_context) > 0:
+                context_length = (
+                    chunk.MAX_DATA_REPOSITORY_CONTEXT_LENGTH
+                    * LLMFactory.llm_data_assumptions["tokens_per_character"]
+                )
             input_length = task_request.max_input_tokens
             output_length = task_request.max_ground_truth_tokens
             metaprompt_context = (
@@ -47,6 +54,9 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
             instruction_length = LLMFactory.llm_data_assumptions[
                 "instruction_characters"
             ]
+            context_length = 0
+            if len(task_request.input_variable_context) > 0:
+                context_length = chunk.MAX_DATA_REPOSITORY_CONTEXT_LENGTH
             input_length = task_request.max_input_characters
             output_length = task_request.max_ground_truth_characters
             metaprompt_context = (
@@ -144,7 +154,9 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
                 },
                 # Stage 1 inference and evaluation with adaptive filtering
                 "inference_evaluation": {
-                    "data_length_prompt": (instruction_length + input_length)
+                    "data_length_prompt": (
+                        instruction_length + context_length + input_length
+                    )
                     * adaptive_filtering.get_total_num_inferences(
                         num_original_prompt_model_candidates=PROMPT_GENERATION_ALGORITHM_PARAMETERS[
                             "stage_1"
@@ -189,6 +201,7 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
                     * (
                         instruction_length
                         + num_few_shots * few_shot_length
+                        + context_length
                         + input_length
                         + output_length
                     )
@@ -216,6 +229,7 @@ def estimate_task_creation_cost(task_request: TaskRequest) -> dict:
                     * (
                         instruction_length
                         + num_few_shots * few_shot_length
+                        + context_length
                         + input_length
                     )
                     * num_test_data,
@@ -280,6 +294,7 @@ def get_task_confirmation_details(task: Task) -> dict:
     # Create TaskRequest instance
     task_request = TaskRequest(
         raw_dataset_s3_key=task.evaluation_dataset,
+        data_repository_s3_key=task.data_repository,
         allowed_models=json.loads(task.allowed_models),
         use_vector_db=False,
     )

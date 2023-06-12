@@ -13,6 +13,9 @@ from app.utilities.dataset_processing import data_check
 from app.utilities.logging.task_logger import TaskLogger
 from app.utilities.S3.s3_util import download_file_from_s3_and_save_locally
 from app.utilities.vector_db import vector_db
+from app.utilities.vector_db import (
+    vector_db_data_repository as vector_db_data_repository_util,
+)
 from config import Config
 from config import Config
 import json
@@ -77,15 +80,29 @@ def deploy_prompt(
     # Get the template_data from the prompt
     template_data = json.loads(prompt.template_data)
 
+    # If applicable, setup vector db object with data repository
+    vector_db_data_repository = None
+    if task.vector_db_data_repository_metadata:
+        vector_db_data_repository = (
+            vector_db_data_repository_util.load_vector_db_data_repository(
+                vector_db_data_repository_metadata=json.loads(
+                    task.vector_db_data_repository_metadata
+                ),
+                openai_api_key=Config.HORIZON_OPENAI_API_KEY,
+            )
+        )
+
     # Create prompt instance based on if object is zero-shot or few-shot
     if template_type == "prompt":
         prompt_instance = PromptTemplateFactory.reconstruct_prompt_object(
-            template_type, **template_data
+            template_type=template_type,
+            template_data=template_data,
+            vector_db_data_repository=vector_db_data_repository,
         )
     elif template_type == "fewshot":
         # Try to fetch vector db
         if task.vector_db_metadata:
-            evaluation_dataset_vector_db = vector_db.load_vector_db(
+            vector_db_evaluation_dataset = vector_db.load_vector_db(
                 vector_db_metadata=json.loads(task.vector_db_metadata),
                 openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             )
@@ -103,14 +120,14 @@ def deploy_prompt(
             os.remove(raw_dataset_file_path)
 
             # Initialize vector db
-            evaluation_dataset_vector_db = vector_db.initialize_vector_db_from_dataset(
+            vector_db_evaluation_dataset = vector_db.initialize_vector_db_from_dataset(
                 task_id=task.id,
                 evaluation_dataset=evaluation_dataset_dataframe,
                 openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             )
 
             # Store vector db metadata in task object and commit changes to db
-            task.store_vector_db_metadata(vector_db=evaluation_dataset_vector_db)
+            task.store_vector_db_metadata(vector_db=vector_db_evaluation_dataset)
 
         # Throw error if no raw or vector db version of evaluation dataset
         else:
@@ -118,8 +135,9 @@ def deploy_prompt(
 
         prompt_instance = PromptTemplateFactory.reconstruct_prompt_object(
             template_type=template_type,
-            evaluation_dataset_vector_db=evaluation_dataset_vector_db,
             template_data=template_data,
+            vector_db_evaluation_dataset=vector_db_evaluation_dataset,
+            vector_db_data_repository=vector_db_data_repository,
         )
 
     # Prepend "var_" to input variable names as done in Task generation (to prevent collisions with internal variable names)
@@ -128,7 +146,9 @@ def deploy_prompt(
         processed_input_values["var_" + variable] = value
 
     # Format prompt by substituting input values
-    original_formatted_prompt = prompt_instance.format(**processed_input_values)
+    original_formatted_prompt = prompt_instance.format_with_context(
+        **processed_input_values
+    )
 
     # If model is ChatOpenAI or ChatAnthropic, wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:

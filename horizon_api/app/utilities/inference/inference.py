@@ -36,7 +36,7 @@ def run_inference(
     # Get input data from vector db
     if train_or_test_dataset == "train":
         db_results = (
-            task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
+            task_request.vector_db_evaluation_dataset.get_data_per_evaluation_data_id(
                 evaluation_data_id_list=task_request.train_data_id_list,
                 query=task_request.user_objective,
                 include_embeddings=False,
@@ -45,7 +45,7 @@ def run_inference(
         )
     elif train_or_test_dataset == "test":
         db_results = (
-            task_request.evaluation_dataset_vector_db.get_data_per_evaluation_data_id(
+            task_request.vector_db_evaluation_dataset.get_data_per_evaluation_data_id(
                 evaluation_data_id_list=task_request.test_data_id_list,
                 query=task_request.user_objective,
                 include_embeddings=False,
@@ -88,7 +88,9 @@ def run_inference(
             f"prompt_model_id: {row['prompt_model_id']} | evaluation_data_id: {row['evaluation_data_id']} | generation_id: {row['generation_id']}"
         )
 
-        original_formatted_prompt = row["prompt_object"].format(**input_values)
+        original_formatted_prompt = row["prompt_object"].format_with_context(
+            **input_values
+        )
         formatted_prompt_for_llm = original_formatted_prompt
         model_object = row["model_object"]
         # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object

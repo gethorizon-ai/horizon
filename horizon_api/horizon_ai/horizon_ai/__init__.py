@@ -307,6 +307,20 @@ def deploy_task(task_id, inputs, log_deployment=False):
     return response
 
 
+def upload_data_repository(task_id, file_path):
+    global api_key
+    if api_key == None:
+        raise Exception("Must set Horizon API key.")
+    headers = {"X-Api-Key": api_key}
+    with open(file_path, "rb") as f:
+        response = _post(
+            endpoint=f"/api/tasks/{task_id}/upload_data_repository",
+            files={"data_repository": f},
+            headers=headers,
+        )
+        return response
+
+
 def upload_evaluation_dataset(task_id, file_path):
     global api_key
     if api_key == None:

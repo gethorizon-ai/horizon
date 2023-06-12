@@ -272,6 +272,14 @@ def generate_task():
     # Get objective
     objective = click.prompt("Task objective")
 
+    # Get data repository if this is a QA use case
+    data_repository_file_path = None
+    if click.confirm("Is this a question-answer use case?"):
+        if click.confirm(
+            "Upload data repository from which to retrieve context for task deployment?"
+        ):
+            data_repository_file_path = click.prompt("Data repository file path (.txt)")
+
     # Get evaluation dataset
     dataset_file_path = click.prompt("Evaluation dataset file path (.csv)")
 
@@ -323,13 +331,24 @@ def generate_task():
         click.echo(str(e))
         return
 
+    # Upload data repository, if applicable
+    if data_repository_file_path is not None:
+        try:
+            upload_data_repository_response = horizon_ai.upload_data_repository(
+                task_id, data_repository_file_path
+            )
+        except Exception as e:
+            horizon_ai.delete_task(task_id)
+            click.echo("Failed in data repository upload")
+            click.echo(str(e))
+            return
+
     # Upload evaluation dataset
     try:
         upload_dataset_response = horizon_ai.upload_evaluation_dataset(
             task_id, dataset_file_path
         )
     except Exception as e:
-        # If uploading evaluation dataset fails, then delete previously created task
         horizon_ai.delete_task(task_id)
         click.echo("Failed in dataset upload")
         click.echo(str(e))
