@@ -86,6 +86,7 @@ def check_evaluation_dataset(
         AssertionError: insufficient rows of data (must have at least 1 row plus column headers).
         AssertionError: insufficient rows of data for Task creation (must have at least 15 rows of data).
         AssertionError: insufficient number of columns (must have at least 1).
+        AssertionError: cells exist that are empty or only have whitespace.
         AssertionError: improper naming of input variables (must be alphanumeric + underscores, no spaces).
         AssertionError: duplicate input variable names.
         AssertionError: duplicate rows of data.
@@ -106,38 +107,51 @@ def check_evaluation_dataset(
     # Check that there is at least 1 row of evaluation data
     if len(data) < 2:
         raise AssertionError(
-            "There must be at least 1 row of evaluation data plus column headers."
+            "Detected less than 2 rows of data. There must be at least 1 row of evaluation data plus column headers."
         )
 
     # For Task creation request and not synthetic data generation, check that there is at least 15 rows of data
     if (not synthetic_data_generation) and len(data) < 16:
-        raise AssertionError("There must be at least 15 rows of evaluation data.")
+        raise AssertionError(
+            "Detected less than 15 rows of data. There must be at least 15 rows of evaluation data plus column headers."
+        )
 
     # Check that there is at least 1 column. Last column is assumed to be the ground truth
     columns = data[0]
     if len(columns) == 0:
         raise AssertionError(
-            "There must be at least 1 column. The rightmost column is assumed to be the ground truth."
+            "Detected no column headers (first row of csv file). There must be at least 1 column. The rightmost column is assumed to be the ground truth."
         )
+
+    # Check that there are no cells that are empty or only has whitespace
+    for row in data:
+        if any(cell.strip() == "" for cell in row):
+            raise AssertionError(
+                "Detected cell in data that is empty or only has whitespace. Please try again with data where each cell has text. For example, check that there are no empty rows or columns bordering the data."
+            )
 
     # Check that each input variable is a single non-empty string with letters, numbers, and underscores only (no spaces)
     input_variables = columns[:-1]
     for input_var in input_variables:
         if not re.match(r"^[A-Za-z0-9_]+$", input_var):
             raise AssertionError(
-                "Input variable names must be a single string letters, numbers, and underscores only (no spaces allowed)."
+                "Could not read input variable names from the column headers. Input variable names must be in the first row of the csv file. Each input variable name must be composed of letters, numbers, and underscores only (no spaces or empty values allowed)."
             )
 
     # Check that there are no duplicate input variable names
     if len(input_variables) != len(set(input_variables)):
-        raise AssertionError("Input variable names must be unique.")
+        raise AssertionError(
+            "Detected duplicate input variable names. Please try again with unique input variable names."
+        )
 
     # Check that there are no duplicate rows
     seen_rows = set()
     for row in data[1:]:
         row_csv = ",".join(row)
         if row_csv in seen_rows:
-            raise AssertionError("Data cannot have duplicate rows.")
+            raise AssertionError(
+                "Detected duplicate rows of data. Please try again with unique rows of data."
+            )
         else:
             seen_rows.add(row_csv)
 
