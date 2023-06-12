@@ -150,6 +150,8 @@ def deploy_prompt(
         **processed_input_values
     )
 
+    print(f"Generated prompt: {original_formatted_prompt}")  # TODO: remove
+
     # If model is ChatOpenAI or ChatAnthropic, wrap message with HumanMessage object
     if type(model_instance) == ChatOpenAI or type(model_instance) == ChatAnthropic:
         formatted_prompt_for_llm = [HumanMessage(content=original_formatted_prompt)]
