@@ -57,7 +57,7 @@ class PromptTemplate(BasePromptTemplate, PromptTemplateOriginal):
         Returns:
             PromptTemplate: prompt object to be deployed.
         """
-        # Setup context selector if vector db for data repository provided
+        # Setup context selector if vector db for data repository provided. Add "context" as input variable
         context_selector = None
         if vector_db_data_repository:
             context_selector = MaxMarginalRelevanceExampleSelector(
@@ -66,6 +66,7 @@ class PromptTemplate(BasePromptTemplate, PromptTemplateOriginal):
                 example_keys=["context"],
                 input_keys=template_data["input_variables"],
             )
+            template_data["input_variables"].append("context")
 
         # Construct prompt object
         return PromptTemplate(
@@ -77,5 +78,7 @@ class PromptTemplate(BasePromptTemplate, PromptTemplateOriginal):
     def to_dict(self):
         return {
             "template": self.template,
-            "input_variables": self.input_variables,
+            "input_variables": list(
+                set(self.input_variables).difference(set(["context"]))
+            ),
         }

@@ -60,7 +60,7 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
         Returns:
             FewshotPromptTemplate: few shot prompt object to be deployed.
         """
-        # Setup context selector if vector db for data repository provided
+        # Setup context selector if vector db for data repository provided. Add "context" as input variable
         context_selector = None
         if vector_db_data_repository:
             context_selector = MaxMarginalRelevanceExampleSelector(
@@ -69,6 +69,7 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
                 example_keys=["context"],
                 input_keys=template_data["input_variables"],
             )
+            template_data["input_variables"].append("context")
 
         # Setup few shot example selector
         example_selector = MaxMarginalRelevanceExampleSelector(
@@ -101,10 +102,13 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
         Returns:
             dict: information to reconstruct few-shot prompt template.
         """
+        # Remove "context" from input variables list since that is not input provided by user
         return {
             "example_prompt": self.example_prompt.to_dict(),
             "prefix": self.prefix,
             "suffix": self.suffix,
-            "input_variables": self.input_variables,
+            "input_variables": list(
+                set(self.input_variables).difference(set(["context"]))
+            ),
             "k": self.example_selector.k,  # Number of few shot examples
         }
