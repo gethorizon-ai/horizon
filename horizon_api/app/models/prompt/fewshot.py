@@ -22,12 +22,7 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
             context_selector (Optional[BaseExampleSelector], optional): ExampleSelector to retrieve context from data repository.
                 Defaults to None.
         """
-        # Setup context selector and check that "context" is an input variable in prompt
         self.context_selector = context_selector
-        if context_selector is not None:
-            assert "context" in context_selector
-
-        # Call parent constructor for remaining arguments
         super().__init__(**kwargs)
 
     def format_with_context(self, **kwargs: Any) -> str:
