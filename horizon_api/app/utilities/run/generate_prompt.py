@@ -74,6 +74,7 @@ def generate_prompt_model_configuration(
         ),
         user_objective=task.objective,
         allowed_models=json.loads(task.allowed_models),
+        num_test_data_input=3,  # TODO: remove
     )
 
     # Store vector db metadata for evaluation dataset in task object if not present

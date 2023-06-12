@@ -1,0 +1,24 @@
+﻿Patient Name: Emily Smith
+DOB: 1970-02-22
+Gender: Female
+Contact: emily.smith@email.com
+EC Name: Robert Smith
+EC Relationship: Husband
+EC Contact: robert.smith@email.com
+Insurance Provider: GlobalHealth
+Policy Number: 4567891230
+Medical History: Asthma
+Family Medical History: Cancer
+Living Will/DPOA: Yes
+PCP Name: Dr. Miller
+PCP Contact: dr.miller@email.com
+Current Health Status: Asthma
+Dietary Requirements: Peanut allergy
+Physical Capabilities: Normal
+Cognitive Function: Good
+Communication Preferences: English
+Social History: Reading
+Personal Care Needs: nan
+Room Preferences: Window view
+Therapy Schedule: Monthly checkup
+Advance Directives: Full code
