@@ -62,6 +62,7 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
         """
         # Setup context selector if vector db for data repository provided. Add "context" as input variable
         context_selector = None
+        prompt_input_variables = template_data["input_variables"].copy()
         if vector_db_data_repository:
             context_selector = MaxMarginalRelevanceExampleSelector(
                 vectorstore=vector_db_data_repository,
@@ -69,16 +70,14 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
                 example_keys=["context"],
                 input_keys=template_data["input_variables"],
             )
-            template_data["input_variables"].append("context")
+            prompt_input_variables.append("context")
 
         # Setup few shot example selector. Remove "context" as input variable in case it was added
         example_selector = MaxMarginalRelevanceExampleSelector(
             vectorstore=vector_db_evaluation_dataset,
             k=template_data["k"],
             example_keys=template_data["input_variables"] + ["ground_truth"],
-            input_keys=list(
-                set(template_data["input_variables"]).difference(set(["context"]))
-            ),
+            input_keys=template_data["input_variables"],
         )
 
         # Construct example prompt
@@ -95,7 +94,7 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
             example_prompt=example_prompt,
             prefix=template_data["prefix"],
             suffix=template_data["suffix"],
-            input_variables=template_data["input_variables"],
+            input_variables=prompt_input_variables,
         )
 
     def to_dict(self) -> dict:
