@@ -65,15 +65,6 @@ def prompt_generation_pattern_role_play(
         ),
     )
 
-    context_selector = None
-    if task_request.vector_db_data_repository is not None:
-        context_selector = MaxMarginalRelevanceExampleSelector(
-            vectorstore=task_request.vector_db_data_repository,
-            k=chunk.NUM_CHUNKS_TO_RETRIEVE_FOR_PROMPT_CONTEXT,
-            example_keys=["context"],
-            input_keys=task_request.input_variables,
-        )
-
     prompt_model_id_list = []
     generation_id_list = []
     prompt_object_list = []
@@ -83,6 +74,17 @@ def prompt_generation_pattern_role_play(
         # Check that prompt template has required input variables and is formatted correctly
         prompt_prefix = responses[i].text.strip()
         prompt_template = prompt_prefix + output_format_instructions + prompt_suffix
+
+        # Generate example selector to retrieve context from data repository, if applicable
+        context_selector = None
+        if task_request.vector_db_data_repository is not None:
+            context_selector = MaxMarginalRelevanceExampleSelector(
+                vectorstore=task_request.vector_db_data_repository,
+                k=chunk.NUM_CHUNKS_TO_RETRIEVE_FOR_PROMPT_CONTEXT,
+                example_keys=["context"],
+                input_keys=task_request.input_variables,
+            )
+
         try:
             generated_prompt = PromptTemplateFactory.create_prompt_template(
                 "prompt",

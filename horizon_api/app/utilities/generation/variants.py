@@ -2,9 +2,13 @@
 
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.post_processing.post_processing import PostProcessing
+from app.models.example_selector.max_marginal_relevance_example_selector import (
+    MaxMarginalRelevanceExampleSelector,
+)
 from app.utilities.generation import base
 from app.utilities.generation import prompt_generation_metaprompts
 from app.utilities.generation import prompt_generation_models
+from app.utilities.dataset_processing import chunk
 from app.models.component.task_request import TaskRequest
 from app.models.prompt.factory import PromptTemplateFactory
 import json
@@ -80,10 +84,21 @@ def prompt_generation_variants(
                 new_prompt_prefix + output_format_instructions + prompt_suffix
             )
 
+            # Generate example selector to retrieve context from data repository, if applicable
+            context_selector = None
+            if task_request.vector_db_data_repository is not None:
+                context_selector = MaxMarginalRelevanceExampleSelector(
+                    vectorstore=task_request.vector_db_data_repository,
+                    k=chunk.NUM_CHUNKS_TO_RETRIEVE_FOR_PROMPT_CONTEXT,
+                    example_keys=["context"],
+                    input_keys=task_request.input_variables,
+                )
+
             # Check that prompt template has required input variables and is formatted correctly
             try:
                 generated_prompt = PromptTemplateFactory.create_prompt_template(
                     "prompt",
+                    context_selector=context_selector,
                     template=prompt_template,
                     input_variables=task_request.input_variables
                     + task_request.input_variable_context,

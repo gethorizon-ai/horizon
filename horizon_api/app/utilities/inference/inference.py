@@ -91,6 +91,7 @@ def run_inference(
         original_formatted_prompt = row["prompt_object"].format_with_context(
             **input_values
         )
+        print(f"Generated prompt: {original_formatted_prompt}")  # TODO: remove
         formatted_prompt_for_llm = original_formatted_prompt
         model_object = row["model_object"]
         # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object

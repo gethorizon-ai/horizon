@@ -76,15 +76,6 @@ def prompt_generation_user_objective(
         ),
     )
 
-    context_selector = None
-    if task_request.vector_db_data_repository is not None:
-        context_selector = MaxMarginalRelevanceExampleSelector(
-            vectorstore=task_request.vector_db_data_repository,
-            k=chunk.NUM_CHUNKS_TO_RETRIEVE_FOR_PROMPT_CONTEXT,
-            example_keys=["context"],
-            input_keys=task_request.input_variables,
-        )
-
     print(f"Generated prompt suffix")  # TODO: remove
 
     prompt_model_id_list = []
@@ -98,6 +89,16 @@ def prompt_generation_user_objective(
         prompt_template = prompt_prefix + output_format_instructions + prompt_suffix
 
         print(f"Generated prompt template: {prompt_template}")  # TODO: remove
+
+        # Generate example selector to retrieve context from data repository, if applicable
+        context_selector = None
+        if task_request.vector_db_data_repository is not None:
+            context_selector = MaxMarginalRelevanceExampleSelector(
+                vectorstore=task_request.vector_db_data_repository,
+                k=chunk.NUM_CHUNKS_TO_RETRIEVE_FOR_PROMPT_CONTEXT,
+                example_keys=["context"],
+                input_keys=task_request.input_variables,
+            )
 
         try:
             generated_prompt = PromptTemplateFactory.create_prompt_template(
