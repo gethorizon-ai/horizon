@@ -329,6 +329,9 @@ def process_generate_prompt_model_configuration(
         )
         user_email = get_user_email(username=user.id)
 
+        # Email user that task generation has been initiated
+        email_notifications.email_task_generation_initiated(user_email=user_email)
+
         # Attempt prompt-model configuration algorithm
         task_configuration_dict = generate_prompt.generate_prompt_model_configuration(
             user_objective=user_objective,
@@ -339,12 +342,12 @@ def process_generate_prompt_model_configuration(
         )
 
         # If successful, email job results to user
-        email_notifications.email_task_creation_success(
+        email_notifications.email_task_generation_success(
             user_email=user_email, task_details=task_configuration_dict
         )
     except Exception as e:
         # If failed, email error details to user
-        email_notifications.email_task_creation_error(
+        email_notifications.email_task_generation_error(
             user_email=user_email, error_message=str(e)
         )
 

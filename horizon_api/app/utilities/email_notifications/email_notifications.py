@@ -6,7 +6,43 @@ import html
 client = boto3.client("sesv2", region_name="us-west-2")
 
 
-def email_task_creation_success(user_email: str, task_details: dict) -> None:
+def email_task_generation_initiated(user_email: str) -> None:
+    """Emails user to inform them that their task generation has initiated.
+
+    Args:
+        user_email (str): user_email (str): user email address.
+    """
+    # Configure email parameters
+    subject = "Horizon task generation initiated!"
+    html_body = f"""
+<html>
+<body>
+Hi,<br />
+Success! Task generation initiated. Check your email for the outputs. (It generally takes 30-60 minutes depending on the selected models, data size, and LLM provider latency).<br /><br />
+<b>Horizon AI</b>
+</body>
+</html>"""
+
+    # Send email
+    response = client.send_email(
+        FromEmailAddress="noreply@gethorizon.ai",
+        Destination={
+            "ToAddresses": [
+                user_email,
+            ],
+        },
+        Content={
+            "Simple": {
+                "Subject": {"Data": subject, "Charset": "UTF-8"},
+                "Body": {
+                    "Html": {"Data": html_body, "Charset": "UTF-8"},
+                },
+            },
+        },
+    )
+
+
+def email_task_generation_success(user_email: str, task_details: dict) -> None:
     """Emails user to inform them that their task creation request is completed.
 
     Args:
@@ -108,18 +144,14 @@ Summary of Task below (access additional details via CLI):<br />
             "Simple": {
                 "Subject": {"Data": subject, "Charset": "UTF-8"},
                 "Body": {
-                    # "Text": {"Data": text_body, "Charset": "UTF-8"},
-                    "Html": {
-                        "Data": html_body,
-                        "Charset": "UTF-8",
-                    },
+                    "Html": {"Data": html_body, "Charset": "UTF-8"},
                 },
             },
         },
     )
 
 
-def email_task_creation_error(user_email: str, error_message: str) -> None:
+def email_task_generation_error(user_email: str, error_message: str) -> None:
     """Emails user to inform them that their task creation request failed.
 
     Args:
@@ -146,10 +178,6 @@ def email_task_creation_error(user_email: str, error_message: str) -> None:
                 "Subject": {"Data": subject, "Charset": "UTF-8"},
                 "Body": {
                     "Text": {"Data": text_body, "Charset": "UTF-8"},
-                    # "Html": {
-                    #     "Data": html_body,
-                    #     "Charset": "UTF-8",
-                    # },
                 },
             },
         },
@@ -226,10 +254,6 @@ def email_synthetic_data_generation_error(user_email: str, error_message: str) -
                 "Subject": {"Data": subject, "Charset": "UTF-8"},
                 "Body": {
                     "Text": {"Data": text_body, "Charset": "UTF-8"},
-                    # "Html": {
-                    #     "Data": html_body,
-                    #     "Charset": "UTF-8",
-                    # },
                 },
             },
         },
