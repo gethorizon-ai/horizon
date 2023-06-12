@@ -36,6 +36,9 @@ def prompt_generation_user_objective(
 
     # Get metaprompt and format it
     metaprompt = prompt_generation_metaprompts.get_metaprompt_user_objective()
+
+    print(f"Created metaprompt")  # TODO: remove
+
     formatted_metaprompt = metaprompt.format(
         objective=task_request.user_objective,
         input_variables=base.generate_input_variables_string(
