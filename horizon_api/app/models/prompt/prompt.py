@@ -21,8 +21,8 @@ class PromptTemplate(BasePromptTemplate, PromptTemplateOriginal):
             context_selector (Optional[BaseExampleSelector], optional): ExampleSelector to retrieve context from data repository.
                 Defaults to None.
         """
-        print(f"Creating prompt with {kwargs}")  # TODO: remove
         self.context_selector = context_selector
+        print(f"Creating prompt with {kwargs}")  # TODO: remove
         super().__init__(**kwargs)
 
     def format_with_context(self, **kwargs: Any) -> str:
