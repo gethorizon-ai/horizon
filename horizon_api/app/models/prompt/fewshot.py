@@ -71,12 +71,14 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
             )
             template_data["input_variables"].append("context")
 
-        # Setup few shot example selector
+        # Setup few shot example selector. Remove "context" as input variable in case it was added
         example_selector = MaxMarginalRelevanceExampleSelector(
             vectorstore=vector_db_evaluation_dataset,
             k=template_data["k"],
             example_keys=template_data["input_variables"] + ["ground_truth"],
-            input_keys=template_data["input_variables"],
+            input_keys=list(
+                set(template_data["input_variables"]).difference(set(["context"]))
+            ),
         )
 
         # Construct example prompt
