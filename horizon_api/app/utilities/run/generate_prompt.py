@@ -68,10 +68,14 @@ def generate_prompt_model_configuration(
         data_repository_s3_key=task.data_repository,
         task_id=task.id,
         openai_api_key=Config.HORIZON_OPENAI_API_KEY,
-        vector_db_metadata=json.loads(task.vector_db_metadata),
+        vector_db_metadata=json.loads(task.vector_db_metadata)
+        if task.vector_db_metadata is not None
+        else None,
         vector_db_data_repository_metadata=json.loads(
             task.vector_db_data_repository_metadata
-        ),
+        )
+        if task.vector_db_data_repository_metadata is not None
+        else None,
         user_objective=task.objective,
         allowed_models=json.loads(task.allowed_models),
         num_test_data_input=3,  # TODO: remove
