@@ -32,6 +32,8 @@ def prompt_generation_user_objective(
     Returns:
         PromptModelCandidates: data structure with generated prompt-model candidates
     """
+    print(f"Starting prompt generation user objective")  # TODO: remove
+
     # Get metaprompt and format it
     metaprompt = prompt_generation_metaprompts.get_metaprompt_user_objective()
     formatted_metaprompt = metaprompt.format(
@@ -41,13 +43,19 @@ def prompt_generation_user_objective(
         ),
     )
 
+    print(f"Formatted metaprompt")  # TODO: remove
+
     # Get LLM
     metaprompt_model = prompt_generation_models.get_model_user_objective(
         num_prompts=num_prompts, openai_api_key=openai_api_key
     )
 
+    print(f"Got LLM")  # TODO: remove
+
     # Generate prompt candidates
     responses = metaprompt_model.generate([formatted_metaprompt]).generations[0]
+
+    print(f"Generated prompt candidates")  # TODO: remove
 
     # If post_processing is defined, then append output format instructions to prefix
     output_format_instructions = ""
@@ -60,6 +68,8 @@ def prompt_generation_user_objective(
             task_request.vector_db_data_repository is not None
         ),
     )
+
+    print(f"Generated prompt suffix")  # TODO: remove
 
     prompt_model_id_list = []
     generation_id_list = []
