@@ -36,7 +36,14 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
             self.partial_variables = {**self.partial_variables, **{"context": context}}
 
         # Format remainder of prompt
-        return super().format(**kwargs)
+        output = super().format(**kwargs)
+
+        # Reset partial and input variables
+        self.input_variables.extend(self.partial_variables.keys())
+        self.partial_variables = {}
+
+        # Return output
+        return output
 
     def reconstruct_from_stored_data(
         template_data: dict,
