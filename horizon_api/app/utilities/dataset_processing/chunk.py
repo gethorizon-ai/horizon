@@ -31,7 +31,6 @@ def chunk_doc(text: str) -> pd.DataFrame:
             text=text,
             chunk_length=CHUNK_LENGTH,
         ),
-        axis=1,
     )
     doc_dataframe = doc_dataframe.explode("context").reset_index(drop=True)
 
