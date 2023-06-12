@@ -74,6 +74,10 @@ class FewshotPromptTemplate(BasePromptTemplate, FewShotPromptOriginal):
         # Construct example prompt
         example_prompt = prompt.PromptTemplate(**template_data["example_prompt"])
 
+        print(
+            f"Template data when reconstructing prompt: {template_data}"
+        )  # TODO: remove
+
         # Construct few shot prompt object
         return FewshotPromptTemplate(
             context_selector=context_selector,
