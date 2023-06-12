@@ -13,22 +13,6 @@ class PromptTemplate(BasePromptTemplate, PromptTemplateOriginal):
     context_selector: Optional[BaseExampleSelector] = None
     """ExampleSelector to retrieve context from data repository."""
 
-    # def __init__(
-    #     self,
-    #     context_selector: Optional[BaseExampleSelector] = None,
-    #     **kwargs,
-    # ):
-    #     """Setup ExampleSelector to retrieve context from data repository for QA use case, before passing to parent constructor.
-
-    #     Args:
-    #         context_selector (Optional[BaseExampleSelector], optional): ExampleSelector to retrieve context from data repository.
-    #             Defaults to None.
-    #     """
-    #     print(f"Beginning to create prompt with {kwargs}")  # TODO: remove
-    #     self.context_selector = context_selector
-    #     print(f"Creating prompt with {kwargs}")  # TODO: remove
-    #     super().__init__(**kwargs)
-
     def format_with_context(self, **kwargs: Any) -> str:
         """First populate the prompt with context from data repository if applicable, then format the prompt with the inputs.
 

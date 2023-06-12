@@ -5,9 +5,13 @@ from app.models.llm.base import BaseLLM
 from app.models.component.task_request import TaskRequest
 from app.models.component.prompt_model_candidates import PromptModelCandidates
 from app.models.component.post_processing.post_processing import PostProcessing
+from app.models.example_selector.max_marginal_relevance_example_selector import (
+    MaxMarginalRelevanceExampleSelector,
+)
 from app.utilities.generation import base
 from app.utilities.generation import prompt_generation_metaprompts
 from app.utilities.generation import prompt_generation_models
+from app.utilities.dataset_processing import chunk
 import copy
 
 
@@ -61,6 +65,15 @@ def prompt_generation_pattern_role_play(
         ),
     )
 
+    context_selector = None
+    if task_request.vector_db_data_repository is not None:
+        context_selector = MaxMarginalRelevanceExampleSelector(
+            vectorstore=task_request.vector_db_data_repository,
+            k=chunk.NUM_CHUNKS_TO_RETRIEVE_FOR_PROMPT_CONTEXT,
+            example_keys=["context"],
+            input_keys=task_request.input_variables,
+        )
+
     prompt_model_id_list = []
     generation_id_list = []
     prompt_object_list = []
@@ -73,6 +86,7 @@ def prompt_generation_pattern_role_play(
         try:
             generated_prompt = PromptTemplateFactory.create_prompt_template(
                 "prompt",
+                context_selector=context_selector,
                 template=prompt_template,
                 input_variables=task_request.input_variables
                 + task_request.input_variable_context,
