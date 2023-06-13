@@ -13,7 +13,7 @@ def email_task_generation_initiated(user_email: str) -> None:
         user_email (str): user email address.
     """
     # Configure email parameters
-    subject = "Horizon Task Generation!"
+    subject = "Horizon Task Generation"
     html_body = f"""
 <html>
 <body>
