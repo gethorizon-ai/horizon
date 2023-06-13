@@ -13,12 +13,13 @@ def email_task_generation_initiated(user_email: str) -> None:
         user_email (str): user_email (str): user email address.
     """
     # Configure email parameters
-    subject = "Horizon task generation initiated!"
+    subject = "Horizon Task Generation!"
     html_body = f"""
 <html>
 <body>
-Hi,<br />
-Success! Task generation initiated. Check your email for the outputs. (It generally takes 30-60 minutes depending on the selected models, data size, and LLM provider latency).<br /><br />
+Hi,<br /><br />
+Your Task generation has started. You will receive an email the outputs in approximately 30-60 minutes.<br /><br />
+If you run into any issues, check the <a href="https://docs.gethorizon.ai">documentation</a> or email support at team@gethorizon.ai.<br /><br />
 <b>Horizon AI</b>
 </body>
 </html>"""
