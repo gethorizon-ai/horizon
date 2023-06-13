@@ -303,7 +303,6 @@ class GetTaskConfirmationDetailsAPI(Resource):
 def process_generate_prompt_model_configuration(
     user_objective: str,
     task_id: int,
-    # prompt_id: int,
     openai_api_key: str = None,
     anthropic_api_key: str = None,
 ) -> None:
@@ -314,7 +313,6 @@ def process_generate_prompt_model_configuration(
     Args:
         user_objective (str): objective of the use case.
         task_id (int): id corresponding to task record.
-        prompt_id (int): id corresponding to prompt record.
         openai_api_key (str, optional): OpenAI API key to use if wanting to consider OpenAI models. Defaults to None.
         anthropic_api_key (str, optional): Anthropic API key to use if wanting to consider Anthropic models. Defaults to None.
     """
@@ -336,7 +334,6 @@ def process_generate_prompt_model_configuration(
         task_configuration_dict = generate_prompt.generate_prompt_model_configuration(
             user_objective=user_objective,
             task=task,
-            # prompt=prompt,
             openai_api_key=openai_api_key,
             anthropic_api_key=anthropic_api_key,
         )
@@ -395,19 +392,11 @@ class GenerateTaskAPI(Resource):
         if not task:
             return {"error": "Task not found or not associated with user"}, 404
 
-        # # Fetch prompt
-        # if not task.active_prompt_id:
-        #     return {"error": "Active prompt not found for the task"}, 404
-        # prompt = Prompt.query.get(task.active_prompt_id)
-        # if not prompt:
-        #     return {"error": "Active prompt does not exist for the task"}, 404
-
         # Call the process_generate_prompt_model_configuration function as a background job with the provided details
         try:
             result_id = process_generate_prompt_model_configuration.delay(
                 user_objective=args["objective"],
                 task_id=task.id,
-                # prompt_id=prompt.id,
                 openai_api_key=args["openai_api_key"],
                 anthropic_api_key=args["anthropic_api_key"],
             )
