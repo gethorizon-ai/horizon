@@ -84,8 +84,8 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
     <th>Prompt ID</th>
     <th>Model</th>
     <th>Inference Quality</th>
-    <th>Inference Cost ($ / call)</th>
-    <th>Inference Latency (s / call)</th>
+    <th>Inference Cost ($/call)</th>
+    <th>Inference Latency (s/call)</th>
 </tr>
 """
 
@@ -187,7 +187,7 @@ Success - your Horizon Task has completed optimization and is ready for deployme
 {email_text_prompt_model_configs}
 
 <b><u>*Active prompt-model configuration for this task:</b></u><br/>
-<i>Switch to a different option if present using CLI.</i><br/>
+<i>Switch to a different option if available using CLI.</i><br/>
 {email_text_active_prompt}
 
 <b>Horizon AI</b>
