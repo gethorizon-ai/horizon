@@ -18,7 +18,7 @@ def email_task_generation_initiated(user_email: str) -> None:
 <html>
 <body>
 Hi,<br /><br />
-Your Task generation has started. You will receive an email the outputs in approximately 30-60 minutes.<br /><br />
+Your Task generation has started. You will receive an email with the outputs in approximately 30-60 minutes.<br /><br />
 If you run into any issues, check the <a href="https://docs.gethorizon.ai">documentation</a> or email support at team@gethorizon.ai.<br /><br />
 <b>Horizon AI</b>
 </body>
