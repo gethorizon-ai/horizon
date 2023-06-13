@@ -67,12 +67,45 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
     allowed_models = html.escape(str(task_details["allowed_models"]))
     active_prompt_id = task_details["active_prompt_id"]
 
-    # Prepare email text for each prompt object
-    email_text_active_prompt = ""
-    email_text_non_active_prompts = ""
-    for prompt in task_details["prompts"]:
+    # Sort prompt-model configs with active prompt id first, then remaining options ordered by descending quality score
+    def custom_sort_key(prompt):
+        if prompt["id"] == active_prompt_id:
+            return (0, prompt["inference_statistics"]["inference_quality"])
+        else:
+            # Use negative to sort in descending order
+            return (1, -prompt["inference_statistics"]["inference_quality"])
+
+    prompt_model_configs = sorted(task_details["prompts"], key=custom_sort_key)
+
+    # Create html table with prompt-model config options
+    email_text_prompt_model_configs = f"""
+<table style="width:100%">
+<tr>
+    <th>Prompt ID</th>
+    <th>Model</th>
+    <th>Estimated Inference Quality</th>
+    <th>Estimated Inference Cost ($ / call)</th>
+    <th>Estimated Inference Latency (s / call)</th>
+</tr>
+"""
+
+    # Parse prompt parameters and prepare email texts
+    for i, prompt in enumerate(prompt_model_configs):
         prompt_id = html.unescape(str(prompt["id"]))
+        try:
+            model_name = html.escape(str(prompt["model"]["model_name"]))
+        except:
+            model_name = html.escape(str(prompt["model"]["model"]))
+        inference_quality = prompt["inference_statistics"]["inference_quality"]
+        inference_cost = prompt["inference_statistics"]["inference_cost"]
+        inference_latency = prompt["inference_statistics"]["inference_latency"]
         template_type = html.escape(str(prompt["template_type"]))
+        input_variables = html.escape(str(prompt["template_data"]["input_variables"]))
+        few_shot_example_selector = None
+        if template_type == "fewshot":
+            few_shot_example_selector = html.escape(
+                str(prompt["few_shot_example_selector"])
+            )
         if template_type == "fewshot":
             prefix = html.escape(str(prompt["template_data"]["prefix"])).replace(
                 "\n", "<br>"
@@ -81,94 +114,80 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
             prefix = html.escape(str(prompt["template_data"]["template"])).replace(
                 "\n", "<br>"
             )
-        input_variables = html.escape(str(prompt["template_data"]["input_variables"]))
-        if template_type == "fewshot":
-            few_shot_example_selector = html.escape(
-                str(prompt["few_shot_example_selector"])
-            )
-        elif template_type == "prompt":
-            few_shot_example_selector = None
-        # Parse model name from model parameters (differs for OpenAI vs Anthropic models)
-        try:
-            model_name = html.escape(str(prompt["model"]["model_name"]))
-        except:
-            model_name = html.escape(str(prompt["model"]["model"]))
-        inference_quality = prompt["inference_statistics"]["inference_quality"]
-        inference_cost = prompt["inference_statistics"]["inference_cost"]
-        inference_latency = prompt["inference_statistics"]["inference_latency"]
 
-        if prompt_id == active_prompt_id:
+        # Prepare email text for active prompt-model config
+        if i == 0:
+            email_text_prompt_model_configs += f"""
+<tr style="background-color: lightyellow;">
+    <td><b>*{prompt_id}</b></td>
+    <td><b>{model_name}</b></td>
+    <td><b>{inference_quality:.2f}</b></td>
+    <td><b>${inference_cost:.2f}</b></td>
+    <td><b>{inference_latency:.2f}s</b></td>
+</tr>
+"""
             email_text_active_prompt = f"""
 <ul>
-<li><b>Model:</b> {model_name}</li>
-<li><b>Prompt ID:</b> {prompt_id}</li>
-<li><b>Template type:</b> {template_type}</li>
-<li><b>Template data:</b></li>
-    <ul>
-    <li><b>Prefix:</b> {prefix}</li>
+    <li><b>Prompt ID:</b> {active_prompt_id}</li>
+    <li><b>Model:</b> {model_name}</li>
     <li><b>Input variables:</b> {input_variables}</li>
+    <li><b>Template type:</b> {template_type}</li>
     <li><b>Few shot example selector:</b> {few_shot_example_selector}</li>
-    </ul>
-<li><b>Inference quality:</b> {inference_quality:.2f}</li>
-<li><b>Inference cost:</b> ${inference_cost:.2f}</li>
-<li><b>Inference latency:</b> {inference_latency:.2f}</li>
-</ul>
+    <li><b>Prefix:</b> {prefix}</li>
+</ul><br/>
 """
+
+        # Prepare email text non-active prompt-model config
         else:
-            email_text_non_active_prompts += f"""
-<ul>
-<li><b>Model:</b> {model_name}</li>
-    <ul>
-    <li><b>Prompt ID:</b> {prompt_id}</li>
-    <li><b>Inference quality:</b> {inference_quality:.2f}</li>
-    <li><b>Inference cost:</b> ${inference_cost:.2f}</li>
-    <li><b>Inference latency:</b> {inference_latency:.2f}</li>
-    </ul>
-</ul>
+            email_text_prompt_model_configs += f"""
+<tr>
+    <td>{prompt_id}</td>
+    <td>{model_name}</td>
+    <td>{inference_quality:.2f}</td>
+    <td>${inference_cost:.2f}</td>
+    <td>{inference_latency:.2f}s</td>
+</tr>
+"""
+
+    email_text_prompt_model_configs += f"""
+</table><br/><br/>
 """
 
     # Configure email parameters
     subject = "Your Horizon task is ready!"
     html_body = f"""
 <html>
+<style>
+table, th, td {{
+  border:1px solid black;
+}}
+</style>
 <body>
-Hi,<br />
-Success - your Horizon Task has completed optimization and is ready for deployment.<br />
-Simply refer to the "task id" below to deploy (more information in our <a href="https://docs.gethorizon.ai">docs</a>).<br /><br />
+Hi,<br/><br/>
+Success - your Horizon Task has completed optimization and is ready for deployment. Refer to the "Task ID" below to deploy (more information in our <a href="https://docs.gethorizon.ai">docs</a>).<br /><br />
 
-Summary of Task below (access additional details via CLI):<br />
+Summary of Task (access additional details via CLI):<br />
 <ul>
-<li><b>Name:</b> {name}</li>
-<li><b>Objective:</b> {objective}</li>
-<li><b>Task ID:</b> {task_id}</li>
-<li><b>Project ID:</b> {project_id}</li>
-<li><b>Output schema:</b> {output_schema}</li>
-<li><b>Task generation statistics:</b></li>
-    <ul> 
-    <li><b>Number of prompt-model candidates considered:</b> {number_of_prompt_model_candidates}</li>
-    <li><b>Number of inferences and evaluations done:</b> {number_of_inferences_evaluations_done}</li>
-    <li><b>Total estimated task generation cost:</b> ${total_estimated_task_generation_cost:.2f}</li>
-    </ul>
-<li><b>Models considered:</b> {allowed_models}</li>
-<li><b>Selected prompt-model configuration:</b></li>
+    <li><b>Name:</b> {name}</li>
+    <li><b>Objective:</b> {objective}</li>
+    <li><b>Task ID:</b> {task_id}</li>
+    <li><b>Project ID:</b> {project_id}</li>
+    <li><b>Output schema:</b> {output_schema}</li>
+    <li><b>Task generation statistics:</b></li>
+        <ul> 
+        <li><b>Number of prompt-model candidates considered:</b> {number_of_prompt_model_candidates}</li>
+        <li><b>Number of inferences and evaluations done:</b> {number_of_inferences_evaluations_done}</li>
+        <li><b>Total estimated task generation cost:</b> ${total_estimated_task_generation_cost:.2f}</li>
+        </ul>
+    <li><b>Models considered:</b> {allowed_models}</li>
+</ul><br /><br />
 
-<li><b>Other available prompt-model configurations:</b></li>
+Summary of prompt-model configuration options (active option for this task is highlighted):<br/>
+{email_text_prompt_model_configs}
 
-<li><b>Model selected:</b> {model_name}</li>
-<li><b>Template type:</b> {template_type}</li>
-<li><b>Template data:</b></li>
-    <ul>
-    <li><b>Prefix:</b> {prefix}</li>
-    <li><b>Input variables:</b> {input_variables}</li>
-    <li><b>Few shot example selector:</b> {few_shot_example_selector}</li>
-    </ul>
-<li><b>Inference statistics:</b></li>
-    <ul>
-    <li><b>Inference quality:</b> {inference_quality:.2f}</li>
-    <li><b>Inference cost:</b> ${inference_cost:.2f}</li>
-    <li><b>Inference latency:</b> {inference_latency:.2f}</li>
-    </ul>
-</ul><br />
+Active prompt-model configuration for this task (switch to a different one via CLI):<br/>
+{email_text_active_prompt}
+
 <b>Horizon AI</b>
 </body>
 </html>"""
