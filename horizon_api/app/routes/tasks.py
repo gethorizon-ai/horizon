@@ -331,9 +331,8 @@ def process_generate_prompt_model_configuration(
         anthropic_api_key (str, optional): Anthropic API key to use if wanting to consider Anthropic models. Defaults to None.
     """
     try:
-        # Get task, prompt, and user objects, along with user's email address
+        # Get task and user objects, along with user's email address
         task = Task.query.get(task_id)
-        # prompt = Prompt.query.get(prompt_id)
         user = (
             User.query.join(Project, Project.user_id == User.id)
             .filter(Project.id == task.project_id)
