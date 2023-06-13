@@ -150,7 +150,7 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
 """
 
     email_text_prompt_model_configs += f"""
-</table><br/><br/>
+</table><br/>
 """
 
     # Configure email parameters
@@ -186,12 +186,12 @@ Summary of Task (access additional details via CLI):<br />
         <li><b>Total estimated task generation cost:</b> ${total_estimated_task_generation_cost:.2f}</li>
         </ul>
     <li><b>Models considered:</b> {allowed_models}</li>
-</ul><br /><br />
+</ul><br />
 
 Summary of prompt-model configuration options (active option for this task is highlighted):<br/>
 {email_text_prompt_model_configs}
 
-Active prompt-model configuration for this task (switch to a different one via CLI):<br/>
+*Active prompt-model configuration for this task (switch to a different one via CLI):<br/>
 {email_text_active_prompt}
 
 <b>Horizon AI</b>
