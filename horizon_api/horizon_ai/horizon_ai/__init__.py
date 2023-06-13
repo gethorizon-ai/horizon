@@ -241,7 +241,11 @@ def get_task_active_prompt(task_id):
     global api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
-    headers = {"task_id": task_id, "X-Api-Key": api_key}
+    headers = {
+        "Content-Type": "application/json",
+        "X-Api-Key": api_key,
+        "task_id": task_id,
+    }
     response = _get(endpoint="/api/tasks/get_active_prompt", headers=headers)
     return response
 
