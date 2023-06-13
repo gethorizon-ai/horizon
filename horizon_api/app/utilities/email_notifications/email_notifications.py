@@ -10,7 +10,7 @@ def email_task_generation_initiated(user_email: str) -> None:
     """Emails user to inform them that their task generation has initiated.
 
     Args:
-        user_email (str): user_email (str): user email address.
+        user_email (str): user email address.
     """
     # Configure email parameters
     subject = "Horizon Task Generation!"
