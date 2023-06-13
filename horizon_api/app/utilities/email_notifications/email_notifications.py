@@ -61,36 +61,71 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
     number_of_inferences_evaluations_done = task_details["evaluation_statistics"][
         "number_of_inferences_and_evaluations_done"
     ]
-    template_type = html.escape(str(task_details["prompts"][0]["template_type"]))
-    if template_type == "fewshot":
-        prefix = html.escape(
-            str(task_details["prompts"][0]["template_data"]["prefix"])
-        ).replace("\n", "<br>")
-    elif template_type == "prompt":
-        prefix = html.escape(
-            str(task_details["prompts"][0]["template_data"]["template"])
-        ).replace("\n", "<br>")
-    input_variables = html.escape(
-        str(task_details["prompts"][0]["template_data"]["input_variables"])
-    )
-    if template_type == "fewshot":
-        few_shot_example_selector = html.escape(
-            str(task_details["prompts"][0]["few_shot_example_selector"])
-        )
-    elif template_type == "prompt":
-        few_shot_example_selector = None
+    total_estimated_task_generation_cost = task_details["evaluation_statistics"][
+        "total_estimated_task_generation_cost"
+    ]
     allowed_models = html.escape(str(task_details["allowed_models"]))
-    # Parse model name from model parameters (differs for OpenAI vs Anthropic models)
-    try:
-        model_name = html.escape(str(task_details["prompts"][0]["model"]["model_name"]))
-    except:
-        model_name = html.escape(str(task_details["prompts"][0]["model"]["model"]))
-    inference_quality = task_details["prompts"][0]["inference_statistics"][
-        "inference_quality"
-    ]
-    inference_latency = task_details["prompts"][0]["inference_statistics"][
-        "inference_latency"
-    ]
+    active_prompt_id = task_details["active_prompt_id"]
+
+    # Prepare email text for each prompt object
+    email_text_active_prompt = ""
+    email_text_non_active_prompts = ""
+    for prompt in task_details["prompts"]:
+        prompt_id = html.unescape(str(prompt["id"]))
+        template_type = html.escape(str(prompt["template_type"]))
+        if template_type == "fewshot":
+            prefix = html.escape(str(prompt["template_data"]["prefix"])).replace(
+                "\n", "<br>"
+            )
+        elif template_type == "prompt":
+            prefix = html.escape(str(prompt["template_data"]["template"])).replace(
+                "\n", "<br>"
+            )
+        input_variables = html.escape(str(prompt["template_data"]["input_variables"]))
+        if template_type == "fewshot":
+            few_shot_example_selector = html.escape(
+                str(prompt["few_shot_example_selector"])
+            )
+        elif template_type == "prompt":
+            few_shot_example_selector = None
+        # Parse model name from model parameters (differs for OpenAI vs Anthropic models)
+        try:
+            model_name = html.escape(str(prompt["model"]["model_name"]))
+        except:
+            model_name = html.escape(str(prompt["model"]["model"]))
+        inference_quality = prompt["inference_statistics"]["inference_quality"]
+        inference_cost = prompt["inference_statistics"]["inference_cost"]
+        inference_latency = prompt["inference_statistics"]["inference_latency"]
+
+        if prompt_id == active_prompt_id:
+            email_text_active_prompt = f"""
+<ul>
+<li><b>Model:</b> {model_name}</li>
+<li><b>Prompt ID:</b> {prompt_id}</li>
+<li><b>Template type:</b> {template_type}</li>
+<li><b>Template data:</b></li>
+    <ul>
+    <li><b>Prefix:</b> {prefix}</li>
+    <li><b>Input variables:</b> {input_variables}</li>
+    <li><b>Few shot example selector:</b> {few_shot_example_selector}</li>
+    </ul>
+<li><b>Inference quality:</b> {inference_quality:.2f}</li>
+<li><b>Inference cost:</b> ${inference_cost:.2f}</li>
+<li><b>Inference latency:</b> {inference_latency:.2f}</li>
+</ul>
+"""
+        else:
+            email_text_non_active_prompts += f"""
+<ul>
+<li><b>Model:</b> {model_name}</li>
+    <ul>
+    <li><b>Prompt ID:</b> {prompt_id}</li>
+    <li><b>Inference quality:</b> {inference_quality:.2f}</li>
+    <li><b>Inference cost:</b> ${inference_cost:.2f}</li>
+    <li><b>Inference latency:</b> {inference_latency:.2f}</li>
+    </ul>
+</ul>
+"""
 
     # Configure email parameters
     subject = "Your Horizon task is ready!"
@@ -108,11 +143,18 @@ Summary of Task below (access additional details via CLI):<br />
 <li><b>Task ID:</b> {task_id}</li>
 <li><b>Project ID:</b> {project_id}</li>
 <li><b>Output schema:</b> {output_schema}</li>
-<li><b>Evaluation statistics:</b></li>
+<li><b>Task generation statistics:</b></li>
     <ul> 
     <li><b>Number of prompt-model candidates considered:</b> {number_of_prompt_model_candidates}</li>
     <li><b>Number of inferences and evaluations done:</b> {number_of_inferences_evaluations_done}</li>
+    <li><b>Total estimated task generation cost:</b> ${total_estimated_task_generation_cost:.2f}</li>
     </ul>
+<li><b>Models considered:</b> {allowed_models}</li>
+<li><b>Selected prompt-model configuration:</b></li>
+
+<li><b>Other available prompt-model configurations:</b></li>
+
+<li><b>Model selected:</b> {model_name}</li>
 <li><b>Template type:</b> {template_type}</li>
 <li><b>Template data:</b></li>
     <ul>
@@ -120,11 +162,10 @@ Summary of Task below (access additional details via CLI):<br />
     <li><b>Input variables:</b> {input_variables}</li>
     <li><b>Few shot example selector:</b> {few_shot_example_selector}</li>
     </ul>
-<li><b>Models considered:</b> {allowed_models}</li>
-<li><b>Model selected:</b> {model_name}</li>
 <li><b>Inference statistics:</b></li>
     <ul>
     <li><b>Inference quality:</b> {inference_quality:.2f}</li>
+    <li><b>Inference cost:</b> ${inference_cost:.2f}</li>
     <li><b>Inference latency:</b> {inference_latency:.2f}</li>
     </ul>
 </ul><br />

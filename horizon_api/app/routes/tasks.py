@@ -110,14 +110,14 @@ class CreateTaskAPI(Resource):
             db.session.add(task)
             db.session.commit()  # Commit the task to the database to obtain its ID
 
-            # Create a new prompt
-            prompt = Prompt(name=f"{args['name']}_prompt", task_id=task.id)
-            db.session.add(prompt)
-            db.session.commit()  # Commit the prompt to the database to obtain its ID
+            # # Create a new prompt
+            # prompt = Prompt(name=f"{args['name']}_prompt", task_id=task.id)
+            # db.session.add(prompt)
+            # db.session.commit()  # Commit the prompt to the database to obtain its ID
 
-            # Assign the prompt_id to the active_prompt_id field of the task
-            task.active_prompt_id = prompt.id
-            db.session.commit()
+            # # Assign the prompt_id to the active_prompt_id field of the task
+            # task.active_prompt_id = prompt.id
+            # db.session.commit()
 
         except Exception as e:
             db.session.rollback()
@@ -204,7 +204,7 @@ class TaskAPI(Resource):
         return {"message": "Task deleted successfully"}, 200
 
 
-class GetCurrentPromptAPI(Resource):
+class GetActivePromptAPI(Resource):
     @api_key_required
     def get(self):
         parser = reqparse.RequestParser()
@@ -225,12 +225,12 @@ class GetCurrentPromptAPI(Resource):
         if not prompt:
             return {"error": "Prompt not found or not associated with user"}, 404
         return {
-            "message": "Prompt retrieved successfully",
+            "message": "Active prompt retrieved successfully",
             "prompt": prompt.to_dict_filtered(),
         }, 200
 
 
-class SetCurrentPromptAPI(Resource):
+class SetActivePromptAPI(Resource):
     @api_key_required
     def put(self):
         parser = reqparse.RequestParser()
@@ -251,7 +251,7 @@ class SetCurrentPromptAPI(Resource):
         if not task:
             return {"error": "Task not found or not associated with user"}, 404
 
-        # Fetch task and check it is associated with task
+        # Fetch prompt and check it is associated with task
         prompt = (
             Prompt.query.join(Task)
             .filter(Prompt.id == args["prompt_id"], Task.id == task.id)
@@ -268,7 +268,7 @@ class SetCurrentPromptAPI(Resource):
             return {"error": str(e)}, 400
 
         return {
-            "message": "Current prompt updated successfully",
+            "message": "Active prompt updated successfully",
             "task": task.to_dict_filtered(),
         }, 200
 
@@ -303,7 +303,7 @@ class GetTaskConfirmationDetailsAPI(Resource):
 def process_generate_prompt_model_configuration(
     user_objective: str,
     task_id: int,
-    prompt_id: int,
+    # prompt_id: int,
     openai_api_key: str = None,
     anthropic_api_key: str = None,
 ) -> None:
@@ -321,7 +321,7 @@ def process_generate_prompt_model_configuration(
     try:
         # Get task, prompt, and user objects, along with user's email address
         task = Task.query.get(task_id)
-        prompt = Prompt.query.get(prompt_id)
+        # prompt = Prompt.query.get(prompt_id)
         user = (
             User.query.join(Project, Project.user_id == User.id)
             .filter(Project.id == task.project_id)
@@ -336,7 +336,7 @@ def process_generate_prompt_model_configuration(
         task_configuration_dict = generate_prompt.generate_prompt_model_configuration(
             user_objective=user_objective,
             task=task,
-            prompt=prompt,
+            # prompt=prompt,
             openai_api_key=openai_api_key,
             anthropic_api_key=anthropic_api_key,
         )
@@ -395,19 +395,19 @@ class GenerateTaskAPI(Resource):
         if not task:
             return {"error": "Task not found or not associated with user"}, 404
 
-        # Fetch prompt
-        if not task.active_prompt_id:
-            return {"error": "Active prompt not found for the task"}, 404
-        prompt = Prompt.query.get(task.active_prompt_id)
-        if not prompt:
-            return {"error": "Active prompt does not exist for the task"}, 404
+        # # Fetch prompt
+        # if not task.active_prompt_id:
+        #     return {"error": "Active prompt not found for the task"}, 404
+        # prompt = Prompt.query.get(task.active_prompt_id)
+        # if not prompt:
+        #     return {"error": "Active prompt does not exist for the task"}, 404
 
         # Call the process_generate_prompt_model_configuration function as a background job with the provided details
         try:
             result_id = process_generate_prompt_model_configuration.delay(
                 user_objective=args["objective"],
                 task_id=task.id,
-                prompt_id=prompt.id,
+                # prompt_id=prompt.id,
                 openai_api_key=args["openai_api_key"],
                 anthropic_api_key=args["anthropic_api_key"],
             )
@@ -778,8 +778,8 @@ def register_routes(api):
     api.add_resource(ListTasksAPI, "/api/tasks")
     api.add_resource(CreateTaskAPI, "/api/tasks/create")
     api.add_resource(TaskAPI, "/api/tasks/<int:task_id>")
-    # api.add_resource(GetCurrentPromptAPI, "/api/tasks/get_curr_prompt")
-    # api.add_resource(SetCurrentPromptAPI, "/api/tasks/set_curr_prompt")
+    api.add_resource(GetActivePromptAPI, "/api/tasks/get_active_prompt")
+    api.add_resource(SetActivePromptAPI, "/api/tasks/set_active_prompt")
     api.add_resource(
         GetTaskConfirmationDetailsAPI,
         "/api/tasks/<int:task_id>/get_task_confirmation_details",

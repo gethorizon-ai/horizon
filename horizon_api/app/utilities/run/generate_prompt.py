@@ -32,7 +32,6 @@ import copy
 def generate_prompt_model_configuration(
     user_objective: str,
     task: Task,
-    prompt: Prompt,
     openai_api_key: str = None,
     anthropic_api_key: str = None,
 ) -> dict:
@@ -43,7 +42,6 @@ def generate_prompt_model_configuration(
     Args:
         user_objective (str): objective of the use case.
         task (Task): db record corresponding to task.
-        prompt (Prompt): db record corresponding to prompt.
         openai_api_key (str, optional): OpenAI API key to use if wanting to consider OpenAI models. Defaults to None.
         anthropic_api_key (str, optional): Anthropic API key to use if wanting to consider Anthropic models. Defaults to None.
 
@@ -406,71 +404,97 @@ def generate_prompt_model_configuration(
             axis=0,
         ).reset_index(drop=True)
 
-    # Shortlist best prompt-model candidate across applicable llms
+    # Create and store prompt object for best prompt for each llm
+    selected_prompt_model_configs = {}
+    for _, row in prompt_model_candidates_selected.iterrows():
+        selected_prompt_record = Prompt(name=f"{task.name}_prompt", task_id=task.id)
+
+        # Commit prompt to database to obtain its ID
+        try:
+            db.session.add(selected_prompt_record)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise Exception(f"Error occurred while creating prompt: {e}")
+
+        selected_prompt_model_id = row["prompt_model_id"]
+        selected_prompt_object = row["prompt_object"]
+        selected_model_object = row["model_object"]
+
+        # Save model parameters to database to later reconstruct model. DO NOT STORE USER LLM API KEY!
+        selected_prompt_record.model_name = selected_model_object.get_model_name()
+        model_params = selected_model_object.get_model_params_to_store()
+        selected_prompt_record.model = json.dumps(model_params)
+
+        # Look up prompt template type and store in prompt record
+        selected_prompt_record.template_type = list(
+            factory.PromptTemplateFactory.prompt_template_classes.keys()
+        )[
+            list(factory.PromptTemplateFactory.prompt_template_classes.values()).index(
+                type(selected_prompt_object)
+            )
+        ]
+
+        # Store the winning prompt in the database
+        serialized_prompt_object = selected_prompt_object.to_dict()
+        selected_prompt_record.template_data = json.dumps(serialized_prompt_object)
+
+        # Store example selector if few-shot based. CURRENTLY HARDCODED TO MAXMARGINALRELEVANCE
+        if selected_prompt_record.template_type == "fewshot":
+            selected_prompt_record.few_shot_example_selector = (
+                "MaxMarginalRelevanceExampleSelector"
+            )
+
+        # Store inference statistics with prompt object
+        inference_statistics = {
+            "inference_quality": aggregated_inference_evaluation_results.loc[
+                aggregated_inference_evaluation_results["prompt_model_id"]
+                == selected_prompt_model_id,
+                "inference_quality",
+            ].mean(),
+            "inference_cost": aggregated_inference_evaluation_results.loc[
+                aggregated_inference_evaluation_results["prompt_model_id"]
+                == selected_prompt_model_id,
+                "inference_cost",
+            ].mean(),
+            "inference_latency": aggregated_inference_evaluation_results.loc[
+                aggregated_inference_evaluation_results["prompt_model_id"]
+                == selected_prompt_model_id,
+                "inference_latency",
+            ].mean(),
+        }
+        selected_prompt_record.inference_statistics = json.dumps(inference_statistics)
+
+        # Track selected prompt record across all llms
+        selected_prompt_model_configs[selected_prompt_model_id] = selected_prompt_record
+
+    # Shortlist best prompt-model candidate across applicable llms and set corresponding record as active prompt
     prompt_model_candidates_final = shortlist.shortlist_prompt_model_candidates(
         prompt_model_candidates=prompt_model_candidates_selected,
         inference_evaluation_results=aggregated_inference_evaluation_results,
         num_shortlist=1,
     )
     final_prompt_model_id = prompt_model_candidates_final["prompt_model_id"].iloc[0]
-    final_prompt_object = prompt_model_candidates_final["prompt_object"].iloc[0]
-    final_model_object = prompt_model_candidates_final["model_object"].iloc[0]
+    task.active_prompt_id = selected_prompt_model_configs[final_prompt_model_id].id
 
-    # Save the model parameters to the database to later reconstruct model. DO NOT STORE USER LLM API KEY!
-    prompt.model_name = final_model_object.get_model_name()
-    model_params = final_model_object.get_model_params_to_store()
-    prompt.model = json.dumps(model_params)
-
-    # Look up the prompt template type for the final prompt and store in the database
-    prompt.template_type = list(
-        factory.PromptTemplateFactory.prompt_template_classes.keys()
-    )[
-        list(factory.PromptTemplateFactory.prompt_template_classes.values()).index(
-            type(final_prompt_object)
-        )
-    ]
-
-    # Store the winning prompt in the database
-    serialized_prompt_object = final_prompt_object.to_dict()
-    prompt.template_data = json.dumps(serialized_prompt_object)
-
-    # Store example selector if few-shot based. CURRENTLY HARDCODED TO MAXMARGINALRELEVANCE
-    if prompt.template_type == "fewshot":
-        prompt.few_shot_example_selector = "MaxMarginalRelevanceExampleSelector"
-
-    # Store inference statistics with prompt object
-    inference_statistics = {
-        "inference_quality": aggregated_inference_evaluation_results.loc[
-            aggregated_inference_evaluation_results["prompt_model_id"]
-            == final_prompt_model_id,
-            "inference_quality",
-        ].mean(),
-        "inference_latency": aggregated_inference_evaluation_results.loc[
-            aggregated_inference_evaluation_results["prompt_model_id"]
-            == final_prompt_model_id,
-            "inference_latency",
-        ].mean(),
-    }
-    prompt.inference_statistics = json.dumps(inference_statistics)
-
-    # Store evaluation statistics with task object
+    # Store evaluation statistics with task record
     evaluation_statistics = {
         "number_of_prompt_model_candidates_considered": starting_prompt_model_id - 1,
         "number_of_inferences_and_evaluations_done": len(
             aggregated_inference_evaluation_results
         ),
+        "total_estimated_task_generation_cost": aggregated_inference_evaluation_results[
+            "inference_cost"
+        ].sum(),
     }
     task.evaluation_statistics = json.dumps(evaluation_statistics)
 
-    # Set newly created prompt as the active prompt for the task if it is not already so
-    task.active_prompt_id = prompt.id
-
     print("Finished prompt-model configuration.")
 
-    # Commit the changes to the database
+    # Commit changes to database
     db.session.commit()
 
     print("Returning from generate_prompt_model_configuration function.")
 
-    # Return task overview with selected prompt-model candidate
+    # Return task overview
     return task.to_dict_filtered()
