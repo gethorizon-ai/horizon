@@ -14,7 +14,7 @@ class LLMFactory:
             "provider": "OpenAI",
             "data_unit": "token",
             "data_limit": 4096,
-            "price_per_data_unit_prompt": 0.002 / 1000,
+            "price_per_data_unit_prompt": 0.0015 / 1000,
             "price_per_data_unit_completion": 0.002 / 1000,
         },
         "text-davinci-003": {
