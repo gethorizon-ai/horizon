@@ -79,7 +79,7 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
 
     # Create html table with prompt-model config options
     email_text_prompt_model_configs = f"""
-<table>
+<table style="width:100%">
 <tr>
     <th>Prompt ID</th>
     <th>Model</th>
@@ -164,7 +164,7 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
     }}
 
     th {{
-      text-align: left;
+      text-align: center;
     }}
     </style>
 </head>
@@ -186,9 +186,9 @@ Summary of Task (access additional details via CLI):<br />
         <li><b>Total estimated task generation cost:</b> ${total_estimated_task_generation_cost:.2f}</li>
         </ul>
     <li><b>Models considered:</b> {allowed_models}</li>
-</ul><br />
+</ul>
 
-Summary of prompt-model configuration options (active option for this task is highlighted):<br/>
+Summary of prompt-model configuration options (active option for this task is highlighted):<br/><br/>
 {email_text_prompt_model_configs}
 
 *Active prompt-model configuration for this task (switch to a different one via CLI):<br/>

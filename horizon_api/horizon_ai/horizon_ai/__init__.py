@@ -236,29 +236,29 @@ def delete_task(task_id):
     return response
 
 
-# # Get the current prompt of a task
-# def get_task_curr_prompt(task_id):
-#     global api_key
-#     if api_key == None:
-#         raise Exception("Must set Horizon API key.")
-#     headers = {"task_id": task_id, "X-Api-Key": api_key}
-#     response = _get(endpoint="/api/tasks/get_curr_prompt", headers=headers)
-#     return response
+# Get the current active prompt-model configuration of a task
+def get_task_active_prompt(task_id):
+    global api_key
+    if api_key == None:
+        raise Exception("Must set Horizon API key.")
+    headers = {"task_id": task_id, "X-Api-Key": api_key}
+    response = _get(endpoint="/api/tasks/get_active_prompt", headers=headers)
+    return response
 
 
-# # Set the current prompt of a task
-# def set_task_curr_prompt(task_id, prompt_id):
-#     global api_key
-#     if api_key == None:
-#         raise Exception("Must set Horizon API key.")
-#     headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
-#     payload = {"task_id": task_id, "prompt_id": prompt_id}
-#     response = _put(
-#         endpoint="/api/tasks/set_curr_prompt",
-#         json=payload,
-#         headers=headers,
-#     )
-#     return response
+# Set the current prompt of a task
+def set_task_active_prompt(task_id, prompt_id):
+    global api_key
+    if api_key == None:
+        raise Exception("Must set Horizon API key.")
+    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+    payload = {"task_id": task_id, "prompt_id": prompt_id}
+    response = _put(
+        endpoint="/api/tasks/set_active_prompt",
+        json=payload,
+        headers=headers,
+    )
+    return response
 
 
 # Get information to confirm with user (e.g., estimated cost) before proceeding with task creation

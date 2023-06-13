@@ -494,44 +494,46 @@ def delete_task(task_id, horizon_api_key):
 
 
 # Get the current prompt of a task
-# @click.command(name="get-active-prompt")
-# @click.option(
-#     "--horizon_api_key",
-#     default=os.environ.get("HORIZON_API_KEY"),
-#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
-#     help="The Horizon API key for the user.",
-# )
-# @click.option("--task_id", prompt="Task ID", help="The ID of the task.")
-# def get_task_curr_prompt(task_id, horizon_api_key):
-#     horizon_ai.api_key = horizon_api_key
-#     try:
-#         result = horizon_ai.get_task_curr_prompt(task_id)
-#         click.echo(result)
-#     except Exception as e:
-#         click.echo(str(e))
+@click.command(name="get-active-prompt")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+)
+@click.option("--task_id", prompt="Task ID", help="The ID of the task.")
+def get_task_curr_prompt(task_id, horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.get_task_active_prompt(task_id)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
-# Set the current prompt of a task
-# @click.command(name="set-active-prompt")
-# @click.option(
-#     "--horizon_api_key",
-#     default=os.environ.get("HORIZON_API_KEY"),
-#     prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
-#     help="The Horizon API key for the user.",
-# )
-# @click.option("--task_id", prompt="Task ID", help="The ID of the task.")
-# @click.option(
-#     "--prompt_id",
-#     prompt="Prompt ID",
-#     help="The ID of the prompt to set as the current prompt for the task.",
-# )
-# def set_task_curr_prompt(task_id, prompt_id, horizon_api_key):
-#     horizon_ai.api_key = horizon_api_key
-#     try:
-#         result = horizon_ai.set_task_curr_prompt(task_id, prompt_id)
-#         click.echo(result)
-#     except Exception as e:
-#         click.echo(str(e))
+# Set the current active prompt of a task
+@click.command(name="set-active-prompt")
+@click.option(
+    "--horizon_api_key",
+    default=os.environ.get("HORIZON_API_KEY"),
+    prompt="Horizon API Key" if not os.environ.get("HORIZON_API_KEY") else False,
+    help="The Horizon API key for the user.",
+)
+@click.option("--task_id", prompt="Task ID", help="The ID of the task.")
+@click.option(
+    "--prompt_id",
+    prompt="Prompt ID",
+    help="The ID of the prompt to set as the current prompt for the task.",
+)
+def set_task_curr_prompt(task_id, prompt_id, horizon_api_key):
+    horizon_ai.api_key = horizon_api_key
+    try:
+        result = horizon_ai.set_task_active_prompt(task_id, prompt_id)
+        formatted_output = json.dumps(result, indent=4)
+        click.echo(formatted_output)
+    except Exception as e:
+        click.echo(str(e))
 
 
 # Generate a task
