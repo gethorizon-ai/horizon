@@ -241,10 +241,16 @@ def delete_project(project_id, horizon_api_key):
     help="The Horizon API key for the user.",
     hide_input=True,
 )
-def list_tasks(horizon_api_key):
+@click.confirmation_option(
+    "--verbose",
+    default=True,
+    prompt="Verbose output (include all prompts for each task, instead of just active prompt)?",
+    help="Whether to include all prompts (verbose option) or only active prompt (standard option) for each task.",
+)
+def list_tasks(horizon_api_key, verbose):
     horizon_ai.api_key = horizon_api_key
     try:
-        result = horizon_ai.list_tasks()
+        result = horizon_ai.list_tasks(verbose)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:
@@ -416,10 +422,16 @@ def generate_task():
     hide_input=True,
 )
 @click.option("--task_id", prompt="Task ID", help="The ID of the task to retrieve.")
-def get_task(task_id, horizon_api_key):
+@click.confirmation_option(
+    "--verbose",
+    default=False,
+    prompt="Verbose output (show all prompts for task, instead of just active prompt)?",
+    help="Whether to include all prompts (verbose option) or only active prompt (standard option) for each task.",
+)
+def get_task(task_id, horizon_api_key, verbose):
     horizon_ai.api_key = horizon_api_key
     try:
-        result = horizon_ai.get_task(task_id)
+        result = horizon_ai.get_task(task_id, verbose)
         formatted_output = json.dumps(result, indent=4)
         click.echo(formatted_output)
     except Exception as e:

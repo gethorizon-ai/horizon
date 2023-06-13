@@ -47,6 +47,16 @@ def allowed_output_schema_file(filename):
 class ListTasksAPI(Resource):
     @api_key_required
     def get(self):
+        parser = reqparse.RequestParser()
+        parser.add_argument(
+            "verbose",
+            type=int,
+            required=False,
+            default=None,
+            help="Task ID is required",
+        )
+        args = parser.parse_args()
+
         # Fetch tasks associated with user
         tasks = (
             Task.query.join(Project, Project.id == Task.project_id)
@@ -56,7 +66,10 @@ class ListTasksAPI(Resource):
 
         return {
             "message": "Tasks retrieved successfully",
-            "tasks": [task.to_dict_filtered() for task in tasks],
+            "tasks": [
+                task.to_dict_filtered(verbose_prompt_output=args["verbose"])
+                for task in tasks
+            ],
         }, 200
 
 
@@ -133,6 +146,16 @@ class CreateTaskAPI(Resource):
 class TaskAPI(Resource):
     @api_key_required
     def get(self, task_id):
+        parser = reqparse.RequestParser()
+        parser.add_argument(
+            "verbose",
+            type=int,
+            required=False,
+            default=None,
+            help="Task ID is required",
+        )
+        args = parser.parse_args()
+
         # Fetch task and check it is associated with user
         task = (
             Task.query.join(Project, Project.id == Task.project_id)
@@ -143,7 +166,7 @@ class TaskAPI(Resource):
             return {"error": "Task not found or not associated with user"}, 404
         return {
             "message": "Task retrieved successfully",
-            "task": task.to_dict_filtered(),
+            "task": task.to_dict_filtered(verbose_prompt_output=args["verbose"]),
         }, 200
 
     @api_key_required

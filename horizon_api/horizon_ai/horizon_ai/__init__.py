@@ -162,12 +162,17 @@ def delete_project(project_id):
 
 # Task-related methods
 # List tasks
-def list_tasks():
+def list_tasks(verbose: bool = False):
     global api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key}
-    response = _get(endpoint="/api/tasks", headers=headers)
+    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+    payload = {"verbose": verbose}
+    response = _get(
+        endpoint="/api/tasks",
+        json=payload,
+        headers=headers,
+    )
     return response
 
 
@@ -195,12 +200,17 @@ def create_task(
 
 
 # Get task information
-def get_task(task_id):
+def get_task(task_id, verbose: bool = False):
     global api_key
     if api_key == None:
         raise Exception("Must set Horizon API key.")
-    headers = {"X-Api-Key": api_key}
-    response = _get(endpoint=f"/api/tasks/{task_id}", headers=headers)
+    headers = {"Content-Type": "application/json", "X-Api-Key": api_key}
+    payload = {"verbose": verbose}
+    response = _get(
+        endpoint=f"/api/tasks/{task_id}",
+        json=payload,
+        headers=headers,
+    )
     return response
 
 

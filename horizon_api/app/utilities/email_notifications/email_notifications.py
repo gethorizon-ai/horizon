@@ -177,12 +177,9 @@ Success - your Horizon Task has completed optimization and is ready for deployme
     <li><b>Project ID:</b> {project_id}</li>
     <li><b>Output schema:</b> {output_schema}</li>
     <li><b>Models considered:</b> {allowed_models}</li>
-    <li><b>Task generation statistics:</b></li>
-        <ul> 
-        <li><b>Number of prompt-model candidates considered:</b> {number_of_prompt_model_candidates}</li>
-        <li><b>Number of inferences and evaluations done:</b> {number_of_inferences_evaluations_done}</li>
-        <li><b>Total estimated task generation cost:</b> ${total_estimated_task_generation_cost:.2f}</li>
-        </ul>
+    <li><b>Number of prompt-model candidates considered:</b> {number_of_prompt_model_candidates}</li>
+    <li><b>Number of inferences and evaluations done:</b> {number_of_inferences_evaluations_done}</li>
+    <li><b>Total estimated task generation cost:</b> ${total_estimated_task_generation_cost:.2f}</li>
 </ul>
 
 <b><u>Prompt-model configuration options:</b></u><br/>
