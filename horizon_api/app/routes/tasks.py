@@ -253,7 +253,7 @@ class SetActivePromptAPI(Resource):
 
         # Fetch prompt and check it is associated with task
         prompt = (
-            Prompt.query.join(Task)
+            Prompt.query.join(Task, Task.id == Prompt.task_id)
             .filter(Prompt.id == args["prompt_id"], Task.id == task.id)
             .first()
         )
