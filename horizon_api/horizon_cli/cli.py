@@ -245,7 +245,7 @@ def list_tasks(horizon_api_key):
     horizon_ai.api_key = horizon_api_key
     verbose = False
     if click.confirm(
-        "Verbose output (show all prompts for each task, instead of just active prompt)?"
+        "Verbose output (show all prompts for each task, not just active prompt)?"
     ):
         verbose = True
     try:
@@ -424,9 +424,7 @@ def generate_task():
 def get_task(task_id, horizon_api_key):
     horizon_ai.api_key = horizon_api_key
     verbose = False
-    if click.confirm(
-        "Verbose output (show all prompts for task, instead of just active prompt)?"
-    ):
+    if click.confirm("Verbose output (show all prompts, not just active prompt)?"):
         verbose = True
     try:
         result = horizon_ai.get_task(task_id, verbose)
