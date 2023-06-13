@@ -12,9 +12,14 @@ openai_api_key = None
 anthropic_api_key = None
 
 
-def _get(endpoint, headers=None):
+def _get(endpoint, json=None, data=None, headers=None):
     global base_url
-    response = requests.get(urljoin(base_url, endpoint), headers=headers)
+    response = requests.get(
+        urljoin(base_url, endpoint),
+        json=json,
+        data=data,
+        headers=headers,
+    )
     return _handle_response(response)
 
 
