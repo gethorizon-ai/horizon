@@ -83,9 +83,9 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
 <tr>
     <th>Prompt ID</th>
     <th>Model</th>
-    <th>Estimated Inference Quality</th>
-    <th>Estimated Inference Cost ($ / call)</th>
-    <th>Estimated Inference Latency (s / call)</th>
+    <th>Inference Quality</th>
+    <th>Inference Cost ($ / call)</th>
+    <th>Inference Latency (s / call)</th>
 </tr>
 """
 
@@ -168,26 +168,29 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
 <body>
 Success - your Horizon Task has completed optimization and is ready for deployment. Refer to the "Task ID" below to deploy (more information in our <a href="https://docs.gethorizon.ai">docs</a>).<br /><br />
 
-Summary of Task (access additional details using CLI):<br />
+<b><u>Task summary:</b></u><br/>
+<i>Access additional details using CLI.</i><br/>
 <ul>
     <li><b>Name:</b> {name}</li>
     <li><b>Objective:</b> {objective}</li>
     <li><b>Task ID:</b> {task_id}</li>
     <li><b>Project ID:</b> {project_id}</li>
     <li><b>Output schema:</b> {output_schema}</li>
+    <li><b>Models considered:</b> {allowed_models}</li>
     <li><b>Task generation statistics:</b></li>
         <ul> 
         <li><b>Number of prompt-model candidates considered:</b> {number_of_prompt_model_candidates}</li>
         <li><b>Number of inferences and evaluations done:</b> {number_of_inferences_evaluations_done}</li>
         <li><b>Total estimated task generation cost:</b> ${total_estimated_task_generation_cost:.2f}</li>
         </ul>
-    <li><b>Models considered:</b> {allowed_models}</li>
 </ul>
 
-Summary of prompt-model configuration options (active option for this task is highlighted):<br/><br/>
+<b><u>Prompt-model configuration options:</b></u><br/>
+<i>Active option for this task is highlighted. All figures are estimates based on your dataset.</i><br/>
 {email_text_prompt_model_configs}
 
-*Active prompt-model configuration for this task (switch to a different option if present using CLI):<br/>
+<b><u>*Active prompt-model configuration for this task:</b></u><br/>
+<i>Switch to a different option if present using CLI.</i><br/>
 {email_text_active_prompt}
 
 <b>Horizon AI</b>
