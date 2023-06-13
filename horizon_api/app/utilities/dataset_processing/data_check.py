@@ -123,7 +123,7 @@ def check_evaluation_dataset(
             "Detected no column headers (first row of csv file). There must be at least 1 column. The rightmost column is assumed to be the ground truth."
         )
 
-    # Check that there are no cells that are empty or only has whitespace
+    # Check that there are no cells that are empty or only have whitespace
     for row in data:
         if any(cell.strip() == "" for cell in row):
             raise AssertionError(
