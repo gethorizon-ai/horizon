@@ -499,4 +499,4 @@ def generate_prompt_model_configuration(
     print("Returning from generate_prompt_model_configuration function.")
 
     # Return task overview
-    return task.to_dict_filtered()
+    return task.to_dict_filtered(verbose_prompt_output=True)

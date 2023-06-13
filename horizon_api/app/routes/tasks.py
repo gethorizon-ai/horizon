@@ -123,15 +123,6 @@ class CreateTaskAPI(Resource):
             db.session.add(task)
             db.session.commit()  # Commit the task to the database to obtain its ID
 
-            # # Create a new prompt
-            # prompt = Prompt(name=f"{args['name']}_prompt", task_id=task.id)
-            # db.session.add(prompt)
-            # db.session.commit()  # Commit the prompt to the database to obtain its ID
-
-            # # Assign the prompt_id to the active_prompt_id field of the task
-            # task.active_prompt_id = prompt.id
-            # db.session.commit()
-
         except Exception as e:
             db.session.rollback()
             logging.exception("Error occurred while creating task: %s", e)
