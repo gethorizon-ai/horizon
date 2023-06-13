@@ -121,19 +121,21 @@ def run_inference(
         end_time = time.time()
         inference_latency = end_time - start_time
 
-        # Calculate inference cost
-        # TODO: account for retries
+        # Calculate inference cost. TODO: account for retries
         prompt_data_length = model_object.get_prompt_data_length(
-            prompt_messages=prompt_for_data_analysis, llm_result=llm_result
+            prompt_messages=prompt_for_data_analysis,
+            llm_result=llm_result,
         )
         completion_data_length = model_object.get_completion_data_length(
             llm_result=llm_result
         )
         prompt_cost = LLMFactory.get_prompt_cost(
-            model_name=model_object, prompt_data_length=prompt_data_length
+            model_name=model_object.get_model_name(),
+            prompt_data_length=prompt_data_length,
         )
         completion_cost = LLMFactory.get_completion_cost(
-            model_name=model_object, completion_data_length=completion_data_length
+            model_name=model_object.get_model_name(),
+            completion_data_length=completion_data_length,
         )
 
         # Record output, inference cost, and inference latency
