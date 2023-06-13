@@ -79,7 +79,7 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
 
     # Create html table with prompt-model config options
     email_text_prompt_model_configs = f"""
-<table style="width:100%">
+<table>
 <tr>
     <th>Prompt ID</th>
     <th>Model</th>
@@ -119,7 +119,7 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
         if i == 0:
             email_text_prompt_model_configs += f"""
 <tr style="background-color: lightyellow;">
-    <td><b>*{prompt_id}</b></td>
+    <td><b>{prompt_id}*</b></td>
     <td><b>{model_name}</b></td>
     <td><b>{inference_quality:.2f}</b></td>
     <td><b>${inference_cost:.3f}</b></td>
@@ -161,18 +161,14 @@ def email_task_generation_success(user_email: str, task_details: dict) -> None:
     <style>
     table, th, td {{
       border: 1px solid black;
-    }}
-
-    th {{
       text-align: center;
     }}
     </style>
 </head>
 <body>
-Hi,<br/><br/>
 Success - your Horizon Task has completed optimization and is ready for deployment. Refer to the "Task ID" below to deploy (more information in our <a href="https://docs.gethorizon.ai">docs</a>).<br /><br />
 
-Summary of Task (access additional details via CLI):<br />
+Summary of Task (access additional details using CLI):<br />
 <ul>
     <li><b>Name:</b> {name}</li>
     <li><b>Objective:</b> {objective}</li>
@@ -191,7 +187,7 @@ Summary of Task (access additional details via CLI):<br />
 Summary of prompt-model configuration options (active option for this task is highlighted):<br/><br/>
 {email_text_prompt_model_configs}
 
-*Active prompt-model configuration for this task (switch to a different one via CLI):<br/>
+*Active prompt-model configuration for this task (switch to a different option if present using CLI):<br/>
 {email_text_active_prompt}
 
 <b>Horizon AI</b>
