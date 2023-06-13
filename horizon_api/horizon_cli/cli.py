@@ -502,7 +502,7 @@ def delete_task(task_id, horizon_api_key):
     help="The Horizon API key for the user.",
 )
 @click.option("--task_id", prompt="Task ID", help="The ID of the task.")
-def get_task_curr_prompt(task_id, horizon_api_key):
+def get_task_active_prompt(task_id, horizon_api_key):
     horizon_ai.api_key = horizon_api_key
     try:
         result = horizon_ai.get_task_active_prompt(task_id)
@@ -526,7 +526,7 @@ def get_task_curr_prompt(task_id, horizon_api_key):
     prompt="Prompt ID",
     help="The ID of the prompt to set as the current prompt for the task.",
 )
-def set_task_curr_prompt(task_id, prompt_id, horizon_api_key):
+def set_task_active_prompt(task_id, prompt_id, horizon_api_key):
     horizon_ai.api_key = horizon_api_key
     try:
         result = horizon_ai.set_task_active_prompt(task_id, prompt_id)
@@ -905,8 +905,8 @@ task.add_command(list_tasks)
 task.add_command(generate_task)
 task.add_command(get_task)
 task.add_command(delete_task)
-# task.add_command(get_task_curr_prompt)
-# task.add_command(set_task_curr_prompt)
+task.add_command(get_task_active_prompt)
+task.add_command(set_task_active_prompt)
 # task.add_command(generate_task)
 task.add_command(deploy_task)
 task.add_command(view_logs)
