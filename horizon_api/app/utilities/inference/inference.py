@@ -94,7 +94,7 @@ def run_inference(
 
         # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
         if type(model_object) == ChatOpenAI or type(model_object) == ChatAnthropic:
-            formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
+            formatted_prompt_for_llm = [HumanMessage(content=original_formatted_prompt)]
             prompt_for_data_analysis = formatted_prompt_for_llm
         else:
             formatted_prompt_for_llm = original_formatted_prompt
