@@ -12,6 +12,7 @@ const initialState = {
   loading: true
 };
 
+
 function Login() {
   const components = {
     Footer() {
@@ -40,12 +41,6 @@ function Login() {
         });
         console.log(user);
 
-        // Send user information to Customer.io
-        const { name, email } = user.attributes;
-        const timestamp = new Date().toISOString();
-
-        // Replace the placeholders below with your actual code to send data to Customer.io
-        sendToCustomerIO(name, email, timestamp);
       } catch (error) {
         console.log(error);
         setState({
@@ -84,36 +79,3 @@ function Login() {
 }
 
 export default Login;
-
-function sendToCustomerIO(name, email, timestamp) {
-    const customerId = '27552a43b73237d21dff'; // Replace with your actual Customer.io customer ID
-    const apiKey = '48939982fc5e84e352f0'; // Replace with your actual Customer.io API key
-  
-    const data = {
-      id: email,
-      created_at: Math.floor(new Date(timestamp).getTime() / 1000),
-      name: name,
-    };
-  
-    const authHeader = `Basic ${Buffer.from(apiKey + ':').toString('base64')}`;
-  
-    fetch(`https://track.customer.io/api/v1/customers/${customerId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: authHeader
-      },
-      body: JSON.stringify(data)
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to send data to Customer.io');
-        }
-        console.log('Data sent to Customer.io successfully');
-      })
-      .catch(error => {
-        console.error('Error sending data to Customer.io:', error);
-      });
-  }
-  
-
