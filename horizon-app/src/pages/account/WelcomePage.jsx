@@ -1,7 +1,7 @@
 import { Box, Container, Typography, Link, List, ListItem } from "@mui/material";
 import HorizonAppBar from "../../components/HorizonAppBar";
 import { useEffect, useState } from "react";
-import { Auth, Hub } from "aws-amplify";
+import { Auth } from "aws-amplify";
 import { Navigate } from "react-router-dom";
 
 const initialState = {
@@ -9,15 +9,6 @@ const initialState = {
   isLoggedIn: false,
   loading: true,
 };
-
-
-let isKompassifyReady = false;
-
-window.addEventListener('message', function (event) {
-  if (event.data.TYPE === "KOMPASSIFY_BOOT_LOADER_IS_READY") {
-    isKompassifyReady = true;
-  }
-});
 
 const items = [
   {
@@ -39,54 +30,19 @@ const items = [
 
 function WelcomePage() {
   const [state, setState] = useState(initialState);
-  const [isNewUser, setIsNewUser] = useState(false);
-  const script = document.createElement('script');
-  script.id = 'kompassious';
-  script.src = 'https://player.kompassify.com/kompassifyPlayer.js?uuid=34e4fbbf-762b-447e-89a4-79e0a517578b';
-  script.async = true;
-  document.body.appendChild(script);
-
-
   useEffect(() => {
-    const script = document.createElement('script');
-    script.id = 'kompassious';
-    script.src = 'https://player.kompassify.com/kompassifyPlayer.js?uuid=041d73ff-2323-43c0-a6e7-95d81eac06dc';
-    script.async = true;
-    document.body.appendChild(script);
-    const signUpListener = Hub.listen('auth', data => {
-      const { payload } = data;
-      if (payload.event === 'signUp') {
-        console.log('signUp event detected'); // Added for debugging
-        setIsNewUser(true);
-      }
-    });
-
-    const checkUser = async () => {
+    async function checkUser() {
       try {
         const user = await Auth.currentAuthenticatedUser({
           bypassCache: false,
         });
-
         setState({
           ...initialState,
           user: user,
           isLoggedIn: true,
           loading: false,
         });
-
-        // window.kompassifyMultiChoice.startMultiChoice("3da7816f-fd83-44f9-af86-d53971cb270a");
-
-        // // Add Kompassify script after successful login
-        // if (isNewUser) {
-        //   const script = document.createElement('script');
-        //   script.id = 'kompassious';
-        //   script.src = 'https://player.kompassify.com/kompassifyPlayer.js?uuid=3da7816f-fd83-44f9-af86-d53971cb270a';
-        //   script.async = true;
-        //   document.body.appendChild(script);
-        //     console.log('Kompassify script added'); // Added for debugging
-
-        // }
-
+        console.log(user);
       } catch (err) {
         console.log(err);
         setState({
@@ -96,16 +52,9 @@ function WelcomePage() {
           loading: false,
         });
       }
-    };
+    }
     checkUser();
-
-    // Clean up the listener on component unmount
-    return () => {
-      Hub.remove('auth', signUpListener);
-      document.body.removeChild(script);
-    };
-}, []);
-  
+  }, []);
 
   const signOut = async () => {
     try {
@@ -230,7 +179,6 @@ function WelcomePage() {
       </Box>
     </Box>
   );
-
 }
 
 export default WelcomePage;
