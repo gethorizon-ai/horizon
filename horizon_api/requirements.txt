@@ -50,7 +50,6 @@ genson==1.2.2
 gevent==22.10.2
 greenlet==2.0.2
 h11==0.14.0
-horizon-ai==0.1.0
 httpcore==0.17.0
 httpx==0.24.0
 idna==3.4
