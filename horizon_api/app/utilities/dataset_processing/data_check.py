@@ -148,9 +148,9 @@ def check_evaluation_dataset(
         else:
             seen_variables.add(variable)
     if duplicates:
-        error_message = "Detected duplicate input variable names in cells: "
+        error_message = "Detected duplicate input variable names: "
         for duplicate in duplicates:
-            error_message += f"{duplicate}: {columns.index(duplicate) + 1}, "
+            error_message += f"{duplicate} (column {columns.index(duplicate) + 1}), "
         error_message = error_message.rstrip(", ")
         error_message += ". Please try again with unique input variable names."
         raise AssertionError(error_message)
