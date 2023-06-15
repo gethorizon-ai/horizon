@@ -100,7 +100,6 @@ Werkzeug
 wrapt
 yarl
 tiktoken
-enum
 mypy-extensions
 mysqlclient
 mysql-connector-python
