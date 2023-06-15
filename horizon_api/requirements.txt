@@ -51,7 +51,6 @@ gevent==22.10.2
 greenlet==2.0.2
 h11==0.14.0
 horizon-ai==0.1.0
--e git+ssh://git@github.com/gethorizon-ai/horizon.git@c3ec2c10eb4b620a27bb5795ca7ad55c9be2d9c8#egg=horizon_cli&subdirectory=horizon_api/horizon_cli
 httpcore==0.17.0
 httpx==0.24.0
 idna==3.4
