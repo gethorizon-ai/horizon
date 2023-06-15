@@ -52,9 +52,6 @@ marshmallow-enum
 matplotlib-inline
 mdurl
 multidict
-mypy-extensions
-mysql-connector-python
-mysqlclient
 numpy
 anthropic
 openai
@@ -104,3 +101,6 @@ wrapt
 yarl
 tiktoken
 enum
+mypy-extensions
+mysqlclient
+mysql-connector-python
