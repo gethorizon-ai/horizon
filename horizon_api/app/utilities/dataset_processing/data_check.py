@@ -93,7 +93,7 @@ def check_evaluation_dataset(
     """
     # Check that evaluation data is at most 50 MB file size
     if os.path.getsize(dataset_file_path) > 50000000:
-        raise AssertionError("Evaluation dataset can be at most 1 MB large.")
+        raise AssertionError("Evaluation dataset can be at most 50 MB large.")
 
     # Try to import evaluation dataset
     try:
@@ -123,34 +123,47 @@ def check_evaluation_dataset(
             "Detected no column headers (first row of csv file). There must be at least 1 column. The rightmost column is assumed to be the ground truth."
         )
 
-    # Check that there are no cells that are empty or only has whitespace
-    for row in data:
-        if any(cell.strip() == "" for cell in row):
-            raise AssertionError(
-                "Detected cell in data that is empty or only has whitespace. Please try again with data where each cell has text. For example, check that there are no empty rows or columns bordering the data."
-            )
+    # Check that there are no cells that are empty or only have whitespace
+    for i, row in enumerate(data):
+        for j, cell in enumerate(row):
+            if cell.strip() == "":
+                raise AssertionError(
+                    f"Detected empty or whitespace cell at row {i+1}, column {j+1}. Please try again with data where each cell has text. For example, check that there are no empty rows or columns bordering the data."
+                )
 
     # Check that each input variable is a single non-empty string with letters, numbers, and underscores only (no spaces)
     input_variables = columns[:-1]
-    for input_var in input_variables:
+    for index, input_var in enumerate(input_variables):
         if not re.match(r"^[A-Za-z0-9_]+$", input_var):
             raise AssertionError(
-                "Could not read input variable names from the column headers. Input variable names must be in the first row of the csv file. Each input variable name must be composed of letters, numbers, and underscores only (no spaces or empty values allowed)."
+                f"Could not read input variable name at column {index+1} ({input_var}). Input variable names must be in the first row of the CSV file. Each input variable name must be composed of letters, numbers, and underscores only (no spaces or empty values allowed)."
             )
 
     # Check that there are no duplicate input variable names
-    if len(input_variables) != len(set(input_variables)):
-        raise AssertionError(
-            "Detected duplicate input variable names. Please try again with unique input variable names."
-        )
+    seen_variables = set()
+    duplicates = []
+    for variable in input_variables:
+        if variable in seen_variables:
+            duplicates.append(variable)
+        else:
+            seen_variables.add(variable)
+    if duplicates:
+        error_message = "Detected duplicate input variable names in cells: "
+        for duplicate in duplicates:
+            error_message += f"{duplicate}: {columns.index(duplicate) + 1}, "
+        error_message = error_message.rstrip(", ")
+        error_message += ". Please try again with unique input variable names."
+        raise AssertionError(error_message)
 
     # Check that there are no duplicate rows
     seen_rows = set()
-    for row in data[1:]:
+    for i, row in enumerate(
+        data[1:], start=2
+    ):  # Start at index 2 to account for header row
         row_csv = ",".join(row)
         if row_csv in seen_rows:
             raise AssertionError(
-                "Detected duplicate rows of data. Please try again with unique rows of data."
+                f"Detected duplicate rows of data. Please try again with unique rows of data. Duplicate row found at line {i}."
             )
         else:
             seen_rows.add(row_csv)
