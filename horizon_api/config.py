@@ -33,8 +33,8 @@ class Config:
     HORIZON_TEST_PASSWORD = os.environ.get("HORIZON_TEST_PASSWORD")
 
     # Connect celery task queue with AWS SQS
-    aws_access_key = os.environ.get("AWS_ACCESS_KEY")
-    aws_secret_key = os.environ.get("AWS_SECRET_KEY")
+    aws_access_key = safequote(os.environ.get("AWS_ACCESS_KEY"))
+    aws_secret_key = safequote(os.environ.get("AWS_SECRET_KEY"))
     CELERY_BROKER_URL = f"sqs://{aws_access_key}:{aws_secret_key}@"
     CELERY_TASK_IGNORE_RESULT = True
     CELERY_BROKER_TRANSPORT_OPTIONS = {
