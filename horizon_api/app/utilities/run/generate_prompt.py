@@ -239,6 +239,7 @@ def generate_prompt_model_configuration(
         ):
             continue
         print(f"working on {llm}")
+        print(f"Number of few shots allowed {llm_info['max_few_shots']}")
 
         # Set user's llm api key
         if LLMFactory.llm_classes[llm]["provider"] == "OpenAI":
