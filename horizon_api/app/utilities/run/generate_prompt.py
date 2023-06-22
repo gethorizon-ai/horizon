@@ -71,7 +71,6 @@ def generate_prompt_model_configuration(
             vector_db_metadata=json.loads(task.vector_db_metadata),
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
-            num_test_data_input=3,  # TODO: remove
         )
 
     # Otherwise, load vector db from raw evaluation dataset
@@ -82,7 +81,6 @@ def generate_prompt_model_configuration(
             openai_api_key=Config.HORIZON_OPENAI_API_KEY,
             user_objective=task.objective,
             allowed_models=json.loads(task.allowed_models),
-            num_test_data_input=3,  # TODO: remove
         )
 
         # Store vector db metadata in task object and commit changes to db
@@ -239,7 +237,6 @@ def generate_prompt_model_configuration(
         ):
             continue
         print(f"working on {llm}")
-        print(f"Number of few shots allowed {llm_info['max_few_shots']}")
 
         # Set user's llm api key
         if LLMFactory.llm_classes[llm]["provider"] == "OpenAI":
