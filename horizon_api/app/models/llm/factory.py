@@ -14,8 +14,16 @@ class LLMFactory:
             "provider": "OpenAI",
             "data_unit": "token",
             "data_limit": 4096,
-            "price_per_data_unit_prompt": 0.002 / 1000,
+            "price_per_data_unit_prompt": 0.0015 / 1000,
             "price_per_data_unit_completion": 0.002 / 1000,
+        },
+        "gpt-3.5-turbo-16k": {
+            "class": ChatOpenAI,
+            "provider": "OpenAI",
+            "data_unit": "token",
+            "data_limit": 16000,
+            "price_per_data_unit_prompt": 0.003 / 1000,
+            "price_per_data_unit_completion": 0.004 / 1000,
         },
         "text-davinci-003": {
             "class": OpenAI,
