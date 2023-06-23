@@ -85,7 +85,7 @@ class Task(db.Model):
             else self.evaluation_statistics,
         }
 
-    def to_dict_filtered(self):
+    def to_dict_filtered(self, verbose_prompt_output: bool = False):
         # Filter to subset of keys / columns
         filtered_keys = [
             "id",
@@ -104,6 +104,15 @@ class Task(db.Model):
         filtered_dict["prompts"] = [
             prompt.to_dict_filtered() for prompt in self.prompts.all()
         ]
+
+        # Filter to only active prompt, unless set to verbose prompt output
+        if not verbose_prompt_output:
+            filtered_prompt_list = [
+                prompt
+                for prompt in filtered_dict["prompts"]
+                if prompt["id"] == filtered_dict["active_prompt_id"]
+            ]
+            filtered_dict["prompts"] = filtered_prompt_list
 
         return filtered_dict
 

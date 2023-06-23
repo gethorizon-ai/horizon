@@ -1,5 +1,6 @@
 """Runs inference on a given set of prompt-model candidates and input dataset."""
 
+from app.models.llm.factory import LLMFactory
 from app.models.llm.open_ai import ChatOpenAI
 from app.models.llm.anthropic import ChatAnthropic
 from app.models.schema import HumanMessage
@@ -89,18 +90,20 @@ def run_inference(
         )
 
         original_formatted_prompt = row["prompt_object"].format(**input_values)
-        formatted_prompt_for_llm = original_formatted_prompt
         model_object = row["model_object"]
+
         # If model is ChatOpenAI or ChatAnthropic, then wrap message with HumanMessage object
         if type(model_object) == ChatOpenAI or type(model_object) == ChatAnthropic:
-            formatted_prompt_for_llm = [HumanMessage(content=formatted_prompt_for_llm)]
+            formatted_prompt_for_llm = [HumanMessage(content=original_formatted_prompt)]
+            prompt_for_data_analysis = formatted_prompt_for_llm
+        else:
+            formatted_prompt_for_llm = original_formatted_prompt
+            prompt_for_data_analysis = [formatted_prompt_for_llm]
 
         start_time = time.time()
-        output = (
-            model_object.generate([formatted_prompt_for_llm])
-            .generations[0][0]
-            .text.strip()
-        )
+
+        llm_result = model_object.generate([formatted_prompt_for_llm])
+        output = llm_result.generations[0][0].text.strip()
 
         # Conduct post-processing if applicable
         if post_processing:
@@ -118,8 +121,28 @@ def run_inference(
         end_time = time.time()
         inference_latency = end_time - start_time
 
-        # Record output and inference latency
+        # Calculate inference cost. TODO: account for retries
+        prompt_data_length = model_object.get_prompt_data_length(
+            prompt_messages=prompt_for_data_analysis,
+            llm_result=llm_result,
+        )
+        completion_data_length = model_object.get_completion_data_length(
+            llm_result=llm_result
+        )
+        prompt_cost = LLMFactory.get_prompt_cost(
+            model_name=model_object.get_model_name(),
+            prompt_data_length=prompt_data_length,
+        )
+        completion_cost = LLMFactory.get_completion_cost(
+            model_name=model_object.get_model_name(),
+            completion_data_length=completion_data_length,
+        )
+
+        # Record output, inference cost, and inference latency
         inference_evaluation_results.loc[index, "output"] = output
+        inference_evaluation_results.loc[index, "inference_cost"] = (
+            prompt_cost + completion_cost
+        )
         inference_evaluation_results.loc[index, "inference_latency"] = inference_latency
 
     return inference_evaluation_results
