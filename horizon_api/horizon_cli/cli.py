@@ -287,6 +287,8 @@ def generate_task():
     allowed_models = []
     if click.confirm("Include [OpenAI]-[gpt-3.5-turbo]?"):
         allowed_models.append("gpt-3.5-turbo")
+    if click.confirm("Include [OpenAI]-[gpt-3.5-turbo-16k]?"):
+        allowed_models.append("gpt-3.5-turbo-16k")
     if click.confirm("Include [OpenAI]-[text-davinci-003]?"):
         allowed_models.append("text-davinci-003")
     if click.confirm("Include [Anthropic]-[claude-instant-v1]?"):
@@ -297,7 +299,11 @@ def generate_task():
         raise Exception("Must select at least one model to include")
 
     # Set appropriate LLM API keys
-    if "gpt-3.5-turbo" in allowed_models or "text-davinci-003" in allowed_models:
+    if (
+        "gpt-3.5-turbo" in allowed_models
+        or "gpt-3.5-turbo-16k" in allowed_models
+        or "text-davinci-003" in allowed_models
+    ):
         if os.environ.get("OPENAI_API_KEY"):
             horizon_ai.openai_api_key = os.environ.get("OPENAI_API_KEY")
         else:

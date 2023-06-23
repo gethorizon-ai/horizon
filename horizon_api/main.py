@@ -2,7 +2,6 @@ from app import create_app
 from app.routes import users, projects, tasks, prompts
 import ssl
 
-
 app = create_app()
 
 if __name__ == "__main__":

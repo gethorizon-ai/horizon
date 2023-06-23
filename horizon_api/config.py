@@ -1,6 +1,5 @@
 import os
 from kombu.utils.url import safequote
-from urllib.parse import quote
 
 
 class Config:
