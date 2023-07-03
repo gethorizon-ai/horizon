@@ -67,9 +67,9 @@ class TaskRequest:
         self.allowed_models = allowed_models
         self.applicable_llms = None
 
-        if user_objective is not None and len(user_objective) > 500:
+        if user_objective is not None and len(user_objective) > 1000:
             raise ValueError(
-                "User objective can be at most 500 characters to manage token limits."
+                "User objective can be at most 1000 characters to manage token limits."
             )
 
         if not raw_dataset_s3_key:
